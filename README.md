@@ -62,15 +62,33 @@
 
 ## 📸 功能截图
 
-<div align="center">
+以下是 Porten 应用的实际界面截图，展示主要功能页面：
 
-| 登录页面 | 即时通信 | 个人主页与情绪日记 |
-|:---:|:---:|:---:|
-| ![登录页面](./docs/screenshots/login.jpg) | ![即时通信](./docs/screenshots/chat.jpg) | ![个人主页](./docs/screenshots/profile.jpg) |
+| 登录页面 | 注册页面 |
+|:---:|:---:|
+| ![登录页面](./docs/screenshots/01-login.png) | ![注册页面](./docs/screenshots/02-register.png) |
 
-> 以上为产品概念展示图，实际界面请下载运行后体验。
+| 消息视图 | 聊天页面 |
+|:---:|:---:|
+| ![消息视图](./docs/screenshots/03-messages.png) | ![聊天页面](./docs/screenshots/05-chat.png) |
 
-</div>
+| 悦音乐页面 | 搜索页面 |
+|:---:|:---:|
+| ![悦音乐](./docs/screenshots/04-music.png) | ![搜索页面](./docs/screenshots/06-search.png) |
+
+| 同胞申请页面 | 营地申请页面 |
+|:---:|:---:|
+| ![同胞申请](./docs/screenshots/07-add-friend.png) | ![营地申请](./docs/screenshots/08-create-group.png) |
+
+> **截图说明**：
+> - **登录页面**：支持邮箱验证码登录与 Porten ID 密码登录，简约温暖的设计风格
+> - **注册页面**：邮箱注册流程，含验证码校验与协议确认
+> - **消息视图**：会话列表首页，展示好友与营地会话，顶部含搜索与创建入口
+> - **聊天页面**：支持文本、图片、视频、语音、文件等多类型消息，实时通信
+> - **悦音乐页面**：情绪音乐馆，需在「个人资料 → 设置 → 应用栏管理」中开启后显示底部入口
+> - **搜索页面**：搜索同胞与营地，支持按 Porten ID、昵称、营地名搜索
+> - **同胞申请页面**：添加同胞/营地，可通过 ID 或关键词查找并发送申请
+> - **营地申请页面**：创建新营地，设置名称、类型、标签、可见性等
 
 ---
 
@@ -294,6 +312,17 @@ Porten 是一个由热爱驱动的开源项目，致力于为跨性别群体提�
 
 - **项目仓库**：[https://github.com/Suran2022/Porten](https://github.com/Suran2022/Porten)
 - **Issue 反馈**：[https://github.com/Suran2022/Porten/issues](https://github.com/Suran2022/Porten/issues)
+
+### 加入我们
+
+如果你对 Porten 感兴趣，欢迎加入我们的社群，与同胞们一起交流、互助、成长：
+
+- **QQ 频道号**：`pd01444686`
+- **QQ 群**：`1047218753`
+- **联系 QQ**：`2380905725`
+- **联系邮箱**：`youyiyue1@gmail.com` 或 `2380905725@qq.com`
+
+> 欢迎同胞们加入我们的社群，这里有温暖的陪伴与真诚的支持。无论你是想交流使用心得、反馈产品建议，还是单纯想找一个理解你的地方，我们都在这里等你。🌈
 
 ---
 
