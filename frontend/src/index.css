@@ -1,0 +1,265 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  overscroll-behavior: none;
+  background: #ffffff;
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+}
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 歌词滚动区域上下边缘渐隐 */
+.mask-lyric-fade {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+}
+
+/* Porten brand gradient - transgender pride flag colors */
+.porten-gradient {
+  background: linear-gradient(
+    90deg,
+    #5BCEFA 0%,
+    #F5A9B8 30%,
+    #ffffff 50%,
+    #F5A9B8 70%,
+    #5BCEFA 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: porten-flow 16s linear infinite;
+}
+
+.porten-bg-gradient {
+  background: linear-gradient(
+    90deg,
+    #5BCEFA 0%,
+    #F5A9B8 50%,
+    #5BCEFA 100%
+  );
+  background-size: 200% 100%;
+  animation: porten-flow 8s ease-in-out infinite;
+}
+
+.agreement-gradient {
+  background: linear-gradient(
+    135deg,
+    #5BCEFA 0%,
+    #F5A9B8 50%,
+    #5BCEFA 100%
+  );
+  background-size: 200% 200%;
+  animation: agreement-flow 3s ease-in-out infinite;
+}
+
+@keyframes agreement-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes porten-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Fade divider - gray line fading from center to both ends */
+.fade-divider {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(209, 213, 219, 0.3) 20%,
+    rgba(156, 163, 175, 0.8) 50%,
+    rgba(209, 213, 219, 0.3) 80%,
+    transparent 100%
+  );
+}
+
+/* Smooth expand transition */
+.expand-enter {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 300ms ease-out, opacity 300ms ease-out, margin 300ms ease-out;
+}
+
+.expand-enter-active {
+  max-height: 120px;
+  opacity: 1;
+}
+
+.expand-exit {
+  max-height: 120px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 300ms ease-out, opacity 300ms ease-out, margin 300ms ease-out;
+}
+
+.expand-exit-active {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Sheet drag handle */
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: rgba(156, 163, 175, 0.5);
+}
+
+/* Bottom nav icon bounce */
+@keyframes bounce-icon {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+  70% {
+    transform: translateY(2px);
+  }
+}
+
+.animate-bounce-icon {
+  animation: bounce-icon 300ms ease-out;
+}
+
+/* Plus menu origin */
+.plus-menu-origin {
+  transform-origin: top right;
+}
+
+/* Progress bar smooth flowing gradient */
+.progress-flow {
+  background: linear-gradient(90deg, #5BCEFA 0%, #F5A9B8 50%, #5BCEFA 100%);
+  background-size: 200% 100%;
+  animation: progress-flow 3s linear infinite;
+}
+
+@keyframes progress-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* No shadow policy */
+.no-shadow {
+  box-shadow: none !important;
+}
+
+/* Search page content fade-in (used when switching category tabs) */
+@keyframes search-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-content-in {
+  animation: search-content-in 260ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+/* Slow spin for vinyl record */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 16s linear infinite;
+}
+
+/* 播放/暂停图标切换动画：淡入 + 轻微缩放，自然过渡 */
+@keyframes iconSwap {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 情绪音乐馆文案切换：从下方进入、上方顶出，自然平滑 */
+@keyframes moodTextIn {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes moodTextOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}

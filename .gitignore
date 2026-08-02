@@ -1,0 +1,58 @@
+# =====================
+# 操作系统 / 编辑器
+# =====================
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# =====================
+# 通用临时文件
+# =====================
+*.log
+*.tmp
+*.bak
+*.bak.*
+
+# =====================
+# 前端 (frontend)
+# =====================
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/.vite/
+frontend/stats.html
+
+# =====================
+# 后端 (backend)
+# =====================
+backend/.env
+backend/.env.local
+backend/.env.test
+backend/venv/
+backend/venv312/
+backend/.pytest_cache/
+backend/uploads/
+backend/app/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/alembic_ver.log
+
+# =====================
+# 数据库
+# =====================
+*.sqlite
+*.sqlite3
+*.db
+
+# =====================
+# 文档/截图（保留 docs/，但忽略临时编辑文件）
+# =====================
+docs/~$*
