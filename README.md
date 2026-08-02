@@ -60,35 +60,25 @@
 
 ---
 
-## 📸 功能截图
+## 📸 项目截图
 
-以下是 Porten 应用的实际界面截图，展示主要功能页面：
+以下是 Porten 应用的实际界面截图：
 
-| 登录页面 | 注册页面 |
+| 截图 1 | 截图 2 |
 |:---:|:---:|
-| ![登录页面](./docs/screenshots/01-login.png) | ![注册页面](./docs/screenshots/02-register.png) |
+| ![截图 1](./docs/screenshots/01.png) | ![截图 2](./docs/screenshots/02.png) |
 
-| 消息视图 | 聊天页面 |
+| 截图 3 | 截图 4 |
 |:---:|:---:|
-| ![消息视图](./docs/screenshots/03-messages.png) | ![聊天页面](./docs/screenshots/05-chat.png) |
+| ![截图 3](./docs/screenshots/03.png) | ![截图 4](./docs/screenshots/04.png) |
 
-| 悦音乐页面 | 搜索页面 |
+| 截图 5 | 截图 6 |
 |:---:|:---:|
-| ![悦音乐](./docs/screenshots/04-music.png) | ![搜索页面](./docs/screenshots/06-search.png) |
+| ![截图 5](./docs/screenshots/05.png) | ![截图 6](./docs/screenshots/06.png) |
 
-| 同胞申请页面 | 营地申请页面 |
+| 截图 7 | 截图 8 |
 |:---:|:---:|
-| ![同胞申请](./docs/screenshots/07-add-friend.png) | ![营地申请](./docs/screenshots/08-create-group.png) |
-
-> **截图说明**：
-> - **登录页面**：支持邮箱验证码登录与 Porten ID 密码登录，简约温暖的设计风格
-> - **注册页面**：邮箱注册流程，含验证码校验与协议确认
-> - **消息视图**：会话列表首页，展示好友与营地会话，顶部含搜索与创建入口
-> - **聊天页面**：支持文本、图片、视频、语音、文件等多类型消息，实时通信
-> - **悦音乐页面**：情绪音乐馆，需在「个人资料 → 设置 → 应用栏管理」中开启后显示底部入口
-> - **搜索页面**：搜索同胞与营地，支持按 Porten ID、昵称、营地名搜索
-> - **同胞申请页面**：添加同胞/营地，可通过 ID 或关键词查找并发送申请
-> - **营地申请页面**：创建新营地，设置名称、类型、标签、可见性等
+| ![截图 7](./docs/screenshots/07.png) | ![截图 8](./docs/screenshots/08.png) |
 
 ---
 
