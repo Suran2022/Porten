@@ -109,11 +109,8 @@ export class TimeoutError extends Error {
 }
 
 function handleAuthError() {
+  // TEMP: Do not redirect to login while authentication is disabled for development.
   removeToken();
-  const publicPaths = ["/login", "/register"];
-  if (!publicPaths.includes(window.location.pathname)) {
-    window.location.href = "/login";
-  }
 }
 
 function isAuthError(response: Response, result: ApiResponse<unknown>): boolean {

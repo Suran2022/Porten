@@ -38,8 +38,8 @@ function PortraitLocker() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore((state) => state.token);
-  return token ? children : <Navigate to="/login" replace />;
+  // TEMP: Login protection is disabled for development. Remove this comment and bypass when restoring authentication.
+  return children;
 }
 
 export default function App() {
@@ -48,9 +48,9 @@ export default function App() {
       <AuthInitializer />
       <PortraitLocker />
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<AuthSlider />} />
-        <Route path="/register" element={<AuthSlider />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/login" element={<Navigate to="/home" replace />} />
+        <Route path="/register" element={<Navigate to="/home" replace />} />
         {/* 免登录的音乐分享页：接收方打开，听 10s 后弹引导框 */}
         <Route path="/share/music" element={<ShareMusicPage />} />
         <Route

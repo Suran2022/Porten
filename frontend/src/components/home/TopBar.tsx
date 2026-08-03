@@ -15,6 +15,7 @@ import { CreateGroupPage } from "./CreateGroupPage";
 import { GroupProfilePage } from "./GroupProfilePage";
 import { SystemMessagesPage } from "./SystemMessagesPage";
 import { EmotionDiaryPage } from "./EmotionDiaryPage";
+import { NotesPage } from "./NotesPage";
 
 interface TopBarProps {
   onProfileClick?: () => void;
@@ -40,6 +41,7 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
   const [groupProfileVisible, setGroupProfileVisible] = useState(false);
   const [groupProfileType, setGroupProfileType] = useState("");
   const [systemMessagesVisible, setSystemMessagesVisible] = useState(false);
+  const [notesVisible, setNotesVisible] = useState(false);
   const [emotionDiaryVisible, setEmotionDiaryVisible] = useState(false);
   const loadConversations = useChatStore((state) => state.loadConversations);
   const { user } = useAuthStore();
@@ -62,6 +64,7 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
         createGroupVisible ||
         groupProfileVisible ||
         systemMessagesVisible ||
+        notesVisible ||
         emotionDiaryVisible
     );
   }, [
@@ -70,6 +73,7 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
     createGroupVisible,
     groupProfileVisible,
     systemMessagesVisible,
+    notesVisible,
     emotionDiaryVisible,
     onFullPageOpenChange,
   ]);
@@ -146,6 +150,7 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
             onClose={() => setPlusOpen(false)}
             onAddFriend={() => setAddFriendVisible(true)}
             onCreateGroup={() => setCreateGroupVisible(true)}
+            onNote={() => setNotesVisible(true)}
             onMoodDiary={() => setEmotionDiaryVisible(true)}
           />
         </div>
@@ -206,6 +211,11 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
       <SystemMessagesPage
         visible={systemMessagesVisible}
         onClose={() => setSystemMessagesVisible(false)}
+      />
+
+      <NotesPage
+        visible={notesVisible}
+        onClose={() => setNotesVisible(false)}
       />
 
       <EmotionDiaryPage

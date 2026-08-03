@@ -14,10 +14,11 @@ interface PlusMenuProps {
   onClose: () => void;
   onAddFriend?: () => void;
   onCreateGroup?: () => void;
+  onNote?: () => void;
   onMoodDiary?: () => void;
 }
 
-export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onMoodDiary }: PlusMenuProps) {
+export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onNote, onMoodDiary }: PlusMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,6 +91,8 @@ export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onMoodDiar
                       onAddFriend?.();
                     } else if (item.key === "create") {
                       onCreateGroup?.();
+                    } else if (item.key === "note") {
+                      onNote?.();
                     } else if (item.key === "mood") {
                       onMoodDiary?.();
                     }

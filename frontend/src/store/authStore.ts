@@ -180,7 +180,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     const token = getToken();
     if (!token) {
-      get().redirectToLogin();
+      // TEMP: Keep the app accessible without authentication during development.
       return;
     }
 

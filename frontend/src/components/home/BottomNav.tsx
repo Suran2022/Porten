@@ -61,9 +61,29 @@ export function BottomNav({ activeIndex, onChange, showMusic = false, onMusicCli
                 >
                   <Icon
                     className="w-6 h-6 transition-all duration-300"
-                    color={isActive ? "url(#portenIconGradient)" : "#9ca3af"}
+                    color={
+                      isActive
+                        ? `url(#portenIconGradient-${tab.key})`
+                        : "#9ca3af"
+                    }
                     strokeWidth={1.8}
-                  />
+                  >
+                    {isActive && (
+                      <defs>
+                        <linearGradient
+                          id={`portenIconGradient-${tab.key}`}
+                          gradientUnits="userSpaceOnUse"
+                          x1="0"
+                          y1="12"
+                          x2="24"
+                          y2="12"
+                        >
+                          <stop offset="0" stopColor="#5BCEFA" />
+                          <stop offset="1" stopColor="#F5A9B8" />
+                        </linearGradient>
+                      </defs>
+                    )}
+                  </Icon>
                   {showBadge && (
                     <span className="absolute -top-1 -right-2 min-w-[1rem] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center">
                       {totalUnread > 99 ? "99+" : totalUnread}
