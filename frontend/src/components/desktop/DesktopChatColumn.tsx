@@ -45,6 +45,7 @@ export function DesktopChatColumn({
         visible
         onClose={onClose}
         onUserProfileClick={onUserProfileClick}
+        isDesktop={true}
       />
     </div>
   );

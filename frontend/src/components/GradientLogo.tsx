@@ -1,6 +1,6 @@
-export function GradientLogo() {
+export function GradientLogo({ size = "text-5xl" }: { size?: string }) {
   return (
-    <h1 className="text-5xl font-bold tracking-tight porten-gradient select-none">
+    <h1 className={`${size} font-bold tracking-tight porten-gradient select-none`}>
       Porten
     </h1>
   );

@@ -353,18 +353,20 @@ export default function HomePageDesktop() {
           </div>
 
           {/* 第三栏：聊天详情 / 内容 */}
-          <div
-            className="relative h-full flex-1 min-w-0 overflow-hidden bg-white"
-            style={{ transform: "translateZ(0)" }}
-          >
+          <div className="flex-1 min-h-0 flex justify-center">
             <div
-              key={`${activeNav}-${activeNav === "messages" ? selectedChat?.id ?? "empty" : ""}`}
-              className={cn(
-                "h-full",
-                activeNav !== "messages" && "animate-content-in"
-              )}
+              className="relative h-full flex-1 min-w-0 overflow-hidden bg-white"
+              style={{ transform: "translateZ(0)" }}
             >
-              {renderColumn3()}
+              <div
+                key={`${activeNav}-${activeNav === "messages" ? selectedChat?.id ?? "empty" : ""}`}
+                className={cn(
+                  "h-full",
+                  activeNav !== "messages" && "animate-content-in"
+                )}
+              >
+                {renderColumn3()}
+              </div>
             </div>
           </div>
         </div>

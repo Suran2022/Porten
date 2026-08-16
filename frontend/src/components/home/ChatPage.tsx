@@ -33,6 +33,7 @@ import {
   Music2,
   AlertCircle,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatItem, ChatType } from "@/types/chat";
@@ -42,6 +43,7 @@ import { useChatStore } from "@/store/chatStore";
 import { useMessageStore } from "@/store/messageStore";
 
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { MediaPreview } from "./MediaPreview";
 
 const EMPTY_MESSAGES: Message[] = [];
@@ -51,6 +53,7 @@ interface ChatPageProps {
   visible: boolean;
   onClose: () => void;
   onUserProfileClick?: (userId: number | string) => void;
+  isDesktop?: boolean;
 }
 
 function formatChatTime(timeStr: string): string {
@@ -179,7 +182,16 @@ function renderTextWithLinks(text: string, linkClassName?: string) {
   return parts;
 }
 
-function TimeDivider({ time }: { time: string }) {
+function TimeDivider({ time, isDesktop = false }: { time: string; isDesktop?: boolean }) {
+  if (isDesktop) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+          {formatChatTime(time)}
+        </span>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center justify-center py-4">
       <span className="text-xs text-gray-400">{formatChatTime(time)}</span>
@@ -275,50 +287,52 @@ function useVoiceWaveform() {
     if (!analyser) return;
     analyserRef.current = analyser;
     // 使用频域数据，对音量变化更敏感，更适合做波形可视化。
-    dataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    dataRef.current = new Uint8Array(analyser.frequencyBinCount as number);
     smoothedRef.current = Array.from({ length: WAVE_BAR_COUNT }, () => 20);
 
     const tick = () => {
-      analyser.getByteFrequencyData(dataRef.current!);
-      const data = dataRef.current!;
-      const smoothing = 0.35;
-      const breathSpeed = 0.12;
-      const targets: number[] = [];
+      if (dataRef.current && analyserRef.current) {
+        const data = dataRef.current;
+        analyserRef.current.getByteFrequencyData(data);
+        const smoothing = 0.35;
+        const breathSpeed = 0.12;
+        const targets: number[] = [];
 
-      // 计算整体音量，用于控制呼吸幅度。
-      let total = 0;
-      for (let j = 0; j < data.length; j++) {
-        total += data[j];
-      }
-      const avg = total / data.length;
-      const energy = avg / 255;
-
-      for (let i = 0; i < WAVE_BAR_COUNT; i++) {
-        // 低频到高频均匀采样，人声主要集中在中低频。
-        const t = i / (WAVE_BAR_COUNT - 1);
-        const from = Math.floor(t * t * data.length * 0.6);
-        const to = Math.min(data.length, from + Math.max(1, Math.floor(data.length / WAVE_BAR_COUNT / 2)));
-        let sum = 0;
-        let count = 0;
-        for (let j = from; j < to; j++) {
-          sum += data[j];
-          count++;
+        // 计算整体音量，用于控制呼吸幅度。
+        let total = 0;
+        for (let j = 0; j < data.length; j++) {
+          total += data[j];
         }
-        const raw = count > 0 ? sum / count / 255 : 0;
-        // 增强增益，让轻声也有明显跳动。
-        const base = Math.max(0, raw * 140 + energy * 50);
-        // 叠加缓慢正弦呼吸，相位随索引错开，不说话时也有轻微起伏。
-        phaseRef.current[i] += breathSpeed + energy * 0.25;
-        const breath = (Math.sin(phaseRef.current[i]) * 0.5 + 0.5) * (18 + energy * 55);
-        const target = Math.max(16, Math.min(96, base + breath));
-        targets.push(target);
-      }
+        const avg = total / data.length;
+        const energy = avg / 255;
 
-      smoothedRef.current = smoothedRef.current.map(
-        (prev, i) => prev + (targets[i] - prev) * smoothing
-      );
-      setBars([...smoothedRef.current]);
-      requestRef.current = requestAnimationFrame(tick);
+        for (let i = 0; i < WAVE_BAR_COUNT; i++) {
+          // 低频到高频均匀采样，人声主要集中在中低频。
+          const t = i / (WAVE_BAR_COUNT - 1);
+          const from = Math.floor(t * t * data.length * 0.6);
+          const to = Math.min(data.length, from + Math.max(1, Math.floor(data.length / WAVE_BAR_COUNT / 2)));
+          let sum = 0;
+          let count = 0;
+          for (let j = from; j < to; j++) {
+            sum += data[j];
+            count++;
+          }
+          const raw = count > 0 ? sum / count / 255 : 0;
+          // 增强增益，让轻声也有明显跳动。
+          const base = Math.max(0, raw * 140 + energy * 50);
+          // 叠加缓慢正弦呼吸，相位随索引错开，不说话时也有轻微起伏。
+          phaseRef.current[i] += breathSpeed + energy * 0.25;
+          const breath = (Math.sin(phaseRef.current[i]) * 0.5 + 0.5) * (18 + energy * 55);
+          const target = Math.max(16, Math.min(96, base + breath));
+          targets.push(target);
+        }
+
+        smoothedRef.current = smoothedRef.current.map(
+          (prev, i) => prev + (targets[i] - prev) * smoothing
+        );
+        setBars([...smoothedRef.current]);
+        requestRef.current = requestAnimationFrame(tick);
+      }
     };
     requestRef.current = requestAnimationFrame(tick);
   }, []);
@@ -976,11 +990,13 @@ function ChatMessageItem({
   chatType,
   currentUser,
   onUserProfileClick,
+  isDesktop = false,
 }: {
   message: Message;
   chatType: ChatType;
   currentUser: { id?: string | number; avatar: string; nickname: string };
   onUserProfileClick?: (userId: number | string) => void;
+  isDesktop?: boolean;
 }) {
   if (message.type === "system") {
     return <SystemMessage message={message} currentUser={currentUser} />;
@@ -1009,24 +1025,32 @@ function ChatMessageItem({
     ) : null;
 
   const contentWrapper = isMedia ? (
-    <div className="flex flex-col items-center max-w-[240px]">
+    <div className={cn(
+      "flex flex-col items-center",
+      isDesktop ? "max-w-[600px]" : "max-w-[240px]"
+    )}>
       {bubbleContent}
       {mediaStatusNode}
     </div>
   ) : noBubble ? (
-    <div className="max-w-[calc(100%-4.5rem)]">{bubbleContent}</div>
+    <div className={cn("max-w-[calc(100%-4.5rem)]", isDesktop && "max-w-[600px]")}>{bubbleContent}</div>
   ) : (
-    <Bubble isMe={isMe} forceWhite={isFile} className="max-w-[calc(100%-4.5rem)]">
+    <Bubble isMe={isMe} forceWhite={isFile} className={cn("max-w-[calc(100%-4.5rem)]", isDesktop && "max-w-[600px]")}>
       {bubbleContent}
     </Bubble>
   );
 
   if (isMe) {
     return (
-      <div className="flex items-start justify-end gap-2 px-4 py-2">
+      <div className={cn(
+        "flex items-start justify-end gap-2",
+        isDesktop ? "px-6 py-3" : "px-4 py-2"
+      )}>
         <div className="flex flex-1 items-end justify-end gap-2">
           {statusNode}
-          {contentWrapper}
+          <div className={cn("max-w-[calc(100%-4.5rem)]", isDesktop && "max-w-[700px]")}>
+            {contentWrapper}
+          </div>
         </div>
         <Avatar src={currentUser.avatar} alt={currentUser.nickname} />
       </div>
@@ -1035,7 +1059,10 @@ function ChatMessageItem({
 
   if (isGroup) {
     return (
-      <div className="flex items-start gap-2 px-4 py-2">
+      <div className={cn(
+        "flex items-start gap-2",
+        isDesktop ? "px-6 py-3" : "px-4 py-2"
+      )}>
         <Avatar
           src={message.senderAvatar}
           alt={message.senderName}
@@ -1045,7 +1072,7 @@ function ChatMessageItem({
               : undefined
           }
         />
-        <div className="flex flex-col items-start max-w-[calc(100%-4.5rem)]">
+        <div className={cn("flex flex-col items-start max-w-[calc(100%-4.5rem)]", isDesktop && "max-w-[700px]")}>
           <span className="text-xs text-gray-400 mb-1">{message.senderName}</span>
           {contentWrapper}
         </div>
@@ -1054,7 +1081,10 @@ function ChatMessageItem({
   }
 
   return (
-    <div className="flex items-start gap-2 px-4 py-2">
+    <div className={cn(
+      "flex items-start gap-2",
+      isDesktop ? "px-6 py-3" : "px-4 py-2"
+    )}>
       <Avatar
         src={message.senderAvatar}
         alt={message.senderName}
@@ -1064,20 +1094,27 @@ function ChatMessageItem({
             : undefined
         }
       />
-      {contentWrapper}
+      <div className={cn("max-w-[calc(100%-4.5rem)]", isDesktop && "max-w-[700px]")}>
+        {contentWrapper}
+      </div>
     </div>
   );
 }
 
-export function ChatPage({ chat, visible, onClose, onUserProfileClick }: ChatPageProps) {
+export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop = false }: ChatPageProps) {
   const [isEntering, setIsEntering] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  const [sendMenuOpen, setSendMenuOpen] = useState(false);
+  const [sendOnEnter, setSendOnEnter] = useState(true);
+  const [inputHeight, setInputHeight] = useState(40);
   const scrollRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sendMenuRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const currentUser = useAuthStore((state) => state.user);
   // chat.id 是 `${type}_${conversationId}` 的复合字符串，需要解析出数字 ID。
@@ -1209,16 +1246,46 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick }: ChatPag
     };
   }, [visible]);
 
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (sendMenuRef.current && !sendMenuRef.current.contains(e.target as Node)) {
+        setSendMenuOpen(false);
+      }
+    };
+    if (sendMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [sendMenuOpen]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value.slice(0, 500);
+    setInputValue(value);
+    
+    // Auto-resize textarea height
+    if (textareaRef.current) {
+      const newHeight = Math.min(Math.max(40, textareaRef.current.scrollHeight), 70);
+      setInputHeight(newHeight);
+    }
+  };
+
   const handleSend = async () => {
     const text = inputValue.trim();
     if (!text || !conversationId) return;
     setInputValue("");
+    setInputHeight(40);
     await sendText(conversationId, text);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
-      handleSend();
+      if (sendOnEnter) {
+        e.preventDefault();
+        handleSend();
+      } else if (e.ctrlKey) {
+        e.preventDefault();
+        handleSend();
+      }
     }
   };
 
@@ -1338,29 +1405,70 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick }: ChatPag
       )}
     >
       {/* Top bar */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
-        {renderTopBarLeft()}
-        <div className="flex items-center gap-1">
-          {!isGroup && (
-            <>
-              <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
-                <Phone className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-              </button>
-              <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
-                <Video className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-              </button>
-            </>
-          )}
-          <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
-            <MoreVertical className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-          </button>
+      {isDesktop ? (
+        <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+            </button>
+            <div className="flex items-center gap-3">
+              <Avatar src={chat.avatar} alt={chat.name} />
+              <div>
+                <h1 className="text-base font-semibold text-gray-900">{chat.name}</h1>
+                {chat.type === "group" && (
+                  <p className="text-xs text-gray-500">群聊 · {chat.memberCount}人</p>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {!isGroup && (
+              <>
+                <button type="button" className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
+                  <Phone className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                </button>
+                <button type="button" className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
+                  <Video className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                </button>
+              </>
+            )}
+            <button type="button" className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
+              <MoreVertical className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
+          {renderTopBarLeft()}
+          <div className="flex items-center gap-1">
+            {!isGroup && (
+              <>
+                <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
+                  <Phone className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                </button>
+                <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
+                  <Video className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                </button>
+              </>
+            )}
+            <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
+              <MoreVertical className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Message list */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pt-4"
+        className={cn(
+          "flex-1 overflow-y-auto overflow-x-hidden",
+          isDesktop ? "px-6 py-4 bg-gray-50" : "scrollbar-hide pt-4"
+        )}
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center py-12">
@@ -1375,7 +1483,7 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick }: ChatPag
               !isSameTimeGroup(msg.timestamp, prevMsg.timestamp);
             return (
               <div key={msg.localId}>
-                {showTime && <TimeDivider time={msg.timestamp} />}
+                {showTime && <TimeDivider time={msg.timestamp} isDesktop={isDesktop} />}
                 <ChatMessageItem
                   message={msg}
                   chatType={chat.type}
@@ -1385,12 +1493,13 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick }: ChatPag
                     nickname: currentUser?.nickname || "",
                   }}
                   onUserProfileClick={onUserProfileClick}
+                  isDesktop={isDesktop}
                 />
               </div>
             );
           })
         )}
-        <div className="h-4" />
+        <div className={cn("h-4", isDesktop && "h-8")} />
       </div>
 
       {/* Backdrop to close voice panel when tapping blank area */}
@@ -1404,67 +1513,194 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick }: ChatPag
 
       {/* Bottom bar */}
       <div
-        className="relative flex-shrink-0 bg-white z-20 transition-transform duration-200"
+        className={cn(
+          "relative flex-shrink-0 z-20 transition-transform duration-200",
+          isDesktop ? "bg-gray-50 px-6 py-3" : "bg-white"
+        )}
         style={{ transform: `translateY(-${keyboardHeight}px)` }}
       >
-        <div className="px-4 pt-2 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center h-10 px-3 rounded-md bg-gray-100/60 transition-all duration-200">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value.slice(0, 500))}
-                onKeyDown={handleKeyDown}
-                placeholder="说点什么…"
-                className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
-              />
+        {isDesktop ? (
+          <div className="max-w-[860px] mx-auto">
+            <div className="bg-white border border-gray-200 rounded-2xl p-4 transition-all duration-200 relative group">
+              <div className="absolute inset-0 rounded-2xl opacity-0 group-focus-within:opacity-100 pointer-events-none transition-opacity duration-200" style={{
+                background: 'linear-gradient(to right, #5BCEFA, #F5A9B8)',
+                padding: '1px',
+                borderRadius: 'inherit'
+              }}>
+                <div className="bg-white rounded-2xl h-full w-full"></div>
+              </div>
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex-1 flex items-center min-h-10 px-4 rounded-lg bg-white transition-all duration-200">
+                    <textarea
+                      ref={textareaRef}
+                      value={inputValue}
+                      onChange={handleInputChange}
+                      onKeyDown={handleKeyDown}
+                      placeholder="输入消息..."
+                      className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400 resize-none overflow-hidden"
+                      style={{ height: `${inputHeight}px`, minHeight: '40px', maxHeight: '70px' }}
+                      rows={1}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setVoicePanelOpen((v) => !v)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors",
+                      voicePanelOpen && "bg-gray-100"
+                    )}
+                  >
+                    <Mic className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                    <span className="text-xs text-gray-600">语音</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <Image className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                    <span className="text-xs text-gray-600">图片</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <Paperclip className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                    <span className="text-xs text-gray-600">文件</span>
+                  </button>
+                  <button type="button" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Heart className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                    <span className="text-xs text-gray-600">表情</span>
+                  </button>
+                  <button type="button" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Music2 className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                    <span className="text-xs text-gray-600">音乐</span>
+                  </button>
+                  <div className="flex-1"></div>
+                  <div className="relative">
+                    <div className="flex items-center gap-1 rounded-lg bg-gradient-to-br from-[#5BCEFA] to-[#F5A9B8]">
+                      <button
+                        type="button"
+                        onClick={handleSend}
+                        className={cn(
+                          "flex-shrink-0 h-10 px-4 text-sm font-medium text-white active:opacity-90 transition-all duration-200",
+                          !inputValue.trim() && "opacity-50 cursor-not-allowed"
+                        )}
+                        disabled={!inputValue.trim()}
+                      >
+                        发送
+                      </button>
+                      <span className="text-white font-light">|</span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setSendMenuOpen(!sendMenuOpen); }}
+                        className="h-10 w-8 flex items-center justify-center rounded-lg text-white transition-colors"
+                      >
+                        <ChevronDown className="w-4 h-4" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                    {sendMenuOpen && (
+                      <div ref={sendMenuRef} className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] z-50">
+                        <button
+                          type="button"
+                          onClick={() => { setSendOnEnter(true); setSendMenuOpen(false); }}
+                          className={cn(
+                            "w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between",
+                            sendOnEnter && "bg-gray-50"
+                          )}
+                        >
+                          <span className="text-gray-700">按Enter发送</span>
+                          {sendOnEnter && <Check className="w-4 h-4 text-gray-600" strokeWidth={1.5} />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setSendOnEnter(false); setSendMenuOpen(false); }}
+                          className={cn(
+                            "w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between",
+                            !sendOnEnter && "bg-gray-50"
+                          )}
+                        >
+                          <span className="text-gray-700">按Ctrl+Enter发送</span>
+                          {!sendOnEnter && <Check className="w-4 h-4 text-gray-600" strokeWidth={1.5} />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={handleSend}
-              className={cn(
-                "flex-shrink-0 h-10 px-4 rounded-lg text-sm font-medium text-white bg-gradient-to-br from-[#5BCEFA] to-[#F5A9B8] active:opacity-90 transition-all duration-200 overflow-hidden",
-                inputValue.trim()
-                  ? "max-w-24 opacity-100 ml-0"
-                  : "max-w-0 opacity-0 ml-0 px-0"
-              )}
-            >
-              传达
-            </button>
           </div>
-          <div className="flex items-center justify-between mt-3 px-1">
-            <button
-              type="button"
-              onClick={() => setVoicePanelOpen((v) => !v)}
-              className={cn(
-                "w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors",
-                voicePanelOpen && "bg-gray-100"
-              )}
-            >
-              <Mic className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-            </button>
-            <button
-              type="button"
-              onClick={() => imageInputRef.current?.click()}
-              className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
-            >
-              <Image className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-            </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
-            >
-              <Paperclip className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-            </button>
-            <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
-              <Heart className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-            </button>
-            <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
-              <Music2 className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-            </button>
+        ) : (
+          <div className="px-4 pt-2 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center h-10 px-3 rounded-md bg-gray-100/60 transition-all duration-200">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value.slice(0, 500))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const text = inputValue.trim();
+                      if (!text || !conversationId) return;
+                      setInputValue("");
+                      sendText(conversationId, text);
+                    }
+                  }}
+                  placeholder="说点什么…"
+                  className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSend}
+                className={cn(
+                  "flex-shrink-0 h-10 px-4 rounded-lg text-sm font-medium text-white bg-gradient-to-br from-[#5BCEFA] to-[#F5A9B8] active:opacity-90 transition-all duration-200 overflow-hidden",
+                  inputValue.trim()
+                    ? "max-w-24 opacity-100 ml-0"
+                    : "max-w-0 opacity-0 ml-0 px-0"
+                )}
+              >
+                传达
+              </button>
+            </div>
+            <div className="flex items-center justify-between mt-3 px-1">
+              <button
+                type="button"
+                onClick={() => setVoicePanelOpen((v) => !v)}
+                className={cn(
+                  "w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors",
+                  voicePanelOpen && "bg-gray-100"
+                )}
+              >
+                <Mic className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+              </button>
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
+              >
+                <Image className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
+              >
+                <Paperclip className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+              </button>
+              <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
+                <Heart className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+              </button>
+              <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
+                <Music2 className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Voice panel */}
         <div

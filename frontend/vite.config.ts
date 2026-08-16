@@ -26,6 +26,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
   },
   server: {
+    port: 3002,
     // 开发环境代理：将前端请求转发到本地后端
     // 请根据你的后端实际地址和端口修改 target
     proxy: {
