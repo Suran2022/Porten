@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Music2 } from "lucide-react";
+import { ArrowLeft, Music2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PortenAppBarPageProps {
   visible: boolean;
   onClose: () => void;
+  /** PC 弹窗形态：顶部用右对齐关闭图标替代返回图标 */
+  closeMode?: boolean;
   showMusic: boolean;
   onToggleMusic: (show: boolean) => void;
 }
@@ -12,6 +14,7 @@ interface PortenAppBarPageProps {
 export function PortenAppBarPage({
   visible,
   onClose,
+  closeMode = false,
   showMusic,
   onToggleMusic,
 }: PortenAppBarPageProps) {
@@ -49,13 +52,28 @@ export function PortenAppBarPage({
     >
       {/* 顶部栏 - 复用通用样式，无分割线 */}
       <div className="flex-shrink-0 flex items-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
-        <button
-          onClick={onClose}
-          className="p-1 -ml-1 text-gray-700 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" strokeWidth={1.8} />
-        </button>
-        <h1 className="ml-3 text-lg font-medium text-gray-900">应用栏管理</h1>
+        {closeMode ? (
+          <>
+            <h1 className="flex-1 text-lg font-medium text-gray-900">应用栏管理</h1>
+            <button
+              onClick={onClose}
+              className="p-1 -mr-1 text-gray-700 hover:text-gray-900 transition-colors"
+              aria-label="关闭"
+            >
+              <X className="w-6 h-6" strokeWidth={1.8} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={onClose}
+              className="p-1 -ml-1 text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6" strokeWidth={1.8} />
+            </button>
+            <h1 className="ml-3 text-lg font-medium text-gray-900">应用栏管理</h1>
+          </>
+        )}
       </div>
 
       {/* 内容区 - 无分割线 */}

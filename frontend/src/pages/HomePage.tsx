@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 import { useContactStore } from "@/store/contactStore";
 import { useChatStore } from "@/store/chatStore";
 import { formatMessageTime } from "@/lib/utils";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
+import HomePageDesktop from "@/pages/HomePageDesktop";
 
 const APP_BAR_CONFIG_KEY = "porten_app_bar_config";
 
@@ -54,7 +56,18 @@ function saveShowMusic(show: boolean) {
   }
 }
 
+/**
+ * 首页入口：桌面宽度使用 PC 三栏布局，窄屏保持移动端布局不变。
+ */
 export default function HomePage() {
+  const isDesktop = useIsDesktop();
+  if (isDesktop) {
+    return <HomePageDesktop />;
+  }
+  return <HomePageMobile />;
+}
+
+function HomePageMobile() {
   const [activeView, setActiveView] = useState(0);
   const [resourceTab, setResourceTab] = useState<ResourceTab>("hospital");
   const [knowledgeTab, setKnowledgeTab] = useState<KnowledgeTab>("share");

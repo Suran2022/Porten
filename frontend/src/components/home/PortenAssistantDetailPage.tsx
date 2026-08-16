@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
@@ -16,6 +16,8 @@ interface PortenAssistantDetailPageProps {
   assistantId: string | null;
   assistantName?: string;
   onClose: () => void;
+  /** PC 弹窗形态：顶部用右对齐关闭图标替代返回图标 */
+  closeMode?: boolean;
 }
 
 function formatPublishTime(iso: string): string {
@@ -71,6 +73,7 @@ export function PortenAssistantDetailPage({
   assistantId,
   assistantName,
   onClose,
+  closeMode = false,
 }: PortenAssistantDetailPageProps) {
   const [shouldRender, setShouldRender] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
@@ -180,17 +183,35 @@ export function PortenAssistantDetailPage({
         onTransitionEnd={handleTransitionEnd}
       >
         <div className="flex-shrink-0 flex items-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center -ml-2 active:opacity-60 transition-opacity"
-            aria-label="返回"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
-          </button>
-          <h1 className="flex-1 text-center text-base font-medium text-gray-900 -mr-6">
-            {assistantName || "助手"}
-          </h1>
+          {closeMode ? (
+            <>
+              <h1 className="flex-1 text-left text-base font-medium text-gray-900">
+                {assistantName || "助手"}
+              </h1>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center -mr-2 active:opacity-60 transition-opacity"
+                aria-label="关闭"
+              >
+                <X className="w-5 h-5 text-gray-900" strokeWidth={1.8} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center -ml-2 active:opacity-60 transition-opacity"
+                aria-label="返回"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+              </button>
+              <h1 className="flex-1 text-center text-base font-medium text-gray-900 -mr-6">
+                {assistantName || "助手"}
+              </h1>
+            </>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto">

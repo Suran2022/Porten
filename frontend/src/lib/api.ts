@@ -1,5 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
+import { USE_MOCK } from "@/lib/mockMode";
+import { mockApiRequest, mockUploadFile } from "@/lib/mockEngine";
+
 export interface ApiResponse<T = unknown> {
   code: number;
   message: string;
@@ -60,6 +63,22 @@ export async function apiRequest<T = unknown>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // Mock 模式：全部请求由本地 mock 引擎接管，无需后端服务。
+  if (USE_MOCK) {
+    try {
+      const data = await mockApiRequest(path, {
+        method: options.method,
+        body: typeof options.body === "string" ? options.body : undefined,
+      });
+      return data as T;
+    } catch (err) {
+      throw new ApiError(
+        err instanceof Error ? err.message : "request failed",
+        500
+      );
+    }
+  }
+
   const url = `${API_BASE_URL}${path}`;
   const token = getToken();
 
@@ -569,6 +588,11 @@ function uploadFile(
   onProgress?: (p: number) => void,
   permanent?: boolean
 ): Promise<UploadResult> {
+  // Mock 模式：模拟上传进度并返回本地 object URL。
+  if (USE_MOCK) {
+    return mockUploadFile(file, onProgress);
+  }
+
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const formData = new FormData();

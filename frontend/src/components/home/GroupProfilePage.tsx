@@ -7,6 +7,8 @@ interface GroupProfilePageProps {
   visible: boolean;
   groupType: string;
   onClose: () => void;
+  /** PC 弹窗形态：顶部右对齐显示关闭图标（保留"上一步"） */
+  closeMode?: boolean;
   onBack?: () => void;
   onCreated?: (payload: { conversationId: number; name: string; avatar: string | undefined; memberCount?: number }) => void;
 }
@@ -109,7 +111,7 @@ function OptionalLabel({ label }: { label: string }) {
   );
 }
 
-export function GroupProfilePage({ visible, groupType, onClose, onBack, onCreated }: GroupProfilePageProps) {
+export function GroupProfilePage({ visible, groupType, onClose, closeMode = false, onBack, onCreated }: GroupProfilePageProps) {
   const [isEntering, setIsEntering] = useState(false);
   const [name, setName] = useState("");
   const [intro, setIntro] = useState("");
@@ -228,7 +230,18 @@ export function GroupProfilePage({ visible, groupType, onClose, onBack, onCreate
           上一步
         </button>
         <h1 className="text-base font-medium text-gray-900">营地资料完善</h1>
-        <div className="w-16" />
+        {closeMode ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-16 flex justify-end text-gray-600 active:text-gray-900 transition-colors"
+            aria-label="关闭"
+          >
+            <X className="w-5 h-5 text-gray-900" strokeWidth={1.8} />
+          </button>
+        ) : (
+          <div className="w-16" />
+        )}
       </div>
 
       {/* Scrollable content */}

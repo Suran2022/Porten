@@ -63,6 +63,8 @@ interface AuthState {
   }) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: AuthUser) => void;
+  /** Mock 模式下免后端直接登录：任意账号一键进入。 */
+  loginAsMock: (account?: string) => void;
 }
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
@@ -225,6 +227,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   updateUser: (user: AuthUser) => {
     setStoredUser(user);
     set({ user });
+  },
+
+  loginAsMock: (account) => {
+    const trimmed = (account || "").trim();
+    const hasEmailShape = trimmed.includes("@");
+    const nickname = hasEmailShape ? "林夕" : trimmed || "林夕";
+    const email = hasEmailShape
+      ? trimmed
+      : trimmed
+        ? `${trimmed}@mock.porten`
+        : "guest@mock.porten";
+    const user: AuthUser = {
+      id: 1001,
+      email,
+      nickname,
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=linxi",
+      backgroundUrl:
+        "https://haowallpaper.com/link/common/file/previewFileImg/18601605145677184",
+      portenId: "100001",
+      role: "user",
+      gender: "non_binary",
+      friendCount: 12,
+      transDays: 368,
+      latestDiary:
+        "今天阳光很好，坐在窗边写下这些的时候，突然觉得被世界温柔地接住了。愿我们都能慢慢长成自己喜欢的样子。",
+      mood: "happy",
+    };
+    const token = `mock-token-${Date.now()}`;
+    setAuthSession(token, user);
+    set({ token, user });
   },
 
   sendCode: async (email) => {

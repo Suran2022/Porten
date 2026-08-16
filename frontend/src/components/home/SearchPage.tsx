@@ -31,6 +31,8 @@ const SEARCH_ERROR_TEXT = "响应超时，请稍后重试";
 interface SearchPageProps {
   visible: boolean;
   onClose: () => void;
+  /** PC 弹窗形态：顶部用右对齐关闭图标替代返回图标 */
+  closeMode?: boolean;
 }
 
 interface CategoryDef {
@@ -196,7 +198,7 @@ function EmptyHint({ keyword, label }: { keyword: string; label: string }) {
 
 // ===== Main component =====
 
-export function SearchPage({ visible, onClose }: SearchPageProps) {
+export function SearchPage({ visible, onClose, closeMode = false }: SearchPageProps) {
   const [isEntering, setIsEntering] = useState(false);
   const [activeCategory, setActiveCategory] = useState<SearchCategoryKey>("all");
   const [keyword, setKeyword] = useState("");
@@ -458,18 +460,36 @@ export function SearchPage({ visible, onClose }: SearchPageProps) {
     >
       {/* 通用顶部栏 */}
       <div className="flex-shrink-0 flex items-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center -ml-2 active:opacity-60 transition-opacity"
-          aria-label="返回"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
-        </button>
-        <h1 className="flex-1 text-center text-base font-medium text-gray-900">
-          搜索
-        </h1>
-        <div className="w-8" />
+        {closeMode ? (
+          <>
+            <h1 className="flex-1 text-left text-base font-medium text-gray-900">
+              搜索
+            </h1>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center -mr-2 active:opacity-60 transition-opacity"
+              aria-label="关闭"
+            >
+              <X className="w-5 h-5 text-gray-900" strokeWidth={1.8} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center -ml-2 active:opacity-60 transition-opacity"
+              aria-label="返回"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+            </button>
+            <h1 className="flex-1 text-center text-base font-medium text-gray-900">
+              搜索
+            </h1>
+            <div className="w-8" />
+          </>
+        )}
       </div>
 
       {/* 可聚焦的搜索框 */}

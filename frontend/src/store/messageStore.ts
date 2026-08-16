@@ -24,8 +24,14 @@ import {
 import { Message, MessageStatus } from "@/types/message";
 import { useAuthStore } from "./authStore";
 import { useChatStore } from "./chatStore";
+import { USE_MOCK } from "@/lib/mockMode";
+import { onMockIncomingMessage } from "@/lib/mockEngine";
+import type { MockMessage } from "@/data/mockServerData";
 
 const API_WS_URL = import.meta.env.VITE_API_WS_URL || "ws://localhost:8000/ws";
+
+/** 最近一次打开过的会话 id：mock 回复到达时若不在该会话中则累计未读。 */
+let lastLoadedConversationId: number | null = null;
 
 function previewForChatList(message: Message): string {
   if (message.type === "text") return message.content || "";
@@ -67,6 +73,24 @@ function mapApiToMessage(item: MessageItem, currentUserId: number): Message {
           ? parseFloat(extra.duration) || undefined
           : undefined
       : undefined;
+  const shareMeta =
+    item.message_type === "share" && extra
+      ? {
+          shareType: (extra.share_type as "knowledge" | "resource") || "knowledge",
+          title: (extra.title as string) || "",
+          desc: extra.desc as string | undefined,
+          cover: extra.cover as string | undefined,
+          tags: extra.tags as string[] | undefined,
+        }
+      : undefined;
+  const nameCardMeta =
+    item.message_type === "nameCard" && extra
+      ? {
+          userId: String(extra.user_id ?? ""),
+          nickname: (extra.nickname as string) || "",
+          avatar: (extra.avatar as string) || "",
+        }
+      : undefined;
   return {
     localId: String(item.id),
     id: item.id,
@@ -81,6 +105,8 @@ function mapApiToMessage(item: MessageItem, currentUserId: number): Message {
     isMe,
     status: "sent",
     duration,
+    shareMeta,
+    nameCardMeta,
   };
 }
 
@@ -268,6 +294,10 @@ export const useMessageStore = create<MessageState>((set, get) => ({
   reconnectTimer: null,
 
   loadMessages: async (conversationId) => {
+    // 记录当前打开的会话：mock 引擎的"对方回复"到达时，
+    // 不在该会话中的新消息才累计未读。
+    lastLoadedConversationId = conversationId;
+
     const currentUser = useAuthStore.getState().user;
     if (!currentUser) return;
 
@@ -515,6 +545,8 @@ export const useMessageStore = create<MessageState>((set, get) => ({
   },
 
   connect: () => {
+    // Mock 模式：无需真实 WebSocket，直接跳过连接与重连。
+    if (USE_MOCK) return;
     const token = useAuthStore.getState().token;
     if (!token) return;
     if (get().ws?.readyState === WebSocket.OPEN) return;
@@ -842,4 +874,54 @@ async function sendMedia(
       status: "failed",
     });
   }
+}
+
+/* ============================= Mock 消息订阅 ============================= */
+
+if (USE_MOCK) {
+  onMockIncomingMessage((msg: MockMessage) => {
+    const message: Message = {
+      localId: String(msg.id),
+      id: msg.id,
+      conversationId: msg.conversationId,
+      type: msg.type as Message["type"],
+      content: msg.content,
+      extra: msg.extra as Message["extra"],
+      senderId: msg.senderId,
+      senderName: msg.senderName,
+      senderAvatar: msg.senderAvatar,
+      timestamp: msg.timestamp,
+      isMe: false,
+      status: "sent",
+      duration: msg.duration,
+    };
+
+    useMessageStore.getState().addOrUpdateMessage(msg.conversationId, message);
+    updateConversationPreview(message);
+    saveMessage({
+      localId: String(msg.id),
+      id: msg.id,
+      conversationId: msg.conversationId,
+      type: msg.type,
+      content: msg.content,
+      extra: msg.extra as Record<string, unknown>,
+      senderId: msg.senderId,
+      senderName: msg.senderName,
+      senderAvatar: msg.senderAvatar,
+      timestamp: msg.timestamp,
+      isMe: false,
+      status: "sent",
+    }).catch(() => {});
+
+    // 回复不在当前打开的会话中 → 未读角标 +1。
+    if (msg.conversationId !== lastLoadedConversationId) {
+      useChatStore.setState((state) => ({
+        conversations: state.conversations.map((c) =>
+          c.id === msg.conversationId
+            ? { ...c, unread_count: (c.unread_count || 0) + 1 }
+            : c
+        ),
+      }));
+    }
+  });
 }

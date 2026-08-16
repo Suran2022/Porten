@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Search, UsersRound } from "lucide-react";
+import { ArrowLeft, Search, UsersRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   searchUserByPortenId,
@@ -21,6 +21,8 @@ type Tab = "user" | "group";
 interface AddFriendPageProps {
   visible: boolean;
   onClose: () => void;
+  /** PC 弹窗形态：顶部用右对齐关闭图标替代返回图标 */
+  closeMode?: boolean;
 }
 
 function normalizeText(text: string) {
@@ -156,7 +158,7 @@ function sortByCreatedAtDesc<T>(items: T[]): T[] {
   );
 }
 
-export function AddFriendPage({ visible, onClose }: AddFriendPageProps) {
+export function AddFriendPage({ visible, onClose, closeMode = false }: AddFriendPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>("user");
   const [keyword, setKeyword] = useState("");
   const [isEntering, setIsEntering] = useState(false);
@@ -309,15 +311,31 @@ export function AddFriendPage({ visible, onClose }: AddFriendPageProps) {
     >
       {/* Fixed top bar */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center -ml-2"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
-        </button>
-        <h1 className="text-base font-medium text-gray-900">添加同胞/营地</h1>
-        <div className="w-8" />
+        {closeMode ? (
+          <>
+            <h1 className="text-base font-medium text-gray-900">添加同胞/营地</h1>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center -mr-2"
+              aria-label="关闭"
+            >
+              <X className="w-5 h-5 text-gray-900" strokeWidth={1.8} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center -ml-2"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+            </button>
+            <h1 className="text-base font-medium text-gray-900">添加同胞/营地</h1>
+            <div className="w-8" />
+          </>
+        )}
       </div>
 
       {/* Scrollable content */}

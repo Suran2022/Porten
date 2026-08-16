@@ -42,6 +42,7 @@ export default function LoginPage() {
     switchToPasswordMode,
     sendCode,
     login,
+    loginAsMock,
     clearError,
   } = useAuthStore();
 
@@ -126,6 +127,8 @@ export default function LoginPage() {
     }
     if (isPhone) {
       if (!code || code.length !== 6) return;
+      // Mock 阶段：任意账号直接进入
+      loginAsMock(account.trim());
       showToast("登录成功", "success");
       navigate("/home");
       return;

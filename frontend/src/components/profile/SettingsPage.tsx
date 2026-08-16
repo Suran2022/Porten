@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { SystemToast, ToastType } from "@/components/SystemToast";
@@ -7,6 +7,8 @@ import { SystemToast, ToastType } from "@/components/SystemToast";
 interface SettingsPageProps {
   visible: boolean;
   onClose: () => void;
+  /** PC 弹窗形态：顶部用右对齐关闭图标替代返回图标 */
+  closeMode?: boolean;
   onPortenSecurityClick?: () => void;
   onAppBarClick?: () => void;
 }
@@ -14,6 +16,7 @@ interface SettingsPageProps {
 export function SettingsPage({
   visible,
   onClose,
+  closeMode = false,
   onPortenSecurityClick,
   onAppBarClick,
 }: SettingsPageProps) {
@@ -59,16 +62,34 @@ export function SettingsPage({
     >
       {/* Top bar */}
       <div className="flex items-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center -ml-2"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
-        </button>
-        <h1 className="flex-1 text-center text-base font-medium text-gray-900 -ml-8">
-          设置
-        </h1>
+        {closeMode ? (
+          <>
+            <h1 className="flex-1 text-left text-base font-medium text-gray-900">
+              设置
+            </h1>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center -mr-2"
+              aria-label="关闭"
+            >
+              <X className="w-5 h-5 text-gray-900" strokeWidth={1.8} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center -ml-2"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+            </button>
+            <h1 className="flex-1 text-center text-base font-medium text-gray-900 -ml-8">
+              设置
+            </h1>
+          </>
+        )}
       </div>
 
       {/* Options */}
