@@ -219,19 +219,42 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
       />
 
       {/* 渐变底部与白色背景的高斯模糊过渡层：
-          复刻上层渐变并叠加白色 mask，从顶部可见到底部完全白底融合。 */}
+          在祖先元素存在 transform（如桌面端 PcDialog 居中动画）时，
+          filter:blur 的溢出会被裁剪，因此改用"高斯模糊自身 + 渐变 mask 渐隐"
+          的双层结构，规避裁剪与 z-index 不稳定问题。
+
+          第一层：复刻上层渐变的彩底并向下延伸 160px，整体施加 40px 高斯模糊，
+                 让粉/蓝自然向白底消散；
+          第二层：白色 180→255 不透明渐变，仅覆盖底部 80px，用 mask
+                 在顶/底做柔化（顶部可见、底部完全透明），与白底无缝衔接。 */}
       <div
-        className="pointer-events-none absolute left-0 z-[5] w-full"
+        className="pointer-events-none absolute left-0 w-full"
         style={{
-          top: "calc(39% - 24px)",
-          height: "64px",
+          top: 0,
+          height: "calc(39% + 160px)",
           background:
-            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 60%, rgba(255,255,255,1) 100%)",
-          filter: "blur(20px)",
+            "linear-gradient(180deg, rgba(91,206,250,0.30) 0%, rgba(139,204,238,0.27) 30%, rgba(245,169,184,0.30) 55%, rgba(248,198,209,0.18) 75%, rgba(255,255,255,0) 100%)",
+          filter: "blur(40px)",
+          opacity: 0.85,
           WebkitMaskImage:
-            "linear-gradient(180deg, #000 0%, #000 55%, transparent 100%)",
+            "linear-gradient(180deg, #000 0%, #000 50%, transparent 100%)",
           maskImage:
-            "linear-gradient(180deg, #000 0%, #000 55%, transparent 100%)",
+            "linear-gradient(180deg, #000 0%, #000 50%, transparent 100%)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute left-0 w-full"
+        style={{
+          bottom: 0,
+          height: "120px",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 40%, rgba(255,255,255,1) 100%)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          WebkitMaskImage:
+            "linear-gradient(180deg, transparent 0%, #000 35%, #000 100%)",
+          maskImage:
+            "linear-gradient(180deg, transparent 0%, #000 35%, #000 100%)",
         }}
       />
 
