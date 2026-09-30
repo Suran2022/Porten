@@ -390,3 +390,57 @@ body {
 .animate-float-fast {
   animation: float-fast 2.5s ease-in-out infinite;
 }
+
+/* ============================================
+ * 下拉刷新（Pull-to-Refresh）
+ * ============================================ */
+
+/* 刷新中三圆点动效：三枚圆点沿三角轮转（css-loaders l10）。
+ * 尺寸 20px 与文本 text-sm 行框（leading-5 = 20px）等高，保证图标与文本视觉一致 */
+.ptr-loader {
+  width: 20px;
+  aspect-ratio: 1;
+  --g: radial-gradient(
+    farthest-side,
+    #0000 calc(95% - 2px),
+    #9ca3af calc(100% - 2px) 98%,
+    #0000 101%
+  ) no-repeat;
+  background: var(--g), var(--g), var(--g);
+  background-size: 9px 9px;
+  animation: ptr-l10 1.5s infinite;
+}
+
+@keyframes ptr-l10 {
+  0% {
+    background-position: 0 0, 0 100%, 100% 100%;
+  }
+  25% {
+    background-position: 100% 0, 0 100%, 100% 100%;
+  }
+  50% {
+    background-position: 100% 0, 0 0, 100% 100%;
+  }
+  75% {
+    background-position: 100% 0, 0 0, 0 100%;
+  }
+  100% {
+    background-position: 100% 100%, 0 0, 0 100%;
+  }
+}
+
+/* 下拉阶段：圆点渐入 */
+.ptr-dot {
+  animation: ptr-dot-in 0.3s ease-out both;
+}
+
+@keyframes ptr-dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

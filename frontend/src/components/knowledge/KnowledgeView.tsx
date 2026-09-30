@@ -24,10 +24,10 @@ export function KnowledgeView({
             transform: `translateX(${activeTab === "share" ? 0 : "-50%"})`,
           }}
         >
-          <div className="h-full w-1/2 overflow-y-auto scrollbar-hide">
+          <div className="h-full w-1/2">
             <ShareView />
           </div>
-          <div className="h-full w-1/2 overflow-y-auto scrollbar-hide">
+          <div className="h-full w-1/2">
             <LearnView
               activeCategory={activeCategory}
               menuFixed={menuFixed}

@@ -27,6 +27,8 @@ export default defineConfig({
   },
   server: {
     port: 3002,
+    // 允许 Cloudflare Quick Tunnel 临时域名访问（公网预览用）
+    allowedHosts: ['.trycloudflare.com'],
     // 开发环境代理：将前端请求转发到本地后端
     // 请根据你的后端实际地址和端口修改 target
     proxy: {

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { KnowledgeTab } from "@/types/knowledge";
+import RubberSegment from "@/components/common/RubberSegment";
 
 interface KnowledgeTopBarProps {
   activeTab: KnowledgeTab;
@@ -22,37 +23,29 @@ export function KnowledgeTopBar({
       <div className="max-w-md mx-auto h-full flex items-center justify-center px-4">
         <div
           className={cn(
-            "inline-flex items-center rounded-full border border-black p-[0.5px] transition-opacity duration-300",
+            "transition-opacity duration-300",
             !buttonsVisible && "opacity-0 pointer-events-none"
           )}
         >
-          {tabs.map((tab) => {
-            const isActive = tab.key === activeTab;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => onTabChange(tab.key)}
-                className={cn(
-                  "relative px-8 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ease-out",
-                  isActive
-                    ? "text-white"
-                    : "text-gray-700 hover:text-gray-900 bg-white"
-                )}
-              >
-                {isActive && (
-                  <span
-                    className="absolute inset-0 rounded-full -z-10"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, #5BCEFA, #F5A9B8, #5BCEFA)",
-                    }}
-                  />
-                )}
-                {tab.label}
-              </button>
-            );
-          })}
+          <RubberSegment
+            aria-label="知识板块切换"
+            items={tabs.map((tab) => ({ value: tab.key, label: tab.label }))}
+            value={activeTab}
+            onChange={(value) => onTabChange(value as KnowledgeTab)}
+            size="md"
+            radius={10}
+            inset={3}
+            equalSlots
+            stretch={100}
+            squash={3}
+            speed={1}
+            glide={75}
+            draggable
+            trackColor="#f4f4f5"
+            thumbColor="linear-gradient(90deg, #5BCEFA, #F5A9B8, #5BCEFA)"
+            textColor="#52525b"
+            activeTextColor="#ffffff"
+          />
         </div>
       </div>
     </header>

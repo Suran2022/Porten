@@ -24,6 +24,7 @@ import { ResourceTab } from "@/types/resource";
 import { KnowledgeTab, LearnCategory } from "@/types/knowledge";
 import { ChatItem, ChatType } from "@/types/chat";
 import { cn } from "@/lib/utils";
+import { PullToRefresh } from "@/components/common/PullToRefresh";
 import { useContactStore } from "@/store/contactStore";
 import { useChatStore } from "@/store/chatStore";
 import { formatMessageTime } from "@/lib/utils";
@@ -317,14 +318,18 @@ function HomePageMobile() {
           className="flex h-full w-[300%] transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] overflow-hidden"
           style={{ transform: `translateX(-${activeView * 33.333}%)` }}
         >
-          <div className="h-full w-1/3 overflow-y-auto">
-            <div className="max-w-md mx-auto">
-              <SearchBar onClick={() => setSearchVisible(true)} />
-              <MessageList
-                onChatClick={handleChatOpen}
-                onPartnerClick={() => setPartnerVisible(true)}
-              />
-            </div>
+          <div className="h-full w-1/3">
+            <PullToRefresh
+              onRefresh={() => useChatStore.getState().loadConversations()}
+            >
+              <div className="max-w-md mx-auto">
+                <SearchBar onClick={() => setSearchVisible(true)} />
+                <MessageList
+                  onChatClick={handleChatOpen}
+                  onPartnerClick={() => setPartnerVisible(true)}
+                />
+              </div>
+            </PullToRefresh>
           </div>
           <div className="h-full w-1/3 overflow-y-auto">
             <div className="max-w-md mx-auto">

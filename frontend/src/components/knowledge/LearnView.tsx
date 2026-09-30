@@ -1,10 +1,32 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LearnCategory } from "@/types/knowledge";
 import { getLearnPostsByCategory } from "@/data/knowledgeMock";
+import { LearnPost } from "@/types/knowledge";
 import { ArticleCard } from "./ArticleCard";
 import { VideoCard } from "./VideoCard";
+import { PullToRefresh } from "@/components/common/PullToRefresh";
 
 import { cn } from "@/lib/utils";
+
+/** 模拟网络延迟：让刷新动效可感知 */
+const REFRESH_DELAY_MS = 700;
+
+/** 分类栏高度（px）：下拉刷新提示条需让位到分类栏之下 */
+const CATEGORY_MENU_HEIGHT = 48;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** 洗牌：刷新后打乱列表顺序，使刷新结果可感知 */
+function shuffle<T>(list: T[]): T[] {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 interface LearnViewProps {
   activeCategory: LearnCategory;
@@ -20,6 +42,11 @@ export function LearnView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>();
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+
+  // 列表数据改为受控 state：下拉刷新时重新拉取（洗牌）触发重渲
+  const [posts, setPosts] = useState<LearnPost[]>(() =>
+    getLearnPostsByCategory(activeCategory)
+  );
 
   const setVideoRef = (id: string) => (el: HTMLVideoElement | null) => {
     if (el) {
@@ -69,7 +96,9 @@ export function LearnView({
     });
   }, [onMenuFixedChange, updateActiveVideo]);
 
+  // 切换分类：重新拉取数据、回到顶部并复位分类栏吸附
   useEffect(() => {
+    setPosts(getLearnPostsByCategory(activeCategory));
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
@@ -77,14 +106,22 @@ export function LearnView({
     updateActiveVideo();
   }, [activeCategory, onMenuFixedChange, updateActiveVideo]);
 
-  const posts = getLearnPostsByCategory(activeCategory);
+  const handleRefresh = useCallback(async () => {
+    await sleep(REFRESH_DELAY_MS);
+    setPosts(shuffle(getLearnPostsByCategory(activeCategory)));
+  }, [activeCategory]);
 
   return (
-    <div
-      ref={scrollRef}
+    <PullToRefresh
+      onRefresh={handleRefresh}
+      scrollRef={scrollRef}
       onScroll={handleScroll}
-      className={cn(
-        "h-full overflow-y-auto scrollbar-hide transition-[padding-top] duration-300",
+      // 提示条让位到吸附式分类栏之下，并计入滚动容器的 pt-14 顶部内边距，
+      // 使提示内容始终居中于"分类栏底 ~ 主内容顶"，上下间距对称
+      indicatorOffset={CATEGORY_MENU_HEIGHT}
+      contentPaddingTop={56}
+      scrollClassName={cn(
+        "transition-[padding-top] duration-300",
         menuFixed ? "pt-0" : "pt-14"
       )}
     >
@@ -102,6 +139,6 @@ export function LearnView({
           )
         )}
       </div>
-    </div>
+    </PullToRefresh>
   );
 }
