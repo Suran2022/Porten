@@ -212,49 +212,30 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
       <div
         className="pointer-events-none absolute left-0 top-0 w-full"
         style={{
-          height: "39%",
+          height: "28%",
           background:
-            "linear-gradient(145deg, rgba(91,206,250,0.30) 0%, rgba(139,204,238,0.27) 22%, rgba(245,169,184,0.30) 52%, rgba(248,198,209,0.18) 72%, rgba(255,255,255,0) 100%)",
+            "linear-gradient(180deg, rgba(91,206,250,0.30) 0%, rgba(139,204,238,0.27) 28%, rgba(245,169,184,0.30) 52%, rgba(248,198,209,0.18) 72%, rgba(252,220,225,0.06) 92%, rgba(255,255,255,0) 100%)",
         }}
       />
 
-      {/* 渐变底部与白色背景的高斯模糊过渡层：
-          在祖先元素存在 transform（如桌面端 PcDialog 居中动画）时，
-          filter:blur 的溢出会被裁剪，因此改用"高斯模糊自身 + 渐变 mask 渐隐"
-          的双层结构，规避裁剪与 z-index 不稳定问题。
+      {/* 渐变底部与白色背景的柔和融合层：
+          NotesPage 外层 fixed inset-0 自带 transition-transform，
+          任何 filter:blur 的溢出都会被 transform 祖先裁剪，导致模糊不可见。
+          因此完全改用纯 CSS 渐变曲线实现"色彩 → 白"的物理过渡：
 
-          第一层：复刻上层渐变的彩底并向下延伸 160px，整体施加 40px 高斯模糊，
-                 让粉/蓝自然向白底消散；
-          第二层：白色 180→255 不透明渐变，仅覆盖底部 80px，用 mask
-                 在顶/底做柔化（顶部可见、底部完全透明），与白底无缝衔接。 */}
+          第一步：上方原渐变自身已经把色相从饱和逐步衰减到 92% 处的
+                 rgba(252,220,225,0.06)、100% 的 rgba(255,255,255,0)，
+                 避免渐变尾部出现肉眼可见的"色彩断崖"；
+          第二步：本层紧贴原渐变底部 80px 区间，从透明到全白线性过渡，
+                 叠加在原渐变与白底之上，让两者之间留出 80px 的物理过渡带，
+                 渐变尾部自然消散到白底，对 transform 容器免疫。 */}
       <div
         className="pointer-events-none absolute left-0 w-full"
         style={{
-          top: 0,
-          height: "calc(39% + 160px)",
+          top: "calc(28% - 80px)",
+          height: "160px",
           background:
-            "linear-gradient(180deg, rgba(91,206,250,0.30) 0%, rgba(139,204,238,0.27) 30%, rgba(245,169,184,0.30) 55%, rgba(248,198,209,0.18) 75%, rgba(255,255,255,0) 100%)",
-          filter: "blur(40px)",
-          opacity: 0.85,
-          WebkitMaskImage:
-            "linear-gradient(180deg, #000 0%, #000 50%, transparent 100%)",
-          maskImage:
-            "linear-gradient(180deg, #000 0%, #000 50%, transparent 100%)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute left-0 w-full"
-        style={{
-          bottom: 0,
-          height: "120px",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 40%, rgba(255,255,255,1) 100%)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          WebkitMaskImage:
-            "linear-gradient(180deg, transparent 0%, #000 35%, #000 100%)",
-          maskImage:
-            "linear-gradient(180deg, transparent 0%, #000 35%, #000 100%)",
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 65%, rgba(255,255,255,0.9) 90%, rgba(255,255,255,1) 100%)",
         }}
       />
 
