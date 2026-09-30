@@ -218,6 +218,23 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
         }}
       />
 
+      {/* 渐变底部与白色背景的高斯模糊过渡层：
+          复刻上层渐变并叠加白色 mask，从顶部可见到底部完全白底融合。 */}
+      <div
+        className="pointer-events-none absolute left-0 z-[5] w-full"
+        style={{
+          top: "calc(39% - 24px)",
+          height: "64px",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 60%, rgba(255,255,255,1) 100%)",
+          filter: "blur(20px)",
+          WebkitMaskImage:
+            "linear-gradient(180deg, #000 0%, #000 55%, transparent 100%)",
+          maskImage:
+            "linear-gradient(180deg, #000 0%, #000 55%, transparent 100%)",
+        }}
+      />
+
       <header className="relative z-20 flex h-16 flex-shrink-0 items-center px-4 pt-[env(safe-area-inset-top)]">
         <button
           type="button"
