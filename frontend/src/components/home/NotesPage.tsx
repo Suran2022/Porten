@@ -212,30 +212,17 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
       <div
         className="pointer-events-none absolute left-0 top-0 w-full"
         style={{
-          height: "28%",
+          height: "39%",
           background:
-            "linear-gradient(180deg, rgba(91,206,250,0.30) 0%, rgba(139,204,238,0.27) 28%, rgba(245,169,184,0.30) 52%, rgba(248,198,209,0.18) 72%, rgba(252,220,225,0.06) 92%, rgba(255,255,255,0) 100%)",
-        }}
-      />
-
-      {/* 渐变底部与白色背景的柔和融合层：
-          NotesPage 外层 fixed inset-0 自带 transition-transform，
-          任何 filter:blur 的溢出都会被 transform 祖先裁剪，导致模糊不可见。
-          因此完全改用纯 CSS 渐变曲线实现"色彩 → 白"的物理过渡：
-
-          第一步：上方原渐变自身已经把色相从饱和逐步衰减到 92% 处的
-                 rgba(252,220,225,0.06)、100% 的 rgba(255,255,255,0)，
-                 避免渐变尾部出现肉眼可见的"色彩断崖"；
-          第二步：本层紧贴原渐变底部 80px 区间，从透明到全白线性过渡，
-                 叠加在原渐变与白底之上，让两者之间留出 80px 的物理过渡带，
-                 渐变尾部自然消散到白底，对 transform 容器免疫。 */}
-      <div
-        className="pointer-events-none absolute left-0 w-full"
-        style={{
-          top: "calc(28% - 80px)",
-          height: "160px",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 65%, rgba(255,255,255,0.9) 90%, rgba(255,255,255,1) 100%)",
+            "linear-gradient(145deg, rgba(91,206,250,0.30) 0%, rgba(139,204,238,0.27) 22%, rgba(245,169,184,0.30) 52%, rgba(248,198,209,0.18) 72%, rgba(255,255,255,0) 100%)",
+          // mask-image 在垂直方向控制渐变尾部淡出，与白色背景自然融合；
+          // 不使用 filter:blur，因为 NotesPage 外层 fixed inset-0 自带
+          // transition-transform，filter:blur 的溢出会被 transform 祖先裁剪而不可见；
+          // mask 只调整元素自身的 alpha 通道，不产生几何溢出，对 transform 容器免疫。
+          WebkitMaskImage:
+            "linear-gradient(180deg, #000 0%, #000 55%, rgba(0,0,0,0.6) 78%, rgba(0,0,0,0.25) 92%, transparent 100%)",
+          maskImage:
+            "linear-gradient(180deg, #000 0%, #000 55%, rgba(0,0,0,0.6) 78%, rgba(0,0,0,0.25) 92%, transparent 100%)",
         }}
       />
 
