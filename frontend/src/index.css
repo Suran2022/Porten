@@ -8,6 +8,17 @@ body {
   background: #ffffff;
 }
 
+/* 禁用输入框聚焦时页面自动放大（iOS Safari 忽略 user-scalable=no，
+   聚焦字号小于 16px 的输入控件会强制缩放页面；保证触屏设备输入控件
+   字号不小于 16px 即可禁用该行为，桌面端不受影响） */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 #root {
   position: fixed;
   inset: 0;
