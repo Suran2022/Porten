@@ -114,6 +114,16 @@ function ReportIcon({ className }: { className?: string }) {
   );
 }
 
+/** 顶部栏举报图标（盾形 + 对勾） */
+function ReportShieldIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 1024 1024" fill="currentColor" aria-hidden>
+      <path d="M793.6 546.3552V310.6304a76.8 76.8 0 0 0-56.9856-74.24l-178.4832-47.616a179.2 179.2 0 0 0-92.2624 0l-178.4832 47.616A76.8 76.8 0 0 0 230.4 310.6304v237.1072c0 15.872 4.864 30.976 13.9264 43.2128 26.112 35.072 75.8272 99.1744 129.3824 154.2656 26.7776 27.5968 53.9136 52.224 79.0016 69.8368 25.9584 18.2272 45.9776 26.1632 59.2896 26.1632 10.6496 0 28.9792-7.3216 54.6816-25.8048 24.5248-17.5616 51.6096-42.24 78.6944-69.7856 54.016-55.04 105.6768-119.0912 133.1712-154.4704 9.7792-12.5952 15.0528-28.3136 15.0528-44.8z m51.2 0c0 27.3408-8.7552 54.272-25.856 76.288-27.904 35.84-80.9472 101.7344-137.1136 158.8736-28.0064 28.5184-57.344 55.5008-85.248 75.52-26.624 19.1488-56.576 35.3792-84.5824 35.3792-29.7984 0-60.7744-15.872-88.6784-35.3792-28.8256-20.224-58.4704-47.4624-86.3744-76.1856-55.808-57.4976-107.1104-123.648-133.632-159.3344a123.2896 123.2896 0 0 1-24.1152-73.728V310.5792A128 128 0 0 1 274.176 186.88l178.4832-47.5648a230.4 230.4 0 0 1 118.6816 0l178.4832 47.5648A128 128 0 0 1 844.8 310.6304v235.7248z" />
+      <path d="M647.0656 388.352a25.6 25.6 0 0 1 37.0688 35.328l-158.208 166.5024a76.8 76.8 0 0 1-110.2336 1.1264l-75.4688-76.288a25.6 25.6 0 0 1 36.352-35.9936l75.52 76.2368a25.6 25.6 0 0 0 36.7616-0.3584l158.208-166.5536z" />
+    </svg>
+  );
+}
+
 /** 删除图标（仅自己发布的交流显示，红色） */
 function DeleteIcon({ className }: { className?: string }) {
   return (
@@ -576,6 +586,11 @@ export function SharePostDetailPage({
     useToastStore.getState().show("已提交举报，感谢反馈", "success", "center");
   }, []);
 
+  /** 举报当前帖子（顶部栏入口） */
+  const handleReportPost = useCallback(() => {
+    useToastStore.getState().show("已提交举报，感谢反馈", "success", "center");
+  }, []);
+
   const handleDeleteComment = useCallback((id: string) => {
     setComments((prev) => prev.filter((c) => c.id !== id));
     useToastStore.getState().show("删除成功", "success", "center");
@@ -650,7 +665,7 @@ export function SharePostDetailPage({
       style={{ willChange: "transform", touchAction: "pan-y" }}
       className="fixed inset-0 z-[80] bg-white flex flex-col"
     >
-      {/* 顶部栏：左返回、右分享（自己发布的文章额外显示编辑），无分割线 */}
+      {/* 顶部栏：左返回；右侧依次为举报、分享（自己发布的文章额外显示编辑），无分割线 */}
       <header className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white">
         <button
           type="button"
@@ -661,6 +676,15 @@ export function SharePostDetailPage({
           <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
         </button>
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="举报"
+            onClick={handleReportPost}
+            className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors text-gray-900"
+          >
+            {/* 盾形图形在 1024 viewBox 内留白较大，放大一档使视觉尺寸与相邻 w-5 图标一致 */}
+            <ReportShieldIcon className="w-6 h-6" />
+          </button>
           {post?.isOwn ? (
             <button
               type="button"

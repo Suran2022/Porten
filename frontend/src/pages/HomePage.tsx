@@ -11,6 +11,7 @@ import { KnowledgeView } from "@/components/knowledge/KnowledgeView";
 import { SharePostDetailPage } from "@/components/knowledge/SharePostDetailPage";
 import { LearnCategoryMenu } from "@/components/knowledge/LearnCategoryMenu";
 import { ProfilePage } from "@/components/profile/ProfilePage";
+import { SystemMessagesPage } from "@/components/home/SystemMessagesPage";
 import { ComradeProfilePage } from "@/components/profile/ComradeProfilePage";
 import { SettingsPage } from "@/components/profile/SettingsPage";
 import { PortenSecurityPage } from "@/components/profile/PortenSecurityPage";
@@ -77,6 +78,7 @@ function HomePageMobile() {
   const [knowledgeMenuFixed, setKnowledgeMenuFixed] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [systemMessagesVisible, setSystemMessagesVisible] = useState(false);
   const [securityVisible, setSecurityVisible] = useState(false);
   const [appBarVisible, setAppBarVisible] = useState(false);
   const [showMusic, setShowMusic] = useState<boolean>(() => loadShowMusic());
@@ -397,6 +399,7 @@ function HomePageMobile() {
         visible={profileVisible}
         onClose={() => setProfileVisible(false)}
         onSettingsClick={() => setSettingsVisible(true)}
+        onSystemMessagesClick={() => setSystemMessagesVisible(true)}
       />
 
       <SettingsPage
@@ -404,6 +407,11 @@ function HomePageMobile() {
         onClose={() => setSettingsVisible(false)}
         onPortenSecurityClick={() => setSecurityVisible(true)}
         onAppBarClick={() => setAppBarVisible(true)}
+      />
+
+      <SystemMessagesPage
+        visible={systemMessagesVisible}
+        onClose={() => setSystemMessagesVisible(false)}
       />
 
       <PortenSecurityPage

@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { SystemToast, ToastType } from "@/components/SystemToast";
 
+/** 当前 Web 端版本号（版本更新选项展示用） */
+const APP_VERSION = "Web-v 0.2.2";
+
 interface SettingsPageProps {
   visible: boolean;
   onClose: () => void;
@@ -33,6 +36,14 @@ export function SettingsPage({
 
   const hideToast = () => {
     setToastVisible(false);
+  };
+
+  /** 检查版本更新：当前恒为最新版本，通用提示告知用户 */
+  const handleCheckUpdate = () => {
+    showToast("success", "已是最新版本");
+    setTimeout(() => {
+      hideToast();
+    }, 2000);
   };
 
   const handleLogout = async () => {
@@ -116,6 +127,42 @@ export function SettingsPage({
             strokeWidth={1.5}
           />
         </button>
+
+        {/* 关于 / 版本更新：仅移动端形态显示（closeMode 为 PC 弹窗形态，桌面端布局不动） */}
+        {!closeMode ? (
+          <>
+            {/* 关于 Porten：关于页面暂不实现，占位入口 */}
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-4 py-4 bg-white active:bg-gray-50/50 transition-colors"
+            >
+              <span className="text-base text-gray-900">关于 Porten</span>
+              <ChevronRight
+                className="w-4 h-4 text-gray-400"
+                strokeWidth={1.5}
+              />
+            </button>
+            {/* 问题反馈：反馈页面暂不实现，占位入口 */}
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-4 py-4 bg-white active:bg-gray-50/50 transition-colors"
+            >
+              <span className="text-base text-gray-900">问题反馈</span>
+              <ChevronRight
+                className="w-4 h-4 text-gray-400"
+                strokeWidth={1.5}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={handleCheckUpdate}
+              className="w-full flex items-center justify-between px-4 py-4 bg-white active:bg-gray-50/50 transition-colors"
+            >
+              <span className="text-base text-gray-900">版本更新</span>
+              <span className="text-sm text-gray-400">{APP_VERSION}</span>
+            </button>
+          </>
+        ) : null}
       </div>
 
       {/* Logout button */}

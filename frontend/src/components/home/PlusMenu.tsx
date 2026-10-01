@@ -1,10 +1,27 @@
 import { useEffect, useState, useRef } from "react";
-import { UserPlus, Users, StickyNote, Heart } from "lucide-react";
+import {
+  UserPlus,
+  Users,
+  CalendarCheck,
+  Map,
+  CalendarDays,
+  Wallet,
+  Briefcase,
+  ScanLine,
+  StickyNote,
+  Heart,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
   { key: "add", label: "添加同胞/营地", icon: UserPlus },
   { key: "create", label: "创建营地", icon: Users },
+  { key: "agreement", label: "创建约定", icon: CalendarCheck },
+  { key: "journey", label: "创建旅程", icon: Map },
+  { key: "schedule", label: "我的日程", icon: CalendarDays },
+  { key: "finance", label: "跨儿财务", icon: Wallet },
+  { key: "workplace", label: "跨儿职场", icon: Briefcase },
+  { key: "scan", label: "扫一扫", icon: ScanLine },
   { key: "note", label: "记笔记", icon: StickyNote },
   { key: "mood", label: "情绪日记", icon: Heart },
 ];
@@ -14,11 +31,14 @@ interface PlusMenuProps {
   onClose: () => void;
   onAddFriend?: () => void;
   onCreateGroup?: () => void;
+  onScan?: () => void;
   onNote?: () => void;
   onMoodDiary?: () => void;
+  /** 暂未实现页面的功能项统一回调（携带菜单项标题） */
+  onPlaceholder?: (label: string) => void;
 }
 
-export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onNote, onMoodDiary }: PlusMenuProps) {
+export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onScan, onNote, onMoodDiary, onPlaceholder }: PlusMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,11 +77,16 @@ export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onNote, on
         onClick={onClose}
       />
 
-      {/* Menu popup */}
+      {/* Menu popup
+          展开：ease-out 快速弹出；收起：ease-in 先慢后快，
+          配合 transform-origin(top right) 呈现逐渐缩回加号位置的反向动画 */}
       <div
         className={cn(
           "absolute top-full right-0 mt-2 w-48 bg-black rounded-2xl py-2 pointer-events-auto plus-menu-origin z-[80]",
-          "transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          "transition-all duration-250",
+          isEntering
+            ? "ease-[cubic-bezier(0.16,1,0.3,1)]"
+            : "ease-[cubic-bezier(0.55,0,0.85,0.36)]"
         )}
         style={{
           transform: isEntering ? "scale(1)" : "scale(0)",
@@ -91,10 +116,15 @@ export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onNote, on
                       onAddFriend?.();
                     } else if (item.key === "create") {
                       onCreateGroup?.();
+                    } else if (item.key === "scan") {
+                      onScan?.();
                     } else if (item.key === "note") {
                       onNote?.();
                     } else if (item.key === "mood") {
                       onMoodDiary?.();
+                    } else {
+                      // 暂未实现页面的功能项统一走占位提示
+                      onPlaceholder?.(item.label);
                     }
                     onClose();
                   }}

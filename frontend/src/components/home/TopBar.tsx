@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Mail, Users, Plus } from "lucide-react";
+import { Users, Plus } from "lucide-react";
 import { currentUser } from "@/data/mock";
 import { useAuthStore } from "@/store/authStore";
 import { useContactStore } from "@/store/contactStore";
-import { useSystemMessageStore } from "@/store/systemMessageStore";
+import { useToastStore } from "@/store/toastStore";
 import { useChatStore } from "@/store/chatStore";
 import { ChatItem } from "@/types/chat";
 import { getMoodOption } from "@/types/emotionDiary";
@@ -13,7 +13,6 @@ import { AddFriendPage } from "./AddFriendPage";
 import { ContactsPage } from "./ContactsPage";
 import { CreateGroupPage } from "./CreateGroupPage";
 import { GroupProfilePage } from "./GroupProfilePage";
-import { SystemMessagesPage } from "./SystemMessagesPage";
 import { EmotionDiaryPage } from "./EmotionDiaryPage";
 import { NotesPage } from "./NotesPage";
 
@@ -40,7 +39,6 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
   const [createGroupVisible, setCreateGroupVisible] = useState(false);
   const [groupProfileVisible, setGroupProfileVisible] = useState(false);
   const [groupProfileType, setGroupProfileType] = useState("");
-  const [systemMessagesVisible, setSystemMessagesVisible] = useState(false);
   const [notesVisible, setNotesVisible] = useState(false);
   const [emotionDiaryVisible, setEmotionDiaryVisible] = useState(false);
   const loadConversations = useChatStore((state) => state.loadConversations);
@@ -48,14 +46,6 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
   const badge = useContactStore((state) => state.badge);
   const startPolling = useContactStore((state) => state.startPolling);
   const stopPolling = useContactStore((state) => state.stopPolling);
-  const systemUnreadCount = useSystemMessageStore((state) => state.unreadCount);
-  const loadSystemUnreadCount = useSystemMessageStore(
-    (state) => state.loadUnreadCount
-  );
-
-  useEffect(() => {
-    loadSystemUnreadCount();
-  }, [loadSystemUnreadCount]);
 
   useEffect(() => {
     onFullPageOpenChange?.(
@@ -63,7 +53,6 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
         contactsVisible ||
         createGroupVisible ||
         groupProfileVisible ||
-        systemMessagesVisible ||
         notesVisible ||
         emotionDiaryVisible
     );
@@ -72,7 +61,6 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
     contactsVisible,
     createGroupVisible,
     groupProfileVisible,
-    systemMessagesVisible,
     notesVisible,
     emotionDiaryVisible,
     onFullPageOpenChange,
@@ -91,50 +79,59 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
   const mood = moodOption
     ? `${moodOption.emoji} ${moodOption.label}`
     : currentUser.mood;
+  const latestDiary = user?.latestDiary ?? null;
   const badgeCount = badge.friend_requests + badge.group_requests;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-white w-full">
       <div className="max-w-md mx-auto h-16 px-4 flex items-center justify-between relative">
-        {/* Left: avatar, nickname, mood */}
+        {/* Left: avatar, nickname, mood, latest diary
+            （items-end：文本列底与头像底对齐，日记行底部即成为右侧图标的对齐基准线） */}
         <button
           type="button"
           onClick={onProfileClick}
-          className="flex items-center gap-3 text-left"
+          className="flex items-end gap-3 text-left flex-1 min-w-0"
         >
           <img
             src={avatar}
             alt={nickname}
-            className="w-10 h-10 rounded-full object-cover bg-gray-100"
+            className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0"
           />
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1 min-w-0">
             <span className="text-base font-semibold text-gray-900 leading-tight">
               {nickname}
             </span>
-            <span className="text-xs text-gray-500 leading-tight mt-0.5">
-              {mood}
-            </span>
+            <div className="flex items-center mt-0.5 min-w-0">
+              <span className="text-xs text-gray-500 leading-tight flex-shrink-0">
+                {mood}
+              </span>
+              {latestDiary ? (
+                <>
+                  <span
+                    aria-hidden
+                    className="mx-1.5 text-xs text-gray-300 leading-tight flex-shrink-0 select-none"
+                  >
+                    ｜
+                  </span>
+                  <span className="text-xs text-gray-500 leading-tight truncate">
+                    {latestDiary}
+                  </span>
+                </>
+              ) : null}
+            </div>
           </div>
         </button>
 
-        {/* Right: private messages, contacts, plus menu */}
-        <div className="flex items-center gap-1 relative">
-          <button
-            type="button"
-            onClick={() => setSystemMessagesVisible(true)}
-            className="relative w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100/50 transition-colors"
-          >
-            <Mail className="w-5 h-5" strokeWidth={1.8} />
-            {systemUnreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
-            )}
-          </button>
+        {/* Right: contacts, plus menu
+            （-mr-1.5：Plus 图形右缘与搜索框右缘对齐；ml-2 保证与日记文本间距 ≥ 8px） */}
+        <div className="flex items-center gap-1 relative ml-2 -mr-1.5 flex-shrink-0">
           <button
             type="button"
             onClick={() => setContactsVisible(true)}
             className="relative w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100/50 transition-colors"
           >
-            <Users className="w-5 h-5" strokeWidth={1.8} />
+            {/* 下移抵消按钮内居中空隙（(40-24)/2=8px），使图形底部与日记行底线对齐 */}
+            <Users className="w-6 h-6 translate-y-2" strokeWidth={1.8} />
             <Badge count={badgeCount} />
           </button>
           <button
@@ -142,7 +139,8 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
             onClick={() => setPlusOpen((prev) => !prev)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100/50 transition-colors"
           >
-            <Plus className="w-5 h-5" strokeWidth={1.8} />
+            {/* 下移抵消按钮内居中空隙（(40-28)/2=6px），使图形底部与日记行底线对齐 */}
+            <Plus className="w-7 h-7 translate-y-1.5" strokeWidth={1.8} />
           </button>
 
           <PlusMenu
@@ -150,6 +148,16 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
             onClose={() => setPlusOpen(false)}
             onAddFriend={() => setAddFriendVisible(true)}
             onCreateGroup={() => setCreateGroupVisible(true)}
+            onScan={() =>
+              useToastStore
+                .getState()
+                .show("扫一扫功能即将上线，敬请期待", "info", "center")
+            }
+            onPlaceholder={(label) =>
+              useToastStore
+                .getState()
+                .show(`${label}功能即将上线，敬请期待`, "info", "center")
+            }
             onNote={() => setNotesVisible(true)}
             onMoodDiary={() => setEmotionDiaryVisible(true)}
           />
@@ -206,11 +214,6 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
               memberCount,
             });
           }}
-      />
-
-      <SystemMessagesPage
-        visible={systemMessagesVisible}
-        onClose={() => setSystemMessagesVisible(false)}
       />
 
       <NotesPage

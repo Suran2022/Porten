@@ -3,7 +3,6 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -43,7 +42,6 @@ import { useChatStore } from "@/store/chatStore";
 import { useMessageStore } from "@/store/messageStore";
 
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
-import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { MediaPreview } from "./MediaPreview";
 
 const EMPTY_MESSAGES: Message[] = [];
@@ -470,7 +468,7 @@ function TextMessage({ message, isMe }: { message: Message; isMe?: boolean }) {
     ? "text-white"
     : "text-transparent bg-clip-text bg-gradient-to-r from-[#5BCEFA] to-[#F5A9B8]";
   return (
-    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+    <p className="text-[15px] font-medium leading-relaxed whitespace-pre-wrap">
       {message.content ? renderTextWithLinks(message.content, linkClass) : null}
     </p>
   );

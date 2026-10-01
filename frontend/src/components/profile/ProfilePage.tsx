@@ -14,12 +14,18 @@ interface ProfilePageProps {
   visible: boolean;
   onClose: () => void;
   onSettingsClick?: () => void;
+  onSystemMessagesClick?: () => void;
 }
 
 const defaultBackgroundUrl =
   "https://haowallpaper.com/link/common/file/previewFileImg/18601605145677184";
 
-export function ProfilePage({ visible, onClose, onSettingsClick }: ProfilePageProps) {
+export function ProfilePage({
+  visible,
+  onClose,
+  onSettingsClick,
+  onSystemMessagesClick,
+}: ProfilePageProps) {
   const { user } = useAuthStore();
   const [editVisible, setEditVisible] = useState(false);
   const { inputRef: avatarInputRef, openAvatarPicker, handleChange: handleAvatarChange } = useAvatarInput();
@@ -93,7 +99,10 @@ export function ProfilePage({ visible, onClose, onSettingsClick }: ProfilePagePr
           </div>
         )}
       </div>
-      <ProfileBottomBar onSettingsClick={onSettingsClick} />
+      <ProfileBottomBar
+        onSettingsClick={onSettingsClick}
+        onSystemMessagesClick={onSystemMessagesClick}
+      />
 
       <EditProfilePage visible={editVisible} onClose={() => setEditVisible(false)} />
     </div>
