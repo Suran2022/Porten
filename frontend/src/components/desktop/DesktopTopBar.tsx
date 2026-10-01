@@ -3,12 +3,14 @@ import {
   Heart,
   Mail,
   Plus,
-  Search,
   StickyNote,
   UserPlus,
   Users,
 } from "lucide-react";
 import { useSystemMessageStore } from "@/store/systemMessageStore";
+import { useAuthStore } from "@/store/authStore";
+import { currentUser } from "@/data/mock";
+import { getMoodOption } from "@/types/emotionDiary";
 import { DesktopNavKey } from "./DesktopSidebar";
 
 const plusItems = [
@@ -27,7 +29,7 @@ const viewTitles: Record<DesktopNavKey, string> = {
 
 interface DesktopTopBarProps {
   active: DesktopNavKey;
-  onSearchOpen: () => void;
+  onProfileOpen: () => void;
   onSystemMessagesOpen: () => void;
   onAddFriendOpen: () => void;
   onCreateGroupOpen: () => void;
@@ -123,10 +125,10 @@ function PlusDropdown({
   );
 }
 
-/** 第二、三栏合并的顶部栏：左侧为搜索/标题，右侧为加号菜单 + 系统消息。 */
+/** 全宽独立顶部栏：左侧为个人信息（头像 + 昵称/状态），右侧为加号菜单 + 系统消息。 */
 export function DesktopTopBar({
   active,
-  onSearchOpen,
+  onProfileOpen,
   onSystemMessagesOpen,
   onAddFriendOpen,
   onCreateGroupOpen,
@@ -138,6 +140,7 @@ export function DesktopTopBar({
   const loadSystemUnreadCount = useSystemMessageStore(
     (state) => state.loadUnreadCount
   );
+  const { user } = useAuthStore();
 
   useEffect(() => {
     loadSystemUnreadCount();
@@ -145,24 +148,45 @@ export function DesktopTopBar({
 
   const title = viewTitles[active];
 
+  const avatarUrl = user?.avatar || currentUser.avatar;
+  const nickname = user?.nickname || currentUser.nickname;
+  const moodOption = getMoodOption(user?.mood);
+  const mood = moodOption
+    ? `${moodOption.emoji} ${moodOption.label}`
+    : currentUser.mood;
+
   return (
     <header className="relative z-30 h-14 shrink-0 flex items-center justify-between px-4 bg-white border-b border-gray-100">
-      {/* 左侧：消息视图显示全局搜索框，其余视图显示标题 */}
+      {/* 左侧：头像与昵称/状态水平排列，昵称与状态垂直排列，点击打开个人资料 */}
       <div className="flex items-center min-w-0">
-        {active === "messages" ? (
-          <button
-            type="button"
-            onClick={onSearchOpen}
-            className="flex items-center gap-2 h-9 w-60 px-3 rounded-lg bg-gray-100/70 text-gray-400 hover:bg-gray-100 transition-colors duration-200 text-left"
-          >
-            <Search className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} />
-            <span className="text-sm truncate">搜索同胞/营地/图片…</span>
-          </button>
-        ) : title ? (
-          <h1 className="text-base font-semibold text-gray-900 truncate">
-            {title}
-          </h1>
-        ) : null}
+        <button
+          type="button"
+          onClick={onProfileOpen}
+          className="flex items-center gap-3 group min-w-0"
+        >
+          <img
+            src={avatarUrl}
+            alt={nickname}
+            className="w-10 h-10 rounded-full object-cover bg-gray-100 transition-opacity duration-200 group-hover:opacity-90"
+          />
+          <span className="flex flex-col items-start min-w-0">
+            <span className="text-sm font-medium text-gray-900 truncate leading-tight">
+              {nickname}
+            </span>
+            <span className="text-xs text-gray-400 truncate leading-tight">
+              {mood}
+            </span>
+          </span>
+        </button>
+
+        {title && (
+          <>
+            <div className="w-px h-6 bg-gray-200 mx-4 shrink-0" />
+            <h1 className="text-base font-semibold text-gray-900 truncate">
+              {title}
+            </h1>
+          </>
+        )}
       </div>
 
       {/* 右侧：加号菜单 + 系统消息 */}

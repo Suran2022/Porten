@@ -8,11 +8,8 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentUser } from "@/data/mock";
-import { useAuthStore } from "@/store/authStore";
 import { useChatStore } from "@/store/chatStore";
 import { useContactStore } from "@/store/contactStore";
-import { getMoodOption } from "@/types/emotionDiary";
 
 export type DesktopNavKey =
   | "messages"
@@ -23,7 +20,6 @@ export type DesktopNavKey =
 interface DesktopSidebarProps {
   active: DesktopNavKey;
   onNavChange: (key: DesktopNavKey) => void;
-  onProfileOpen: () => void;
   onSettingsOpen: () => void;
   onMusicOpen: () => void;
   /** 应用栏管理中是否开启"悦音乐"入口（与移动端底部菜单一致） */
@@ -41,25 +37,16 @@ const navItems: { key: DesktopNavKey | "music"; label: string; icon: typeof Mess
 export function DesktopSidebar({
   active,
   onNavChange,
-  onProfileOpen,
   onSettingsOpen,
   onMusicOpen,
   showMusic = false,
 }: DesktopSidebarProps) {
   const [bouncingKey, setBouncingKey] = useState<string | null>(null);
 
-  const { user } = useAuthStore();
   const conversations = useChatStore((state) => state.conversations);
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
   const badge = useContactStore((state) => state.badge);
   const contactBadge = badge.friend_requests + badge.group_requests;
-
-  const avatarUrl = user?.avatar || currentUser.avatar;
-  const nickname = user?.nickname || currentUser.nickname;
-  const moodOption = getMoodOption(user?.mood);
-  const mood = moodOption
-    ? `${moodOption.emoji} ${moodOption.label}`
-    : currentUser.mood;
 
   const handleNavClick = (key: DesktopNavKey | "music") => {
     setBouncingKey(key);
@@ -73,29 +60,8 @@ export function DesktopSidebar({
 
   return (
     <aside className="relative z-20 w-[84px] shrink-0 h-full bg-white flex flex-col items-center py-4">
-      {/* 个人信息卡片（PC 版：紧凑头像 + 昵称 + 心情） */}
-      <button
-        type="button"
-        onClick={onProfileOpen}
-        className="flex flex-col items-center w-full px-2 group"
-      >
-        <span className="relative block">
-          <img
-            src={avatarUrl}
-            alt={nickname}
-            className="w-11 h-11 rounded-full object-cover bg-gray-100 transition-opacity duration-200 group-hover:opacity-90"
-          />
-        </span>
-        <span className="mt-1.5 w-full text-center text-xs font-medium text-gray-900 truncate">
-          {nickname}
-        </span>
-        <span className="mt-0.5 w-full text-center text-[10px] text-gray-400 truncate">
-          {mood}
-        </span>
-      </button>
-
-      {/* 导航（对应移动端底部菜单栏，选中无背景色） */}
-      <nav className="mt-5 w-full flex-1 flex flex-col items-center gap-1.5 px-2">
+      {/* 导航（对应移动端底部菜单栏，选中无背景色；个人信息已移至顶部栏） */}
+      <nav className="pt-1 w-full flex-1 flex flex-col items-center gap-1.5 px-2">
         {navItems
           .filter((item) => item.key !== "music" || showMusic)
           .map((item) => {

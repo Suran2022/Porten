@@ -264,9 +264,7 @@ export default function HomePageDesktop() {
       return (
         <DesktopKnowledgePanel
           activeTab={knowledgeTab}
-          activeCategory={knowledgeCategory}
           onTabChange={setKnowledgeTab}
-          onCategoryChange={setKnowledgeCategory}
         />
       );
     }
@@ -274,6 +272,7 @@ export default function HomePageDesktop() {
       <DesktopMessagesColumn
         onChatOpen={handleChatOpen}
         onPartnerOpen={() => setPartnerOpen(true)}
+        onSearchOpen={() => setSearchOpen(true)}
       />
     );
   };
@@ -289,6 +288,7 @@ export default function HomePageDesktop() {
         <DesktopKnowledgeContent
           activeTab={knowledgeTab}
           activeCategory={knowledgeCategory}
+          onCategoryChange={setKnowledgeCategory}
         />
       );
     }
@@ -304,69 +304,66 @@ export default function HomePageDesktop() {
   const playableTracks = MUSIC_TRACKS.filter((t) => t.audioSrc);
 
   return (
-    <div className="fixed inset-0 bg-white flex overflow-hidden">
-      <DesktopSidebar
+    <div className="fixed inset-0 bg-white flex flex-col overflow-hidden">
+      {/* 独立顶部栏：整行，左侧个人信息，右侧加号菜单 + 系统消息 */}
+      <DesktopTopBar
         active={activeNav}
-        onNavChange={setActiveNav}
         onProfileOpen={() => setProfileOpen(true)}
-        onSettingsOpen={() => setSettingsOpen(true)}
-        onMusicOpen={() => {
-          if (!hasUserOpenedMusicRef.current) {
-            hasUserOpenedMusicRef.current = true;
-            setIsPlaying(true);
-          }
-          setMusicOpen(true);
+        onSystemMessagesOpen={() => setSystemMessagesOpen(true)}
+        onAddFriendOpen={() => setAddFriendOpen(true)}
+        onCreateGroupOpen={() => {
+          setGroupType("");
+          setGroupDialogOpen(true);
         }}
-        showMusic={showMusic}
+        onNotesOpen={() => setNotesOpen(true)}
+        onDiaryOpen={() => setDiaryOpen(true)}
       />
 
-      {/* 第二、三栏合并的顶部栏 + 下方两栏内容 */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        <DesktopTopBar
+      <div className="flex-1 min-h-0 flex">
+        <DesktopSidebar
           active={activeNav}
-          onSearchOpen={() => setSearchOpen(true)}
-          onSystemMessagesOpen={() => setSystemMessagesOpen(true)}
-          onAddFriendOpen={() => setAddFriendOpen(true)}
-          onCreateGroupOpen={() => {
-            setGroupType("");
-            setGroupDialogOpen(true);
+          onNavChange={setActiveNav}
+          onSettingsOpen={() => setSettingsOpen(true)}
+          onMusicOpen={() => {
+            if (!hasUserOpenedMusicRef.current) {
+              hasUserOpenedMusicRef.current = true;
+              setIsPlaying(true);
+            }
+            setMusicOpen(true);
           }}
-          onNotesOpen={() => setNotesOpen(true)}
-          onDiaryOpen={() => setDiaryOpen(true)}
+          showMusic={showMusic}
         />
 
-        <div className="flex-1 min-h-0 flex">
-          {/* 第二栏：消息列表 / 联系人 / 分类菜单（transform 收敛内部 fixed 页面） */}
+        {/* 第二栏：消息列表 / 联系人 / 分类菜单（transform 收敛内部 fixed 页面） */}
+        <div
+          className="relative h-full w-[320px] shrink-0 border-r border-gray-100 overflow-hidden"
+          style={{ transform: "translateZ(0)" }}
+        >
           <div
-            className="relative h-full w-[320px] shrink-0 border-r border-gray-100 overflow-hidden"
+            key={activeNav}
+            className={cn(
+              "h-full",
+              activeNav !== "contacts" && "animate-content-in"
+            )}
+          >
+            {renderColumn2()}
+          </div>
+        </div>
+
+        {/* 第三栏：聊天详情 / 内容 */}
+        <div className="flex-1 min-h-0 flex justify-center">
+          <div
+            className="relative h-full flex-1 min-w-0 overflow-hidden bg-white"
             style={{ transform: "translateZ(0)" }}
           >
             <div
-              key={activeNav}
+              key={`${activeNav}-${activeNav === "messages" ? selectedChat?.id ?? "empty" : ""}`}
               className={cn(
                 "h-full",
-                activeNav !== "contacts" && "animate-content-in"
+                activeNav !== "messages" && "animate-content-in"
               )}
             >
-              {renderColumn2()}
-            </div>
-          </div>
-
-          {/* 第三栏：聊天详情 / 内容 */}
-          <div className="flex-1 min-h-0 flex justify-center">
-            <div
-              className="relative h-full flex-1 min-w-0 overflow-hidden bg-white"
-              style={{ transform: "translateZ(0)" }}
-            >
-              <div
-                key={`${activeNav}-${activeNav === "messages" ? selectedChat?.id ?? "empty" : ""}`}
-                className={cn(
-                  "h-full",
-                  activeNav !== "messages" && "animate-content-in"
-                )}
-              >
-                {renderColumn3()}
-              </div>
+              {renderColumn3()}
             </div>
           </div>
         </div>

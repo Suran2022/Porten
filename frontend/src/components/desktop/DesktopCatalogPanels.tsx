@@ -109,49 +109,51 @@ const knowledgeItems: CatalogMenuItem[] = [
 
 export function DesktopKnowledgePanel({
   activeTab,
-  activeCategory,
   onTabChange,
-  onCategoryChange,
 }: {
   activeTab: KnowledgeTab;
-  activeCategory: LearnCategory;
   onTabChange: (tab: KnowledgeTab) => void;
-  onCategoryChange: (category: LearnCategory) => void;
 }) {
   return (
     <CatalogMenu
       items={knowledgeItems}
       active={activeTab}
       onChange={(key) => onTabChange(key as KnowledgeTab)}
-    >
-      {activeTab === "learn" && (
-        <LearnCategoryMenu
-          activeCategory={activeCategory}
-          onCategoryChange={onCategoryChange}
-          className="pb-3"
-        />
-      )}
-    </CatalogMenu>
+    />
   );
 }
 
 export function DesktopKnowledgeContent({
   activeTab,
   activeCategory,
+  onCategoryChange,
 }: {
   activeTab: KnowledgeTab;
   activeCategory: LearnCategory;
+  onCategoryChange: (category: LearnCategory) => void;
 }) {
   return (
-    <div className="h-full overflow-hidden bg-white">
-      <div className="h-full max-w-2xl mx-auto">
-        {/* 分类菜单位于第二栏，因此内容区视为"菜单已固定"，无需预留顶部空间 */}
-        <KnowledgeView
-          activeTab={activeTab}
-          activeCategory={activeCategory}
-          menuFixed
-          onMenuFixedChange={() => {}}
-        />
+    <div className="h-full overflow-hidden bg-white flex flex-col">
+      <div className="w-full max-w-2xl mx-auto flex flex-col min-h-0">
+        {/* 学习分类 Bar 位于第三栏顶部，与内容列左缘对齐 */}
+        {activeTab === "learn" && (
+          <div className="shrink-0 pt-4 pb-3">
+            <LearnCategoryMenu
+              activeCategory={activeCategory}
+              onCategoryChange={onCategoryChange}
+              align="left"
+            />
+          </div>
+        )}
+        <div className="flex-1 min-h-0">
+          {/* 分类菜单已移至第三栏顶部，内容区无需预留顶部空间 */}
+          <KnowledgeView
+            activeTab={activeTab}
+            activeCategory={activeCategory}
+            menuFixed
+            onMenuFixedChange={() => {}}
+          />
+        </div>
       </div>
     </div>
   );
