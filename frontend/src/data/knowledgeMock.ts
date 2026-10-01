@@ -8,9 +8,16 @@ const avatarUrl = (id: string) => `https://i.pravatar.cc/150?u=${id}`;
 const videoSampleUrl =
   "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
+
+const secondsAgo = (s: number) => new Date(Date.now() - s * 1000).toISOString();
+const minutesAgo = (m: number) => secondsAgo(m * 60);
+const hoursAgo = (h: number) => minutesAgo(h * 60);
+const daysAgo = (d: number) => hoursAgo(d * 24);
+
 export const sharePosts: SharePost[] = [
   {
     id: "s1",
+    isOwn: true,
     author: { id: "u1", nickname: "小晴的日记", avatar: avatarUrl("u1") },
     content:
       "今天终于鼓起勇气，向最好的几个朋友坦白了自己的身份。没想到她们第一时间抱住了我，说「你就是你，我们爱的就是那个你」。那一刻哭得停不下来，原来被接纳的感觉这么好。希望还在犹豫的姐妹们也能早日遇到愿意理解你们的人。",
@@ -22,6 +29,13 @@ export const sharePosts: SharePost[] = [
     comments: 38,
     likes: 156,
     publishedAt: "2小时前",
+    publishedDate: "2026-10-01",
+    commentList: [
+      { id: "c1-1", author: "阿宁", avatar: avatarUrl("u2"), content: "替你开心！有这样的朋友真的太幸运了。", publishedAt: secondsAgo(30), lit: true },
+      { id: "c1-2", author: "我", avatar: avatarUrl("me"), content: "谢谢阿宁，也谢谢每一个抱抱我的你。", publishedAt: minutesAgo(2), isOwn: true },
+      { id: "c1-3", author: "考拉", avatar: avatarUrl("u3"), content: "标记一下，等我的好消息。", publishedAt: hoursAgo(26) },
+      { id: "c1-4", author: "匿名用户", content: "看到这篇突然就有勇气了。", publishedAt: daysAgo(10) },
+    ],
   },
   {
     id: "s2",
@@ -36,6 +50,11 @@ export const sharePosts: SharePost[] = [
     comments: 24,
     likes: 203,
     publishedAt: "5小时前",
+    publishedDate: "2026-10-01",
+    commentList: [
+      { id: "c2-1", author: "小雨", avatar: avatarUrl("u4"), content: "一年真的会有很大变化，恭喜。", publishedAt: minutesAgo(5) },
+      { id: "c2-2", author: "Luna", avatar: avatarUrl("u5"), content: "祝越来越顺利。", publishedAt: daysAgo(3) },
+    ],
   },
   {
     id: "s3",
@@ -50,6 +69,11 @@ export const sharePosts: SharePost[] = [
     comments: 67,
     likes: 412,
     publishedAt: "昨天",
+    publishedDate: "2026-09-30",
+    commentList: [
+      { id: "c3-1", author: "考拉", avatar: avatarUrl("u3"), content: "我们公司上个月刚改的无性别卫生间。", publishedAt: minutesAgo(45) },
+      { id: "c3-2", author: "阿宁", avatar: avatarUrl("u2"), content: "抱抱，会越来越好的。", publishedAt: daysAgo(2) },
+    ],
   },
   {
     id: "s4",
@@ -64,6 +88,11 @@ export const sharePosts: SharePost[] = [
     comments: 45,
     likes: 289,
     publishedAt: "昨天",
+    publishedDate: "2026-09-30",
+    commentList: [
+      { id: "c4-1", author: "小雨", avatar: avatarUrl("u4"), content: "梦是心里话，慢慢来。", publishedAt: hoursAgo(1) },
+      { id: "c4-2", author: "阿禾", avatar: avatarUrl("u6"), content: "爱的形式有很多种，妈妈会学会的。", publishedAt: daysAgo(4) },
+    ],
   },
   {
     id: "s5",
@@ -78,6 +107,11 @@ export const sharePosts: SharePost[] = [
     comments: 89,
     likes: 567,
     publishedAt: "2天前",
+    publishedDate: "2026-09-29",
+    commentList: [
+      { id: "c5-1", author: "Luna", avatar: avatarUrl("u5"), content: "已收藏，谢谢你整理。", publishedAt: minutesAgo(20) },
+      { id: "c5-2", author: "我", avatar: avatarUrl("me"), content: "补充一家：可以挂内分泌科初诊。", publishedAt: daysAgo(6), isOwn: true, lit: true },
+    ],
   },
   {
     id: "s6",
@@ -92,6 +126,11 @@ export const sharePosts: SharePost[] = [
     comments: 52,
     likes: 334,
     publishedAt: "2天前",
+    publishedDate: "2026-09-29",
+    commentList: [
+      { id: "c6-1", author: "Summer", avatar: avatarUrl("u7"), content: "为你鼓掌！第一次出门真的很难。", publishedAt: hoursAgo(8) },
+      { id: "c6-2", author: "匿名用户", content: "下次拍张照片留念吧。", publishedAt: daysAgo(5) },
+    ],
   },
   {
     id: "s7",
@@ -106,6 +145,11 @@ export const sharePosts: SharePost[] = [
     comments: 112,
     likes: 698,
     publishedAt: "3天前",
+    publishedDate: "2026-09-28",
+    commentList: [
+      { id: "c7-1", author: "阿宁", avatar: avatarUrl("u2"), content: "每次解释都很累，但我们没有错。", publishedAt: hoursAgo(3) },
+      { id: "c7-2", author: "辰辰", avatar: avatarUrl("u9"), content: "说得太对了。", publishedAt: daysAgo(8) },
+    ],
   },
   {
     id: "u8",
@@ -120,6 +164,11 @@ export const sharePosts: SharePost[] = [
     comments: 31,
     likes: 178,
     publishedAt: "3天前",
+    publishedDate: "2026-09-28",
+    commentList: [
+      { id: "c8-1", author: "阿禾", avatar: avatarUrl("u6"), content: "我也在和咨询师聊，一起加油。", publishedAt: minutesAgo(50) },
+      { id: "c8-2", author: "我", avatar: avatarUrl("me"), content: "谢谢，一起。", publishedAt: daysAgo(7), isOwn: true },
+    ],
   },
   {
     id: "s9",
@@ -134,6 +183,11 @@ export const sharePosts: SharePost[] = [
     comments: 78,
     likes: 445,
     publishedAt: "4天前",
+    publishedDate: "2026-09-27",
+    commentList: [
+      { id: "c9-1", author: "辰辰", avatar: avatarUrl("u9"), content: "恭喜恭喜！今年我也要去办。", publishedAt: hoursAgo(12) },
+      { id: "c9-2", author: "Luna", avatar: avatarUrl("u5"), content: "太不容易了，撒花。", publishedAt: daysAgo(9) },
+    ],
   },
 ];
 

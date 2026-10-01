@@ -1,4 +1,4 @@
-import { KnowledgeTab, LearnCategory } from "@/types/knowledge";
+import { KnowledgeTab, LearnCategory, SharePost } from "@/types/knowledge";
 import { ShareView } from "./ShareView";
 import { LearnView } from "./LearnView";
 
@@ -7,6 +7,8 @@ interface KnowledgeViewProps {
   activeCategory: LearnCategory;
   menuFixed: boolean;
   onMenuFixedChange: (fixed: boolean) => void;
+  /** 点击分享列表卡片打开详情页 */
+  onSharePostOpen?: (post: SharePost) => void;
 }
 
 export function KnowledgeView({
@@ -14,6 +16,7 @@ export function KnowledgeView({
   activeCategory,
   menuFixed,
   onMenuFixedChange,
+  onSharePostOpen,
 }: KnowledgeViewProps) {
   return (
     <div className="h-full flex flex-col bg-white">
@@ -25,7 +28,7 @@ export function KnowledgeView({
           }}
         >
           <div className="h-full w-1/2">
-            <ShareView />
+            <ShareView onPostOpen={onSharePostOpen} />
           </div>
           <div className="h-full w-1/2">
             <LearnView

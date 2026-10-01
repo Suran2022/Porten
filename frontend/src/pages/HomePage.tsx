@@ -8,6 +8,7 @@ import { ResourceTopBar } from "@/components/resource/ResourceTopBar";
 import { ResourceView } from "@/components/resource/ResourceView";
 import { KnowledgeTopBar } from "@/components/knowledge/KnowledgeTopBar";
 import { KnowledgeView } from "@/components/knowledge/KnowledgeView";
+import { SharePostDetailPage } from "@/components/knowledge/SharePostDetailPage";
 import { LearnCategoryMenu } from "@/components/knowledge/LearnCategoryMenu";
 import { ProfilePage } from "@/components/profile/ProfilePage";
 import { ComradeProfilePage } from "@/components/profile/ComradeProfilePage";
@@ -21,7 +22,7 @@ import { MusicView } from "@/components/music/MusicView";
 import { FloatingMusicWidget } from "@/components/music/FloatingMusicWidget";
 import { MUSIC_TRACKS } from "@/data/music";
 import { ResourceTab } from "@/types/resource";
-import { KnowledgeTab, LearnCategory } from "@/types/knowledge";
+import { KnowledgeTab, LearnCategory, SharePost } from "@/types/knowledge";
 import { ChatItem, ChatType } from "@/types/chat";
 import { cn } from "@/lib/utils";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
@@ -105,6 +106,17 @@ function HomePageMobile() {
     null
   );
   const [assistantDetailName, setAssistantDetailName] = useState<string>("");
+
+  // 分享详情页
+  const [shareDetailVisible, setShareDetailVisible] = useState(false);
+  const [selectedSharePost, setSelectedSharePost] = useState<SharePost | null>(
+    null
+  );
+
+  const handleSharePostOpen = (post: SharePost) => {
+    setSelectedSharePost(post);
+    setShareDetailVisible(true);
+  };
 
   const handleAssistantClick = (assistantId: string, assistantName: string) => {
     setAssistantDetailId(assistantId);
@@ -343,13 +355,14 @@ function HomePageMobile() {
                 activeCategory={knowledgeCategory}
                 menuFixed={knowledgeMenuFixed}
                 onMenuFixedChange={setKnowledgeMenuFixed}
+                onSharePostOpen={handleSharePostOpen}
               />
             </div>
           </div>
         </div>
       </main>
 
-      {!profileVisible && !settingsVisible && !securityVisible && !appBarVisible && !partnerVisible && !assistantDetailVisible && !homeFullPageOpen && !musicVisible && !comradeProfileVisible && (
+      {!profileVisible && !settingsVisible && !securityVisible && !appBarVisible && !partnerVisible && !assistantDetailVisible && !homeFullPageOpen && !musicVisible && !comradeProfileVisible && !shareDetailVisible && (
         <BottomNav
           activeIndex={activeView}
           onChange={setActiveView}
@@ -424,6 +437,12 @@ function HomePageMobile() {
       <SearchPage
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
+      />
+
+      <SharePostDetailPage
+        visible={shareDetailVisible}
+        post={selectedSharePost}
+        onClose={() => setShareDetailVisible(false)}
       />
 
       <ChatPage

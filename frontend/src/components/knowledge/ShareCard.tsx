@@ -4,6 +4,7 @@ import { Eye, MessageCircle, Heart, Share2 } from "lucide-react";
 
 interface ShareCardProps {
   post: SharePost;
+  onOpen?: (post: SharePost) => void;
 }
 
 function formatCount(count: number): string {
@@ -21,14 +22,17 @@ function truncateText(text: string, maxLength: number): string {
   return `${text.slice(0, maxLength)}…`;
 }
 
-export function ShareCard({ post }: ShareCardProps) {
+export function ShareCard({ post, onOpen }: ShareCardProps) {
   const { author, content, latestComment, views, comments, likes, publishedAt } = post;
   const [imgError, setImgError] = useState(false);
 
   const avatarFallback = author.nickname.slice(0, 1);
 
   return (
-    <article className="px-4 py-3 bg-white active:bg-gray-50/50 transition-colors cursor-pointer">
+    <article
+      className="px-4 py-3 bg-white active:bg-gray-50/50 transition-colors cursor-pointer"
+      onClick={() => onOpen?.(post)}
+    >
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-[#5BCEFA] to-[#F5A9B8] flex items-center justify-center overflow-hidden">

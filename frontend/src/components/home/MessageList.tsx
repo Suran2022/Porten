@@ -4,6 +4,13 @@ import { useChatStore } from "@/store/chatStore";
 import { formatMessageTime } from "@/lib/utils";
 import { MessageCard } from "./MessageCard";
 import { PortenPartnerCard } from "./PortenPartnerCard";
+import SwipeRow, { SwipeAction } from "@/components/common/SwipeRow";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  EyeOffIcon,
+  FavouriteIcon,
+  PinIcon,
+} from "@hugeicons/core-free-icons";
 
 interface MessageListProps {
   onChatClick?: (item: ChatItem) => void;
@@ -24,13 +31,45 @@ function parseSortTime(timeStr: string): number {
   return isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+const ACTION_ICON_PROPS = { size: 20, strokeWidth: 2 } as const;
+
+const SWIPE_ACTIONS: SwipeAction[] = [
+  {
+    id: "hide",
+    label: "隐藏",
+    icon: <HugeiconsIcon icon={EyeOffIcon} {...ACTION_ICON_PROPS} />,
+    dismiss: true,
+  },
+  {
+    id: "important",
+    label: "重要",
+    icon: <HugeiconsIcon icon={FavouriteIcon} {...ACTION_ICON_PROPS} />,
+    color: "#f97316",
+  },
+  {
+    id: "pin",
+    label: "置顶",
+    icon: <HugeiconsIcon icon={PinIcon} {...ACTION_ICON_PROPS} />,
+    color: "#6b7280",
+  },
+];
+
 export function MessageList({ onChatClick, onPartnerClick }: MessageListProps) {
   const conversations = useChatStore((state) => state.conversations);
   const loadConversations = useChatStore((state) => state.loadConversations);
+  const pinnedIds = useChatStore((state) => state.pinnedIds);
+  const importantIds = useChatStore((state) => state.importantIds);
+  const hiddenIds = useChatStore((state) => state.hiddenIds);
+  const togglePin = useChatStore((state) => state.togglePin);
+  const toggleImportant = useChatStore((state) => state.toggleImportant);
+  const hideConversation = useChatStore((state) => state.hideConversation);
 
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
+
+  // 订阅 importantIds 以保证 setState 触发重渲染（暂时不用于视觉，仅用于响应状态变化）
+  void importantIds;
 
   const items = useMemo(() => {
     const chatItems: ChatItem[] = conversations.map((c) => ({
@@ -59,10 +98,32 @@ export function MessageList({ onChatClick, onPartnerClick }: MessageListProps) {
       unreadCount: 0,
     };
 
-    return [...chatItems, partnerItem].sort(
-      (a, b) => parseSortTime(b.timestamp) - parseSortTime(a.timestamp)
-    );
-  }, [conversations]);
+    const numericId = (item: ChatItem) =>
+      Number(item.id.split("_")[1]);
+
+    return [...chatItems, partnerItem]
+      .filter((item) => {
+        if (item.type === "friend" || item.type === "group") {
+          const id = numericId(item);
+          if (!Number.isNaN(id) && hiddenIds.includes(id)) {
+            return false;
+          }
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const aPinned =
+          a.type === "friend" || a.type === "group"
+            ? pinnedIds.includes(numericId(a))
+            : false;
+        const bPinned =
+          b.type === "friend" || b.type === "group"
+            ? pinnedIds.includes(numericId(b))
+            : false;
+        if (aPinned !== bPinned) return aPinned ? -1 : 1;
+        return parseSortTime(b.timestamp) - parseSortTime(a.timestamp);
+      });
+  }, [conversations, pinnedIds, hiddenIds]);
 
   if (items.length === 0) {
     return <EmptyState />;
@@ -70,16 +131,49 @@ export function MessageList({ onChatClick, onPartnerClick }: MessageListProps) {
 
   return (
     <div className="pb-2">
-      {items.map((item) =>
-        item.id === "porten_partner" ? (
-          <PortenPartnerCard
+      {items.map((item) => {
+        if (item.id === "porten_partner") {
+          return (
+            <PortenPartnerCard
+              key={item.id}
+              onClick={onPartnerClick}
+            />
+          );
+        }
+
+        const numericId = Number(item.id.split("_")[1]);
+
+        return (
+          <SwipeRow
             key={item.id}
-            onClick={onPartnerClick}
-          />
-        ) : (
-          <MessageCard key={item.id} item={item} onClick={onChatClick} />
-        )
-      )}
+            actions={SWIPE_ACTIONS}
+            actionColor="#e5484d"
+            drawerColor="#3f3f46"
+            rowColor="#ffffff"
+            textColor="#f5f5f5"
+            height={72}
+            radius={0}
+            actionWidth={80}
+            direction="left"
+            snapBounce={0.2}
+            resistance={0.55}
+            collapseMs={200}
+            commitAt={0.6}
+            fullSwipe
+            haptic
+            label={item.name}
+            onAction={(action) => {
+              if (action.id === "pin") togglePin(numericId);
+              else if (action.id === "important") toggleImportant(numericId);
+            }}
+            onCommit={(action) => {
+              if (action.id === "hide") hideConversation(numericId);
+            }}
+          >
+            <MessageCard item={item} onClick={onChatClick} />
+          </SwipeRow>
+        );
+      })}
     </div>
   );
 }

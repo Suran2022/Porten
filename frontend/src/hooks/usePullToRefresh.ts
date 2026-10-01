@@ -43,6 +43,17 @@ const INDICATOR_SNAP_EASING =
   "transform 320ms cubic-bezier(0.32, 0.72, 0, 1), opacity 320ms ease";
 const RESET_MS = 340;
 
+/** 下拉启动门槛（px）：低于此位移不认为是下拉，防轻微抖动误触发 */
+const PULL_START_DY = 24;
+/** 方向系数：纵向位移需大于横向位移 × 该系数才认定为下拉（与横滑卡片手势互斥） */
+const PULL_DIRECTION_RATIO = 1.5;
+
+/** 手势是否已被滑动卡片接管：卡片处于横滑拖拽中（data-dragging）与下拉刷新互斥；
+ *  仅按拖拽状态互斥而非按触点位置过滤——下拉手势起点同样落在卡片上，不能一刀切 */
+const inDraggingSwipeRow = (target: EventTarget | null) =>
+  target instanceof Element &&
+  target.closest(".swipe-row[data-dragging]") !== null;
+
 export function usePullToRefresh(options: UsePullToRefreshOptions) {
   const {
     onRefresh,
@@ -239,7 +250,9 @@ export function usePullToRefresh(options: UsePullToRefreshOptions) {
       if (phaseRef.current !== "pulling") {
         // 未进入下拉态：仅在列表位于顶部且为纯垂直向下拖时启动
         if (startScrollTopRef.current > 0 || scrollEl.scrollTop > 0) return;
-        if (dy <= 8 || dy <= Math.abs(dx)) return;
+        // 卡片已进入横滑拖拽态：本次手势属于卡片，不启动下拉
+        if (inDraggingSwipeRow(e.target)) return;
+        if (dy <= PULL_START_DY || dy <= Math.abs(dx) * PULL_DIRECTION_RATIO) return;
         gestureMovedRef.current = true;
         setPhaseBoth("pulling");
       }
@@ -284,7 +297,9 @@ export function usePullToRefresh(options: UsePullToRefreshOptions) {
       const dx = e.clientX - startXRef.current;
 
       if (phaseRef.current !== "pulling") {
-        if (dy <= 8 || dy <= Math.abs(dx)) return;
+        // 卡片已进入横滑拖拽态：本次手势属于卡片，不启动下拉
+        if (inDraggingSwipeRow(e.target)) return;
+        if (dy <= PULL_START_DY || dy <= Math.abs(dx) * PULL_DIRECTION_RATIO) return;
         e.preventDefault();
         document.body.style.userSelect = "none";
         gestureMovedRef.current = true;

@@ -8,18 +8,29 @@ import {
   getConversations,
   saveConversations,
 } from "@/lib/localConversationStore";
+import {
+  loadConversationActions,
+  saveConversationActions,
+} from "@/lib/conversationActions";
 
 interface ChatState {
   conversations: ConversationItem[];
   loading: boolean;
+  pinnedIds: number[];
+  importantIds: number[];
+  hiddenIds: number[];
 
   loadConversations: () => Promise<void>;
   markRead: (conversationId: number) => Promise<void>;
+
+  togglePin: (conversationId: number) => void;
+  toggleImportant: (conversationId: number) => void;
+  hideConversation: (conversationId: number) => void;
 }
 
 function shallowEqualConversations(
   a: ConversationItem[],
-  b: ConversationItem[]
+  b: ConversationItem[],
 ): boolean {
   if (a === b) return true;
   if (a.length !== b.length) return false;
@@ -37,9 +48,18 @@ function shallowEqualConversations(
   });
 }
 
+function toggleInList(list: number[], id: number): number[] {
+  return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+}
+
+const initialActions = loadConversationActions();
+
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   loading: false,
+  pinnedIds: initialActions.pinned,
+  importantIds: initialActions.important,
+  hiddenIds: initialActions.hidden,
 
   loadConversations: async () => {
     set({ loading: true });
@@ -76,7 +96,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   markRead: async (conversationId) => {
     set((state) => ({
       conversations: state.conversations.map((c) =>
-        c.id === conversationId ? { ...c, unread_count: 0 } : c
+        c.id === conversationId ? { ...c, unread_count: 0 } : c,
       ),
     }));
     try {
@@ -84,5 +104,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (err) {
       console.error("markRead failed", err);
     }
+  },
+
+  togglePin: (conversationId) => {
+    const next = toggleInList(get().pinnedIds, conversationId);
+    set({ pinnedIds: next });
+    saveConversationActions({
+      pinned: next,
+      important: get().importantIds,
+      hidden: get().hiddenIds,
+    });
+  },
+
+  toggleImportant: (conversationId) => {
+    const next = toggleInList(get().importantIds, conversationId);
+    set({ importantIds: next });
+    saveConversationActions({
+      pinned: get().pinnedIds,
+      important: next,
+      hidden: get().hiddenIds,
+    });
+  },
+
+  hideConversation: (conversationId) => {
+    const next = toggleInList(get().hiddenIds, conversationId);
+    set({ hiddenIds: next });
+    saveConversationActions({
+      pinned: get().pinnedIds,
+      important: get().importantIds,
+      hidden: next,
+    });
   },
 }));

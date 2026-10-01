@@ -50,7 +50,7 @@ export function Toast() {
         }}
       >
         <Icon className="w-4 h-4" strokeWidth={2} />
-        <span>{text}</span>
+        <span className="whitespace-nowrap">{text}</span>
       </div>
 
       {/* 屏幕正中间提示：常驻同一位置，仅淡入淡出 + 轻微缩放，无位置迁移 */}
@@ -67,7 +67,7 @@ export function Toast() {
         }}
       >
         <Icon className="w-4 h-4" strokeWidth={2} />
-        <span>{text}</span>
+        <span className="whitespace-nowrap">{text}</span>
       </div>
     </>,
     document.body

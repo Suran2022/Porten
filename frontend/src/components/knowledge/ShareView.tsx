@@ -21,8 +21,13 @@ function shuffle<T>(list: T[]): T[] {
   return arr;
 }
 
+interface ShareViewProps {
+  /** 点击列表卡片打开分享详情页 */
+  onPostOpen?: (post: SharePost) => void;
+}
+
 /** 知识列表（分享）：内置下拉刷新，提示条位于知识顶部栏与内容之间 */
-export function ShareView() {
+export function ShareView({ onPostOpen }: ShareViewProps) {
   const [posts, setPosts] = useState<SharePost[]>(sharePosts);
 
   const handleRefresh = async () => {
@@ -34,7 +39,7 @@ export function ShareView() {
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="pb-4">
         {posts.map((post) => (
-          <ShareCard key={post.id} post={post} />
+          <ShareCard key={post.id} post={post} onOpen={onPostOpen} />
         ))}
       </div>
     </PullToRefresh>
