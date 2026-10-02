@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft,
   Search as SearchIcon,
   UsersRound,
   Tent,
@@ -11,6 +10,7 @@ import {
   X,
   Search,
 } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import {
   globalSearch,
@@ -462,7 +462,7 @@ export function SearchPage({ visible, onClose, closeMode = false }: SearchPagePr
       <div className="flex-shrink-0 flex items-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
         {closeMode ? (
           <>
-            <h1 className="flex-1 text-left text-base font-medium text-gray-900">
+            <h1 className="flex-1 text-left text-lg font-medium text-gray-900">
               搜索
             </h1>
             <button
@@ -479,12 +479,12 @@ export function SearchPage({ visible, onClose, closeMode = false }: SearchPagePr
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center -ml-2 active:opacity-60 transition-opacity"
+              className="w-10 h-10 flex items-center justify-center -ml-2 active:opacity-60 transition-opacity"
               aria-label="返回"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+              <BackIcon className="w-7 h-7" />
             </button>
-            <h1 className="flex-1 text-center text-base font-medium text-gray-900">
+            <h1 className="flex-1 text-center text-lg font-medium text-gray-900">
               搜索
             </h1>
             <div className="w-8" />

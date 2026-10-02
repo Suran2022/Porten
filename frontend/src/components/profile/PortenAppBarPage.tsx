@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Music2, X } from "lucide-react";
+import { Music2, X } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 
 interface PortenAppBarPageProps {
@@ -69,7 +70,7 @@ export function PortenAppBarPage({
               onClick={onClose}
               className="p-1 -ml-1 text-gray-700 hover:text-gray-900 transition-colors"
             >
-              <ArrowLeft className="w-6 h-6" strokeWidth={1.8} />
+              <BackIcon className="w-7 h-7" />
             </button>
             <h1 className="ml-3 text-lg font-medium text-gray-900">应用栏管理</h1>
           </>

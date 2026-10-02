@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Search, UsersRound, X } from "lucide-react";
+import { Search, UsersRound, X } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import {
   searchUserByPortenId,
@@ -313,7 +314,7 @@ export function AddFriendPage({ visible, onClose, closeMode = false }: AddFriend
       <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
         {closeMode ? (
           <>
-            <h1 className="text-base font-medium text-gray-900">添加同胞/营地</h1>
+            <h1 className="text-lg font-medium text-gray-900">添加同胞/营地</h1>
             <button
               type="button"
               onClick={onClose}
@@ -328,11 +329,11 @@ export function AddFriendPage({ visible, onClose, closeMode = false }: AddFriend
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center -ml-2"
+              className="w-10 h-10 flex items-center justify-center -ml-2"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+              <BackIcon className="w-7 h-7" />
             </button>
-            <h1 className="text-base font-medium text-gray-900">添加同胞/营地</h1>
+            <h1 className="text-lg font-medium text-gray-900">添加同胞/营地</h1>
             <div className="w-8" />
           </>
         )}

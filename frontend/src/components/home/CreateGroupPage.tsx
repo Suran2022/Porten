@@ -48,7 +48,7 @@ export function CreateGroupPage({ visible, onClose, onSelectCategory }: CreateGr
       {/* Top bar */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white z-10">
         <div className="w-14" />
-        <h1 className="text-base font-medium text-gray-900">组建营地</h1>
+        <h1 className="text-lg font-medium text-gray-900">组建营地</h1>
         <button
           type="button"
           onClick={onClose}

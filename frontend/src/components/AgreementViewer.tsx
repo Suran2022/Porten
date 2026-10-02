@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { AgreementDocument, getAgreementById } from "@/data/agreements";
 import { sendAgreementEmail } from "@/lib/api";
@@ -234,11 +234,11 @@ export function AgreementViewer({
         <button
           type="button"
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center -ml-2 flex-shrink-0"
+          className="w-10 h-10 flex items-center justify-center -ml-2 flex-shrink-0"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+          <BackIcon className="w-7 h-7" />
         </button>
-        <h1 className="text-base font-medium text-gray-900 truncate px-2 flex-1 min-w-0 text-center">
+        <h1 className="text-lg font-medium text-gray-900 truncate px-2 flex-1 min-w-0 text-center">
           {agreement.title}
         </h1>
         <button

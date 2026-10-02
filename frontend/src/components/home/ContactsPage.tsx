@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { ContactFriend, ContactGroup } from "@/lib/api";
 import { useContactStore } from "@/store/contactStore";
@@ -273,11 +274,11 @@ export function ContactsPage({ visible, onClose, onUserClick }: ContactsPageProp
         <button
           type="button"
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center -ml-2"
+          className="w-10 h-10 flex items-center justify-center -ml-2"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+          <BackIcon className="w-7 h-7" />
         </button>
-        <h1 className="text-base font-medium text-gray-900">联系人</h1>
+        <h1 className="text-lg font-medium text-gray-900">联系人</h1>
         <div className="w-8" />
       </div>
 

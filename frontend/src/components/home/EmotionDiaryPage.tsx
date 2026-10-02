@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, History, Pencil } from "lucide-react";
+import { History, Pencil } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { SystemToast, ToastType } from "@/components/SystemToast";
 import {
@@ -241,12 +242,12 @@ export function EmotionDiaryPage({ visible, onClose }: EmotionDiaryPageProps) {
         <button
           type="button"
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center -ml-2"
+          className="w-10 h-10 flex items-center justify-center -ml-2"
           aria-label="退出"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+          <BackIcon className="w-7 h-7" />
         </button>
-        <h1 className="flex-1 text-center text-base font-medium text-gray-900">
+        <h1 className="flex-1 text-center text-lg font-medium text-gray-900">
           情绪日记
         </h1>
         <button

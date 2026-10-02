@@ -84,7 +84,7 @@ export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onCreateJo
           配合 transform-origin(top right) 呈现逐渐缩回加号位置的反向动画 */}
       <div
         className={cn(
-          "absolute top-full right-0 mt-2 w-48 bg-black rounded-2xl py-2 pointer-events-auto plus-menu-origin z-[80]",
+          "absolute top-full right-0 mt-2 w-max bg-black rounded-2xl py-2.5 pointer-events-auto plus-menu-origin z-[80]",
           "transition-all duration-250",
           isEntering
             ? "ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -109,7 +109,7 @@ export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onCreateJo
                   key={item.key}
                   type="button"
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-2.5 text-left text-white/90 hover:text-white hover:bg-white/10 transition-colors",
+                    "w-full flex items-center gap-3.5 px-5 py-3 text-left text-white/90 hover:text-white hover:bg-white/10 transition-colors",
                     index === 0 && "rounded-t-2xl",
                     index === menuItems.length - 1 && "rounded-b-2xl"
                   )}
@@ -133,8 +133,8 @@ export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onCreateJo
                     onClose();
                   }}
                 >
-                  <Icon className="w-4 h-4" strokeWidth={1.8} />
-                  <span className="text-sm">{item.label}</span>
+                  <Icon className="w-5 h-5" strokeWidth={1.8} />
+                  <span className="text-base">{item.label}</span>
                 </button>
             );
           })}

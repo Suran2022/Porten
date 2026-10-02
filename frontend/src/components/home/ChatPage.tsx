@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import {
-  ArrowLeft,
   Phone,
   Video,
   MoreVertical,
@@ -34,6 +33,7 @@ import {
   Loader2,
   ChevronDown,
 } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { ChatItem, ChatType } from "@/types/chat";
 import { Message } from "@/types/message";
@@ -1350,31 +1350,33 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
   const renderTopBarLeft = () => {
     if (isGroup) {
       return (
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-1 flex-1 min-w-0">
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center -ml-2"
+            className="w-10 h-10 flex items-center justify-center -ml-2"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+            <BackIcon className="w-7 h-7" />
           </button>
           <div className="flex items-baseline gap-1 min-w-0">
-            <h1 className="text-base font-medium text-gray-900 truncate">{title}</h1>
+            <h1 className="text-lg font-medium text-gray-900 truncate">{title}</h1>
             {chat?.memberCount != null && (
-              <span className="text-xs text-gray-400">({chat.memberCount})</span>
+              <span className="text-lg font-medium text-gray-400 truncate">
+                ({chat.memberCount})
+              </span>
             )}
           </div>
         </div>
       );
     }
     return (
-      <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="flex items-center gap-1 flex-1 min-w-0">
         <button
           type="button"
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center -ml-2"
+          className="w-10 h-10 flex items-center justify-center -ml-2"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+          <BackIcon className="w-7 h-7" />
         </button>
         <button
           type="button"
@@ -1385,7 +1387,7 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
           }}
           className="flex items-center gap-2 min-w-0 flex-1"
         >
-          <h1 className="text-base font-medium text-gray-900 truncate text-left">
+          <h1 className="text-lg font-medium text-gray-900 truncate text-left">
             {title}
           </h1>
         </button>
@@ -1409,14 +1411,14 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+              className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+              <BackIcon className="w-7 h-7" />
             </button>
             <div className="flex items-center gap-3">
               <Avatar src={chat.avatar} alt={chat.name} />
               <div>
-                <h1 className="text-base font-semibold text-gray-900">{chat.name}</h1>
+                <h1 className="text-lg font-semibold text-gray-900">{chat.name}</h1>
                 {chat.type === "group" && (
                   <p className="text-xs text-gray-500">群聊 · {chat.memberCount}人</p>
                 )}

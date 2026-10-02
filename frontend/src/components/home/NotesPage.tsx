@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   Archive,
   ArchiveRestore,
-  ArrowLeft,
   Check,
   MoreHorizontal,
   Pencil,
@@ -10,6 +9,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 
 interface NoteItem {
@@ -233,10 +233,10 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
           className="flex h-9 w-9 -ml-2 items-center justify-center rounded-full text-gray-800 transition-colors active:bg-white/45"
           aria-label="返回"
         >
-          <ArrowLeft className="h-5 w-5" strokeWidth={1.6} />
+          <BackIcon className="w-7 h-7" />
         </button>
 
-        <h1 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold text-gray-900">
+        <h1 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900">
           我的笔记
         </h1>
 
@@ -363,7 +363,7 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
           >
             <X className="h-5 w-5" strokeWidth={1.7} />
           </button>
-          <h2 className="absolute left-1/2 -translate-x-1/2 text-base font-semibold text-gray-900">
+          <h2 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900">
             {editingNote ? "编辑笔记" : "添加笔记"}
           </h2>
           <button

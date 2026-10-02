@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 
 /**
@@ -88,10 +88,10 @@ export function BottomSheet({
             <button
               type="button"
               onClick={onBack}
-              className="absolute left-2 w-8 h-8 flex items-center justify-center"
+              className="absolute left-2 w-10 h-10 flex items-center justify-center"
               aria-label="返回"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+              <BackIcon className="w-7 h-7" />
             </button>
           )}
           <h2 className="text-base font-medium text-gray-900">{title}</h2>

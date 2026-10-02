@@ -7,7 +7,7 @@ import {
   useState,
   type UIEvent,
 } from "react";
-import { ArrowLeft } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { ShareCommentItem, SharePost } from "@/types/knowledge";
 import { useToastStore } from "@/store/toastStore";
 import { useAuthStore } from "@/store/authStore";
@@ -673,7 +673,7 @@ export function SharePostDetailPage({
           onClick={handleBack}
           className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+          <BackIcon className="w-7 h-7" />
         </button>
         <div className="flex items-center gap-1">
           <button

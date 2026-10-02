@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
 import tripIcon from "@/assets/trip-icon.svg";
@@ -194,14 +194,14 @@ export default function TripPage() {
         <button
           type="button"
           onClick={handleBack}
-          className="w-8 h-8 flex items-center justify-center -ml-2"
+          className="w-10 h-10 flex items-center justify-center -ml-2"
           aria-label="返回"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+          <BackIcon className="w-7 h-7" />
         </button>
         <div className="flex items-center gap-1.5">
           <img src={tripIcon} alt="" className="w-5 h-5 object-contain" />
-          <h1 className="text-base font-medium text-gray-900">我的行程</h1>
+          <h1 className="text-lg font-medium text-gray-900">我的行程</h1>
         </div>
         <div className="w-8 mr-2" />
       </div>

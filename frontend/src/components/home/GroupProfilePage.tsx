@@ -229,7 +229,7 @@ export function GroupProfilePage({ visible, groupType, onClose, closeMode = fals
         >
           上一步
         </button>
-        <h1 className="text-base font-medium text-gray-900">营地资料完善</h1>
+        <h1 className="text-lg font-medium text-gray-900">营地资料完善</h1>
         {closeMode ? (
           <button
             type="button"

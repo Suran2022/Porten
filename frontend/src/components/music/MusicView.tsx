@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, Repeat, SkipBack, SkipForward, Pause, Play, ListMusic, Music2, X, Share2 } from "lucide-react";
+import { Repeat, SkipBack, SkipForward, Pause, Play, ListMusic, Music2, X, Share2 } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { MusicTrack } from "@/data/music";
 
@@ -451,9 +452,9 @@ export function MusicView({
           className="absolute left-4 top-3 text-white/90 active:scale-90 transition-transform p-1 -ml-1"
           aria-label="返回"
         >
-          <ArrowLeft className="w-6 h-6" strokeWidth={2} />
+          <BackIcon className="w-7 h-7" color="#FFFFFF" />
         </button>
-        <h1 className="text-white text-base font-medium text-center truncate px-12 py-1">
+        <h1 className="text-white text-lg font-medium text-center truncate px-12 py-1">
           {track.title}
           {track.subtitle ? (
             <span className="text-white/60 font-normal text-sm"> （{track.subtitle}）</span>

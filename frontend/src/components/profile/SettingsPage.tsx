@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronRight, X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
+import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { SystemToast, ToastType } from "@/components/SystemToast";
@@ -75,7 +76,7 @@ export function SettingsPage({
       <div className="flex items-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 bg-white">
         {closeMode ? (
           <>
-            <h1 className="flex-1 text-left text-base font-medium text-gray-900">
+            <h1 className="flex-1 text-left text-lg font-medium text-gray-900">
               设置
             </h1>
             <button
@@ -92,11 +93,11 @@ export function SettingsPage({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center -ml-2"
+              className="w-10 h-10 flex items-center justify-center -ml-2"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+              <BackIcon className="w-7 h-7" />
             </button>
-            <h1 className="flex-1 text-center text-base font-medium text-gray-900 -ml-8">
+            <h1 className="flex-1 text-center text-lg font-medium text-gray-900 -ml-8">
               设置
             </h1>
           </>
