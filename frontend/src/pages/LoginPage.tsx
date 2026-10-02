@@ -160,7 +160,9 @@ export default function LoginPage() {
   const showCode = codeSent && !showPassword;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
+    // h-full 跟随 AuthSlider 真实可视高度（100vh 在 iOS 上大于可视区，
+    // 会把底部操作区推出屏幕外产生滚动），flex 布局保证单屏完整显示
+    <div className="h-full bg-white flex flex-col relative">
       {/* Top help text */}
       <div className="w-full flex justify-end px-6 pt-6">
         <button

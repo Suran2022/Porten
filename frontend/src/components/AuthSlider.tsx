@@ -25,10 +25,11 @@ export function AuthSlider() {
           transform: `translateX(${isRegister ? "-50%" : "0%"})`,
         }}
       >
-        <div className="h-full w-1/2 overflow-y-auto">
+        {/* overflow-hidden：页面高度跟随真实可视区，单屏内完整显示，无滚动 */}
+        <div className="h-full w-1/2 overflow-hidden">
           <LoginPage />
         </div>
-        <div className="h-full w-1/2 overflow-y-auto">
+        <div className="h-full w-1/2 overflow-hidden">
           <RegisterPage />
         </div>
       </div>

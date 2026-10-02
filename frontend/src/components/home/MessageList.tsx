@@ -4,6 +4,7 @@ import { useChatStore } from "@/store/chatStore";
 import { formatMessageTime } from "@/lib/utils";
 import { MessageCard } from "./MessageCard";
 import { PortenPartnerCard } from "./PortenPartnerCard";
+import { TripAssistantCard } from "./TripAssistantCard";
 import SwipeRow, { SwipeAction } from "@/components/common/SwipeRow";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -98,10 +99,22 @@ export function MessageList({ onChatClick, onPartnerClick }: MessageListProps) {
       unreadCount: 0,
     };
 
+    // 「我的旅程」功能入口在首页始终展示。
+    const tripAssistantItem: ChatItem = {
+      id: "trip_assistant",
+      type: "system",
+      name: "我的旅程",
+      avatar: "",
+      lastMessage: "",
+      lastMessageTime: "",
+      timestamp: "",
+      unreadCount: 0,
+    };
+
     const numericId = (item: ChatItem) =>
       Number(item.id.split("_")[1]);
 
-    return [...chatItems, partnerItem]
+    return [...chatItems, partnerItem, tripAssistantItem]
       .filter((item) => {
         if (item.type === "friend" || item.type === "group") {
           const id = numericId(item);
@@ -139,6 +152,10 @@ export function MessageList({ onChatClick, onPartnerClick }: MessageListProps) {
               onClick={onPartnerClick}
             />
           );
+        }
+
+        if (item.id === "trip_assistant") {
+          return <TripAssistantCard key={item.id} />;
         }
 
         const numericId = Number(item.id.split("_")[1]);

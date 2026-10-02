@@ -38,6 +38,8 @@ interface AuthState {
   error: string | null;
   token: string | null;
   user: AuthUser | null;
+  /** 会话是否已完成本地恢复（initialize 至少跑完本地部分）：刷新后先等它，避免受保护路由被误重定向 */
+  initialized: boolean;
 
   setLoginMethod: (method: LoginMethod) => void;
   switchToPasswordMode: () => void;
@@ -117,6 +119,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
   token: getToken(),
   user: null,
+  initialized: false,
 
   setLoginMethod: (method) =>
     set({
@@ -183,12 +186,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const token = getToken();
     if (!token) {
       // TEMP: Keep the app accessible without authentication during development.
+      set({ initialized: true });
       return;
     }
 
     const storedUser = getStoredUser();
     if (storedUser) {
-      set({ token, user: storedUser });
+      // 本地会话先同步恢复：刷新后立即停留当前页（含 /trip 等子页面），
+      // 服务端 profile 异步刷新，不阻塞渲染。
+      set({ token, user: storedUser, initialized: true });
     }
 
     try {
@@ -208,7 +214,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         mood: profile.mood ?? null,
       };
       setStoredUser(user);
-      set({ token, user });
+      set({ token, user, initialized: true });
     } catch (err) {
       // Only force login when the server explicitly rejects the token.
       // Network or transient errors should keep the existing session so the
@@ -218,6 +224,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         /unauthorized|未授权|认证失败|未登录|expired|invalid token/i.test(
           err.message
         );
+      if (!storedUser) {
+        set({ initialized: true });
+      }
       if (isAuthFailure || !storedUser) {
         get().redirectToLogin();
       }

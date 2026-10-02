@@ -133,7 +133,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    // h-full 跟随 AuthSlider 真实可视高度（100vh 在 iOS 上大于可视区，
+    // 会把底部操作区推出屏幕外产生滚动），flex 布局保证单屏完整显示
+    <div className="h-full bg-white flex flex-col">
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 w-full max-w-md mx-auto pb-8">
         <div className="w-full flex flex-col items-center">

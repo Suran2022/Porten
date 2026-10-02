@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Users, Plus } from "lucide-react";
 import { currentUser } from "@/data/mock";
 import { useAuthStore } from "@/store/authStore";
@@ -33,6 +34,7 @@ function Badge({ count }: { count: number }) {
 }
 
 export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUserClick }: TopBarProps) {
+  const navigate = useNavigate();
   const [plusOpen, setPlusOpen] = useState(false);
   const [addFriendVisible, setAddFriendVisible] = useState(false);
   const [contactsVisible, setContactsVisible] = useState(false);
@@ -148,6 +150,7 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
             onClose={() => setPlusOpen(false)}
             onAddFriend={() => setAddFriendVisible(true)}
             onCreateGroup={() => setCreateGroupVisible(true)}
+            onCreateJourney={() => navigate("/trip/create")}
             onScan={() =>
               useToastStore
                 .getState()
