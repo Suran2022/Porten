@@ -13,8 +13,10 @@ import {
   findUser,
   groupMemberOptions,
   imageUrl,
+  mockAgreements,
   mockAssistantArticles,
   mockAssistants,
+  mockComrades,
   mockContactGroups,
   mockConversations,
   mockDiaries,
@@ -23,16 +25,20 @@ import {
   mockFriends,
   mockGroupRequests,
   mockMessages,
+  mockSchedules,
   mockSearchFiles,
   mockSearchImages,
   mockSystemMessages,
+  mockTrips,
   mockUsers,
   MockConversation,
   MockMessage,
+  MockSchedule,
   MockSystemMessage,
   MockUser,
 } from "@/data/mockServerData";
 import { sharePosts } from "@/data/knowledgeMock";
+import { SCHEDULE_COLOR_POOL } from "@/types/schedule";
 
 /* ============================= 工具 ============================= */
 
@@ -798,6 +804,73 @@ route("GET", /^\/search$/, (ctx) => {
     knowledge: searchKnowledge(q, limit),
     image: searchImages(q, limit),
   };
+});
+
+/* ---- 日程 ---- */
+
+let nextScheduleId = Math.max(...mockSchedules.map((s) => s.id), 0) + 1;
+
+route("GET", /^\/schedules$/, () => ({ items: mockSchedules }));
+
+/** 关联候选：旅程、约定与可参与同胞（均为 mock 数据）。 */
+route("GET", /^\/schedules\/related$/, () => ({
+  trips: mockTrips,
+  agreements: mockAgreements,
+  comrades: mockComrades,
+}));
+
+route("POST", /^\/schedules$/, (ctx) => {
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  const item: MockSchedule = {
+    id: nextScheduleId++,
+    date: String(body.date),
+    start_time: String(body.start_time),
+    end_time: body.end_time ? String(body.end_time) : null,
+    title: body.title ? String(body.title) : null,
+    detail: body.detail ? String(body.detail) : null,
+    category: body.category ? String(body.category) : null,
+    related_type: body.related_type
+      ? (String(body.related_type) as "trip" | "agreement")
+      : null,
+    related_id: body.related_id != null ? Number(body.related_id) : null,
+    place: body.place ? String(body.place) : null,
+    participant_ids: Array.isArray(body.participant_ids)
+      ? body.participant_ids.map(Number)
+      : [],
+    color:
+      SCHEDULE_COLOR_POOL[Math.floor(Math.random() * SCHEDULE_COLOR_POOL.length)],
+    source: body.source === "quick" ? "quick" : "form",
+  };
+  mockSchedules.push(item);
+  return item;
+});
+
+route("PATCH", /^\/schedules\/(\d+)$/, (ctx) => {
+  const item = mockSchedules.find((s) => s.id === Number(ctx.params[0]));
+  if (!item) throw new Error("schedule not found");
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  if (body.start_time != null) item.start_time = String(body.start_time);
+  if (body.end_time !== undefined) {
+    item.end_time = body.end_time ? String(body.end_time) : null;
+  }
+  if (body.title !== undefined) {
+    item.title = body.title ? String(body.title) : null;
+  }
+  if (body.detail !== undefined) {
+    item.detail = body.detail ? String(body.detail) : null;
+  }
+  if (body.category !== undefined) {
+    item.category = body.category ? String(body.category) : null;
+  }
+  if (body.place !== undefined) {
+    item.place = body.place ? String(body.place) : null;
+  }
+  if (body.participant_ids !== undefined) {
+    item.participant_ids = Array.isArray(body.participant_ids)
+      ? body.participant_ids.map(Number)
+      : [];
+  }
+  return item;
 });
 
 /* ============================= 入口 ============================= */

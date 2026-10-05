@@ -151,6 +151,7 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
             onAddFriend={() => setAddFriendVisible(true)}
             onCreateGroup={() => setCreateGroupVisible(true)}
             onCreateJourney={() => navigate("/trip/create")}
+            onSchedule={() => navigate("/schedule")}
             onScan={() =>
               useToastStore
                 .getState()

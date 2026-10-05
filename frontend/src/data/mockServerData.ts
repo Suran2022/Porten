@@ -758,4 +758,165 @@ export const mockSearchImages: MockSearchFile[] = [
   { id: 4, name: "路线图.png", url: imageUrl("hiking-route", 320, 200), size: 520_000, uploader_id: 1011, uploader_nickname: "领队", created_at: minutesAgo(60 * 24 * 3) },
 ];
 
+/* ============================= 日程 ============================= */
+
+/** 日程条目（mock），字段与 ScheduleItem 一致。 */
+export interface MockSchedule {
+  id: number;
+  /** 日程日期，格式 YYYY-MM-DD */
+  date: string;
+  /** 开始时间，格式 HH:mm */
+  start_time: string;
+  /** 结束时间，格式 HH:mm；选填 */
+  end_time: string | null;
+  title: string | null;
+  detail: string | null;
+  category: string | null;
+  related_type: "trip" | "agreement" | null;
+  related_id: number | null;
+  place: string | null;
+  participant_ids: number[];
+  color: "pink" | "coffee" | "blue";
+  source: "form" | "quick";
+}
+
+/** 关联选择项（旅程/约定）。 */
+export interface MockRelatedItem {
+  id: number;
+  label: string;
+}
+
+/** 参与同胞候选。 */
+export interface MockComrade {
+  id: number;
+  nickname: string;
+  avatar: string;
+}
+
+/** 生成相对今天偏移 n 天的 YYYY-MM-DD 日期串。 */
+function dateKeyFromToday(dayOffset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** mock 日程数据：日期相对今天动态生成，保证任意时间打开页面都有日程演示。 */
+export const mockSchedules: MockSchedule[] = [
+  {
+    id: 1,
+    date: dateKeyFromToday(0),
+    start_time: "14:00",
+    end_time: "15:30",
+    title: "下午茶之约",
+    detail: "和老朋友约在常去的那家店，聊聊最近的状态。",
+    category: "date",
+    related_type: "agreement",
+    related_id: 1,
+    place: "甜遇·社区茶店",
+    participant_ids: [1003],
+    color: "pink",
+    source: "form",
+  },
+  {
+    id: 2,
+    date: dateKeyFromToday(0),
+    start_time: "19:00",
+    end_time: null,
+    title: null,
+    detail: "沿着江边慢跑，顺便试试新买的运动手环。",
+    category: "daily",
+    related_type: null,
+    related_id: null,
+    place: null,
+    participant_ids: [],
+    color: "blue",
+    source: "quick",
+  },
+  {
+    id: 3,
+    date: dateKeyFromToday(2),
+    start_time: "09:30",
+    end_time: "10:30",
+    title: "心理咨询",
+    detail: null,
+    category: "visit",
+    related_type: null,
+    related_id: null,
+    place: "北岸心理诊所",
+    participant_ids: [],
+    color: "coffee",
+    source: "form",
+  },
+  {
+    id: 4,
+    date: dateKeyFromToday(5),
+    start_time: "18:30",
+    end_time: "21:00",
+    title: "和同胞看电影",
+    detail: "一起看新上映的音乐纪录片，散场后吃宵夜。",
+    category: "date",
+    related_type: null,
+    related_id: null,
+    place: "城南光影影城",
+    participant_ids: [1014, 1005],
+    color: "pink",
+    source: "form",
+  },
+  {
+    id: 5,
+    date: dateKeyFromToday(9),
+    start_time: "10:00",
+    end_time: "11:00",
+    title: "激素复查",
+    detail: "记得空腹，带上上次的检查单。",
+    category: "visit",
+    related_type: null,
+    related_id: null,
+    place: "市第三人民医院",
+    participant_ids: [],
+    color: "coffee",
+    source: "form",
+  },
+  {
+    id: 6,
+    date: dateKeyFromToday(-3),
+    start_time: "20:00",
+    end_time: "21:30",
+    title: "小组分享会",
+    detail: null,
+    category: "other",
+    related_type: null,
+    related_id: null,
+    place: null,
+    participant_ids: [],
+    color: "blue",
+    source: "form",
+  },
+];
+
+/** 可关联旅程（mock）：对应加号菜单「创建旅程」产生的旅程。 */
+export const mockTrips: MockRelatedItem[] = [
+  { id: 1, label: "上海 → 北京 · 10月12日" },
+  { id: 2, label: "广州 → 成都 · 11月3日" },
+  { id: 3, label: "杭州 → 厦门 · 12月20日" },
+];
+
+/** 可关联约定（mock）：对应加号菜单「创建约定」产生的约定项。 */
+export const mockAgreements: MockRelatedItem[] = [
+  { id: 1, label: "每周三线上互助会" },
+  { id: 2, label: "一起坚持晨间记录 21 天" },
+  { id: 3, label: "月末同城聚会筹备" },
+];
+
+/** 可参与同胞候选（mock）。 */
+export const mockComrades: MockComrade[] = [
+  { id: 1003, nickname: "小雨", avatar: avatar("xiaoyu") },
+  { id: 1005, nickname: "陈默", avatar: avatar("chenmo") },
+  { id: 1011, nickname: "领队", avatar: avatar("leadert") },
+  { id: 1014, nickname: "Luna", avatar: avatar("luna") },
+];
+
 export { minutesAgo, avatar, groupAvatar, imageUrl };

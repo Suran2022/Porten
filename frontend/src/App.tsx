@@ -8,6 +8,7 @@ import {
 import { AuthSlider } from "@/components/AuthSlider";
 import AuthPageDesktop from "@/pages/AuthPageDesktop";
 import HomePage from "@/pages/HomePage";
+import SchedulePage from "@/pages/SchedulePage";
 import ShareMusicPage from "@/pages/ShareMusicPage";
 import TripPage from "@/pages/TripPage";
 import CreateTripPage from "@/pages/CreateTripPage";
@@ -124,6 +125,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CreateTripPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* 我的日程独立页面：从消息页顶部栏加号菜单进入 */}
+        <Route
+          path="/schedule"
+          element={
+            <ProtectedRoute>
+              <SchedulePage />
             </ProtectedRoute>
           }
         />

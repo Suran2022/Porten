@@ -260,6 +260,45 @@ export async function fetchEmotionDiaryViewers(
   );
 }
 
+export type { ScheduleItem, ScheduleRelatedData } from "@/types/schedule";
+import type {
+  ScheduleCreatePayload,
+  ScheduleItem,
+  ScheduleRelatedData,
+} from "@/types/schedule";
+
+/* ---- 日程 ---- */
+
+export async function fetchSchedules(): Promise<ScheduleItem[]> {
+  const res = await apiRequest<{ items: ScheduleItem[] }>("/schedules");
+  // mock 引擎直接返回内存数组引用，必须浅拷贝出新引用，
+  // 否则 setItems 时 Object.is 判定相等会跳过重渲染
+  return res.items.map((it) => ({ ...it }));
+}
+
+export async function fetchScheduleRelated(): Promise<ScheduleRelatedData> {
+  return apiRequest<ScheduleRelatedData>("/schedules/related");
+}
+
+export async function createSchedule(
+  payload: ScheduleCreatePayload
+): Promise<ScheduleItem> {
+  return apiRequest<ScheduleItem>("/schedules", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateSchedule(
+  id: number,
+  payload: Partial<ScheduleCreatePayload>
+): Promise<ScheduleItem> {
+  return apiRequest<ScheduleItem>(`/schedules/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function register(email: string, password: string, verificationCode: string): Promise<LoginData> {
   return apiRequest<LoginData>("/auth/register", {
     method: "POST",

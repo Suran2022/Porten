@@ -33,6 +33,8 @@ interface PlusMenuProps {
   onCreateGroup?: () => void;
   /** 创建旅程：跳转创建旅程独立页面 */
   onCreateJourney?: () => void;
+  /** 我的日程：跳转我的日程独立页面 */
+  onSchedule?: () => void;
   onScan?: () => void;
   onNote?: () => void;
   onMoodDiary?: () => void;
@@ -40,7 +42,7 @@ interface PlusMenuProps {
   onPlaceholder?: (label: string) => void;
 }
 
-export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onCreateJourney, onScan, onNote, onMoodDiary, onPlaceholder }: PlusMenuProps) {
+export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onCreateJourney, onSchedule, onScan, onNote, onMoodDiary, onPlaceholder }: PlusMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,6 +122,8 @@ export function PlusMenu({ open, onClose, onAddFriend, onCreateGroup, onCreateJo
                       onCreateGroup?.();
                     } else if (item.key === "journey") {
                       onCreateJourney?.();
+                    } else if (item.key === "schedule") {
+                      onSchedule?.();
                     } else if (item.key === "scan") {
                       onScan?.();
                     } else if (item.key === "note") {

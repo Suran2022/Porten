@@ -38,3 +38,36 @@ export function formatMessageTime(timeStr: string): string {
 
   return date.toISOString().split("T")[0];
 }
+
+/* ============================= 日程工具 ============================= */
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** 日期转 YYYY-MM-DD。 */
+export function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+/** Date 转当天分钟数表达（供时间线定位/拖拽计算）。 */
+export function hmmToMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** 分钟数转 HH:mm；1440 表示当天结束，显示为 24:00。 */
+export function minutesToHHmm(minutes: number): string {
+  if (minutes >= 24 * 60) return "24:00";
+  return `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`;
+}
+
+/** Date 转 HH:mm。 */
+export function formatHHmm(date: Date): string {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+/** Date 转中文日期时间展示：2026年10月4日 14:30。 */
+export function formatDateTimeCn(date: Date): string {
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${formatHHmm(date)}`;
+}
