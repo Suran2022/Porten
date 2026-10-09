@@ -206,6 +206,7 @@ export default function LoginPage() {
               <div className="flex justify-end mt-2 pr-1">
                 <button
                   type="button"
+                  onClick={() => navigate("/forgot-password")}
                   className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   忘记密码？

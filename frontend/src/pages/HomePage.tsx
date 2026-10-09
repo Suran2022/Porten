@@ -329,7 +329,7 @@ function HomePageMobile() {
 
       <main className="fixed left-0 right-0 top-16 bottom-16">
         <div
-          className="flex h-full w-[300%] transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] overflow-hidden"
+          className="flex h-full w-[300%] overflow-hidden"
           style={{ transform: `translateX(-${activeView * 33.333}%)` }}
         >
           <div className="h-full w-1/3">

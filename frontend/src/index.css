@@ -495,3 +495,24 @@ body {
 .sheet-step-in {
   animation: sheet-step-in 0.25s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
+
+/* 找回账号页顶部分割线加载进度：蓝粉渐变，慢快慢（ease-in-out）3s 从左铺满 */
+@keyframes auth-progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.auth-progress {
+  height: 1.5px;
+  background: linear-gradient(
+    90deg,
+    #5BCEFA 0%,
+    #F5A9B8 50%,
+    #5BCEFA 100%
+  );
+  animation: auth-progress-fill 3s ease-in-out forwards;
+}

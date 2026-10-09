@@ -27,6 +27,8 @@ export default defineConfig({
   },
   server: {
     port: 3002,
+    // 绑定本地回环 IPv4，配合 Cloudflare Quick Tunnel 目标 http://127.0.0.1:3002
+    host: '127.0.0.1',
     // 允许 Cloudflare Quick Tunnel 临时域名访问（公网预览用）
     allowedHosts: ['.trycloudflare.com'],
     // 开发环境代理：将前端请求转发到本地后端

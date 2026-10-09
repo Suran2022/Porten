@@ -17,8 +17,8 @@ interface SplashScreenProps {
 }
 
 /**
- * 开屏页：屏幕正中央显示航班图标 + 蓝粉渐变 Porten 文本 Logo，
- * 底部显示「静夜思云提供计算服务」小字。
+ * 开屏页：屏幕正中央显示航班图标（缩小后保持原视觉中心位置），
+ * 底部「静夜思云提供计算服务」上方显示蓝粉渐变 Porten 文本 Logo。
  * 停留 3 秒后淡出，期间全屏覆盖、不响应点击（不允许跳过）。
  */
 export function SplashScreen({ onDone, onExited, fadingOut }: SplashScreenProps) {
@@ -38,18 +38,20 @@ export function SplashScreen({ onDone, onExited, fadingOut }: SplashScreenProps)
         if (fadingOut) onExited();
       }}
     >
-      {/* 中央：图标 + 文本 Logo */}
-      <div className="flex flex-col items-center">
-        <img src={splashIcon} alt="" className="w-32 h-32 splash-icon-in" />
-        <div className="mt-5 splash-fade-up">
-          <GradientLogo size="text-6xl" />
-        </div>
+      {/* 中央：图标 Logo（外层平移补偿，保持原视觉中心位置） */}
+      <div className="-translate-y-10">
+        <img src={splashIcon} alt="" className="w-24 h-24 splash-icon-in" />
       </div>
 
-      {/* 底部小字 */}
-      <p className="splash-caption absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] text-xs text-gray-400">
-        静夜思云提供计算服务
-      </p>
+      {/* 底部：文本 Logo + 服务声明 */}
+      <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] flex flex-col items-center">
+        <div className="splash-fade-up">
+          <GradientLogo size="text-3xl" />
+        </div>
+        <p className="splash-caption mt-2 text-xs text-gray-400">
+          静夜思云提供计算服务
+        </p>
+      </div>
     </div>
   );
 }

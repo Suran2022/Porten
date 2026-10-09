@@ -9,7 +9,9 @@ import { AuthSlider } from "@/components/AuthSlider";
 import AuthPageDesktop from "@/pages/AuthPageDesktop";
 import HomePage from "@/pages/HomePage";
 import SchedulePage from "@/pages/SchedulePage";
+import WorkplacePage from "@/pages/WorkplacePage";
 import ShareMusicPage from "@/pages/ShareMusicPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import TripPage from "@/pages/TripPage";
 import CreateTripPage from "@/pages/CreateTripPage";
 import { Toast } from "@/components/Toast";
@@ -109,6 +111,8 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<AuthGateway />} />
         <Route path="/register" element={<AuthGateway />} />
+        {/* 找回 Porten 账号独立页面：登录页「忘记密码？」进入，免登录态 */}
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {/* 免登录的音乐分享页：接收方打开，听 10s 后弹引导框 */}
         <Route path="/share/music" element={<ShareMusicPage />} />
         <Route
@@ -134,6 +138,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <SchedulePage />
+            </ProtectedRoute>
+          }
+        />
+        {/* 跨儿职场独立页面：从消息页顶部栏加号菜单进入 */}
+        <Route
+          path="/workplace"
+          element={
+            <ProtectedRoute>
+              <WorkplacePage />
             </ProtectedRoute>
           }
         />
