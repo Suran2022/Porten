@@ -10,6 +10,7 @@ import AuthPageDesktop from "@/pages/AuthPageDesktop";
 import HomePage from "@/pages/HomePage";
 import SchedulePage from "@/pages/SchedulePage";
 import WorkplacePage from "@/pages/WorkplacePage";
+import AgreementPage from "@/pages/AgreementPage";
 import ShareMusicPage from "@/pages/ShareMusicPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import TripPage from "@/pages/TripPage";
@@ -147,6 +148,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <WorkplacePage />
+            </ProtectedRoute>
+          }
+        />
+        {/* 创建约定独立页面：从消息页顶部栏加号菜单进入 */}
+        <Route
+          path="/agreement"
+          element={
+            <ProtectedRoute>
+              <AgreementPage />
             </ProtectedRoute>
           }
         />

@@ -27,8 +27,14 @@ import {
   Check,
   Image,
   Paperclip,
-  Heart,
+  Smile,
   Music2,
+  Plus,
+  Star,
+  Contact,
+  CalendarCheck,
+  Map,
+  MapPin,
   AlertCircle,
   Loader2,
   ChevronDown,
@@ -42,6 +48,7 @@ import { useChatStore } from "@/store/chatStore";
 import { useMessageStore } from "@/store/messageStore";
 
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { EMOJI_LIST } from "@/data/emoji";
 import { MediaPreview } from "./MediaPreview";
 
 const EMPTY_MESSAGES: Message[] = [];
@@ -1099,11 +1106,145 @@ function ChatMessageItem({
   );
 }
 
+/**
+ * 输入面板「更多功能」展开面板：两行四列的功能卡片网格，
+ * 卡片为正方形圆角白底、内仅显示图标，文本位于卡片下方外部；
+ * 当前提供文件、音乐、收藏、名片、约定、旅程、位置七个入口，
+ * onClick 为空表示功能暂未实现，先占位展示。
+ */
+function ChatMorePanel({ onFileClick }: { onFileClick: () => void }) {
+  // 约定/旅程图标与首页加号菜单保持一致（CalendarCheck / Map）
+  const items: { label: string; icon: typeof Paperclip; onClick?: () => void }[] = [
+    { label: "文件", icon: Paperclip, onClick: onFileClick },
+    { label: "音乐", icon: Music2 },
+    { label: "收藏", icon: Star },
+    { label: "名片", icon: Contact },
+    { label: "约定", icon: CalendarCheck },
+    { label: "旅程", icon: Map },
+    { label: "位置", icon: MapPin },
+  ];
+  return (
+    <div className="px-4 pb-3">
+      <div className="grid grid-cols-4 gap-x-3 gap-y-4 rounded-2xl bg-gray-100/60 p-3">
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                onClick={item.onClick}
+                className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center active:bg-gray-50 transition-colors"
+              >
+                <Icon className="w-6 h-6 text-gray-600" strokeWidth={1.5} />
+              </button>
+              <span className="text-xs text-gray-600">{item.label}</span>
+            </div>
+          );
+        })}
+        {/* 第 8 格暂空：保持两行四列的面板骨架 */}
+        <div aria-hidden />
+      </div>
+    </div>
+  );
+}
+
+/** 最近使用表情的 localStorage key（沿用 porten_ 前缀命名规范）。 */
+const RECENT_EMOJIS_KEY = "porten_recent_emojis";
+/** 最近使用表情最多保留数量。 */
+const MAX_RECENT_EMOJIS = 8;
+
+function loadRecentEmojis(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_EMOJIS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((e): e is string => typeof e === "string")
+      : [];
+  } catch {
+    // ignore
+    return [];
+  }
+}
+
+function saveRecentEmojis(emojis: string[]): void {
+  try {
+    window.localStorage.setItem(RECENT_EMOJIS_KEY, JSON.stringify(emojis));
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * 表情展开面板：分类依次为「最近使用 → 超级表情 → emoji 表情」。
+ * 超级表情暂留空；点击 emoji 插入输入框并记录到最近使用
+ * （localStorage 持久化，去重、新的在前、最多 MAX_RECENT_EMOJIS 个）。
+ */
+function ChatEmojiPanel({ onPick }: { onPick: (emoji: string) => void }) {
+  const [recent, setRecent] = useState<string[]>(loadRecentEmojis);
+
+  const handlePick = (emoji: string) => {
+    setRecent((prev) => {
+      const next = [emoji, ...prev.filter((e) => e !== emoji)].slice(
+        0,
+        MAX_RECENT_EMOJIS
+      );
+      saveRecentEmojis(next);
+      return next;
+    });
+    onPick(emoji);
+  };
+
+  const renderEmojiButton = (emoji: string, index: number) => (
+    <button
+      key={`${emoji}_${index}`}
+      type="button"
+      onClick={() => handlePick(emoji)}
+      className="h-9 flex items-center justify-center rounded-lg text-2xl leading-none active:bg-gray-100 transition-colors"
+    >
+      {emoji}
+    </button>
+  );
+
+  return (
+    <div className="px-4 pb-3">
+      <div className="max-h-64 overflow-y-auto scrollbar-hide">
+        {/* 最近使用：跟随点击实时更新，无记录时给出轻提示 */}
+        <div className="text-sm font-medium text-gray-500 mb-2">最近使用</div>
+        {recent.length > 0 ? (
+          <div className="grid grid-cols-8 gap-1">
+            {recent.map(renderEmojiButton)}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400">暂无最近使用的表情</p>
+        )}
+
+        {/* 超级表情：暂时留空 */}
+        <div className="mt-4 text-sm font-medium text-gray-500 mb-2">
+          超级表情
+        </div>
+
+        {/* emoji 表情 */}
+        <div className="mt-4 text-sm font-medium text-gray-500 mb-2">
+          emoji 表情
+        </div>
+        <div className="grid grid-cols-8 gap-1">
+          {EMOJI_LIST.map(renderEmojiButton)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop = false }: ChatPageProps) {
   const [isEntering, setIsEntering] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  // 输入面板「更多功能」展开面板（文件/音乐等功能卡片）
+  const [morePanelOpen, setMorePanelOpen] = useState(false);
+  // 输入面板「表情」展开面板（最近使用/超级表情/emoji）
+  const [emojiPanelOpen, setEmojiPanelOpen] = useState(false);
   const [sendMenuOpen, setSendMenuOpen] = useState(false);
   const [sendOnEnter, setSendOnEnter] = useState(true);
   const [inputHeight, setInputHeight] = useState(40);
@@ -1502,11 +1643,11 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
         <div className={cn("h-4", isDesktop && "h-8")} />
       </div>
 
-      {/* Backdrop to close voice panel when tapping blank area */}
-      {voicePanelOpen && (
+      {/* Backdrop to close voice/more/emoji panel when tapping blank area */}
+      {(voicePanelOpen || morePanelOpen || emojiPanelOpen) && (
         <div
           className="absolute inset-0 z-[15] bg-transparent"
-          onClick={() => setVoicePanelOpen(false)}
+          onClick={() => { setVoicePanelOpen(false); setMorePanelOpen(false); setEmojiPanelOpen(false); }}
           aria-hidden="true"
         />
       )}
@@ -1547,7 +1688,7 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => setVoicePanelOpen((v) => !v)}
+                    onClick={() => { setVoicePanelOpen((v) => !v); setMorePanelOpen(false); setEmojiPanelOpen(false); }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors",
                       voicePanelOpen && "bg-gray-100"
@@ -1564,21 +1705,29 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
                     <Image className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
                     <span className="text-xs text-gray-600">图片</span>
                   </button>
+                  {/* 表情：展开表情面板（最近使用/超级表情/emoji） */}
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    onClick={() => { setEmojiPanelOpen((v) => !v); setVoicePanelOpen(false); setMorePanelOpen(false); }}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors",
+                      emojiPanelOpen && "bg-gray-100"
+                    )}
                   >
-                    <Paperclip className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
-                    <span className="text-xs text-gray-600">文件</span>
-                  </button>
-                  <button type="button" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Heart className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                    <Smile className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
                     <span className="text-xs text-gray-600">表情</span>
                   </button>
-                  <button type="button" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Music2 className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
-                    <span className="text-xs text-gray-600">音乐</span>
+                  {/* 加号：展开/收起更多功能面板（文件、音乐等已收纳其中） */}
+                  <button
+                    type="button"
+                    onClick={() => { setMorePanelOpen((v) => !v); setVoicePanelOpen(false); setEmojiPanelOpen(false); }}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors",
+                      morePanelOpen && "bg-gray-100"
+                    )}
+                  >
+                    <Plus className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+                    <span className="text-xs text-gray-600">更多</span>
                   </button>
                   <div className="flex-1"></div>
                   <div className="relative">
@@ -1670,7 +1819,7 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
             <div className="flex items-center justify-between mt-3 px-1">
               <button
                 type="button"
-                onClick={() => setVoicePanelOpen((v) => !v)}
+                onClick={() => { setVoicePanelOpen((v) => !v); setMorePanelOpen(false); setEmojiPanelOpen(false); }}
                 className={cn(
                   "w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors",
                   voicePanelOpen && "bg-gray-100"
@@ -1685,22 +1834,53 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
               >
                 <Image className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
               </button>
+              {/* 表情：展开表情面板（最近使用/超级表情/emoji） */}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
+                onClick={() => { setEmojiPanelOpen((v) => !v); setVoicePanelOpen(false); setMorePanelOpen(false); }}
+                className={cn(
+                  "w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors",
+                  emojiPanelOpen && "bg-gray-100"
+                )}
               >
-                <Paperclip className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+                <Smile className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
               </button>
-              <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
-                <Heart className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-              </button>
-              <button type="button" className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors">
-                <Music2 className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+              {/* 加号：展开/收起更多功能面板（文件、音乐等已收纳其中） */}
+              <button
+                type="button"
+                onClick={() => { setMorePanelOpen((v) => !v); setVoicePanelOpen(false); setEmojiPanelOpen(false); }}
+                className={cn(
+                  "w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors",
+                  morePanelOpen && "bg-gray-100"
+                )}
+              >
+                <Plus className="w-6 h-6 text-gray-600" strokeWidth={1.5} />
               </button>
             </div>
           </div>
         )}
+
+        {/* 更多功能面板：与语音面板同层（底栏内部），展开于加号图标下方 */}
+        <div
+          className={cn(
+            "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+            morePanelOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
+          )}
+        >
+          <ChatMorePanel onFileClick={() => fileInputRef.current?.click()} />
+        </div>
+
+        {/* 表情面板：与语音/更多面板同层（底栏内部），展开于表情图标下方 */}
+        <div
+          className={cn(
+            "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+            emojiPanelOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
+          )}
+        >
+          <ChatEmojiPanel
+            onPick={(emoji) => setInputValue((v) => (v + emoji).slice(0, 500))}
+          />
+        </div>
 
         {/* Voice panel */}
         <div
@@ -1829,7 +2009,7 @@ export function ChatPage({ chat, visible, onClose, onUserProfileClick, isDesktop
         ref={fileInputRef}
         type="file"
         className="hidden"
-        onChange={(e) => handleFileChange(e, sendFile)}
+        onChange={(e) => { setMorePanelOpen(false); handleFileChange(e, sendFile); }}
       />
     </div>
   );

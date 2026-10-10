@@ -150,6 +150,7 @@ export function TopBar({ onProfileClick, onFullPageOpenChange, onChatOpen, onUse
             onClose={() => setPlusOpen(false)}
             onAddFriend={() => setAddFriendVisible(true)}
             onCreateGroup={() => setCreateGroupVisible(true)}
+            onCreateAgreement={() => navigate("/agreement")}
             onCreateJourney={() => navigate("/trip/create")}
             onSchedule={() => navigate("/schedule")}
             onWorkplace={() => navigate("/workplace")}
