@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Porten 窗口主题。
+
+  说明：
+    - Theme.Porten 用于 Application 与绝大多数场景（纯 Compose 渲染，主题只管窗口属性）；
+    - Theme.Porten.Starting 专用于 MainActivity —— androidx.core.splashscreen 要求
+      承载 Activity 的主题必须继承 Theme.SplashScreen，postSplashScreenTheme 指定接管后的真实主题。
+-->
+<resources>
+
+    <style name="Theme.Porten" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/porten_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- 禁止预览/最近任务中出现窗口内容的系统级缩放动画 -->
+        <item name="android:windowActivityTransitions">false</item>
+    </style>
+
+    <style name="Theme.Porten.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/porten_white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Porten</item>
+    </style>
+</resources>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  网络安全策略。
+
+  三条底线：
+    1. 全站禁止明文流量（cleartextTrafficPermitted=false），所有通信必须走 TLS；
+    2. 证书绑定（Certificate Pinning）：把服务端证书的公钥指纹写死在包内，
+       即便攻击者诱导安装了伪造根证书，也无法完成中间人攻击；
+    3. 备用指纹必须同时提供——证书轮换时若没有备用 pin，客户端会永久锁死无法联网。
+
+  维护须知（重要）：
+    下面 pin 值为占位符，**产物发布前必须替换为真实服务端证书的 SHA-256 指纹**，
+    获取方式见 移动端环境配置说明.md 的「证书指纹获取」小节。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- 生产域名：TODO 替换为真实域名与真实指纹 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">example.com</domain>
+        <pin-set expiration="2027-01-01">
+            <!-- 主指纹：TODO 替换为真实值 -->
+            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
+            <!-- 备用指纹：证书轮换逃生通道，必须使用不同中间 CA 或备份密钥 -->
+            <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+        </pin-set>
+    </domain-config>
+
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

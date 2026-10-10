@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  启动模块字符串。
+
+  归属说明：本模块私有文案放在模块自己的 res 下，不要把本模块的文案堆到 :app，
+            否则模块无法独立编译与复用；跨模块共享文案才下沉到 :core:ui。
+  命名规范：porten_<module>_<meaning>，避开 Android 保留字。
+-->
+<resources>
+    <string name="porten_common_splash_caption">静夜思云提供计算服务</string>
+    <string name="porten_launcher_skeleton_title">Porten 移动端骨架已就绪</string>
+    <string name="porten_launcher_skeleton_desc">原生壳 / Flutter / H5 混合架构骨架搭建完成，业务页面待接入。</string>
+</resources>

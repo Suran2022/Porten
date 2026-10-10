@@ -1,0 +1,146 @@
+# ============================================================================================
+# Porten 移动端 · 统一依赖版本目录（Version Catalog）
+# --------------------------------------------------------------------------------------------
+# 规范说明：
+#   1. 所有模块的依赖版本一律在此处声明，模块内只允许引用 libs.xxx，禁止写死版本号；
+#   2. [versions] 统一版本号，[libraries] 定义坐标，[plugins] 定义 Gradle 插件；
+#   3. 版本选择原则：优先满足 Flutter 3.47.7 官方模板校验过的版本下界（AGP / Kotlin / Gradle），
+#      再在该区间内取最新稳定版，确保「原生 ↔ Flutter」混合构建兼容性。
+# ============================================================================================
+
+[versions]
+
+## ---- 构建工具链（经实证选定的稳定组合）----
+## AGP 8.13.1：Flutter 3.47 校验下界（≥8.11.1）之上的成熟版本，legacy DSL 与
+## Flutter Gradle 插件完全兼容，pub 插件生态验证充分；AGP 9.1.0 与 Flutter 3.47.7
+## 存在 legacy/BaseExtension NPE 与 pub 插件内置 Kotlin 语法互斥的兼容缺口。
+## 注意：新机型适配由 compileSdk=36 / targetSdk=36 保证，与 AGP 大版本无关。
+androidGradlePlugin = "8.13.1"
+## Kotlin 2.2.21：与 Gradle 9.3 内嵌 Kotlin 2.2.21 同版，build-logic 编译零 metadata 兼容问题；
+## 同时满足 KGP compose 插件与 pub 插件（kotlin{} 块）的语法要求。
+kotlin = "2.2.21"
+javaTarget = "17"
+
+## ---- Android 基础（与 compileSdk=36 匹配的稳定版本线）----
+## 选型原则：androidx 最新版开始要求 compileSdk 37（该 SDK 尚未正式发布），
+## 因此统一取「要求 ≤ 36」的最新稳定版；待 SDK 37 正式发布后统一上探。
+androidxCore = "1.17.0"
+androidxActivity = "1.11.0"
+androidxLifecycle = "2.9.1"
+androidxNavigation = "2.9.5"
+androidxSplashscreen = "1.2.0"
+androidxDatastore = "1.1.7"
+androidxSecurity = "1.1.0"
+androidxWebkit = "1.14.0"
+androidxStartup = "1.2.0"
+androidxFragment = "1.8.9"
+
+## ---- Jetpack Compose（Material3）----
+androidxComposeBom = "2025.06.01"
+
+## ---- 依赖注入 ----
+hilt = "2.60.1"
+hiltNavigationCompose = "1.4.0"
+
+## ---- 异步与序列化 ----
+kotlinxCoroutines = "1.10.2"
+kotlinxSerialization = "1.9.0"
+
+## ---- 网络（OkHttp / Retrofit）----
+## OkHttp 5.5 的 AAR 元数据要求 compileSdk 37，取 4.12.0 稳定线；
+## Retrofit 3.x 依赖 OkHttp 5，一并回退到与 OkHttp 4 匹配的 2.11.0。
+okhttp = "4.12.0"
+retrofit = "2.11.0"
+
+## ---- 测试 ----
+junit4 = "4.13.2"
+androidxTestRunner = "1.7.0"
+androidxTestExtJunit = "1.3.0"
+turbine = "1.2.1"
+
+## ---- 代码质量 ----
+detekt = "1.23.8"
+
+## ---- Android 编译参数 ----
+compileSdk = "36"
+targetSdk = "36"
+# minSdk 24：与 Flutter 3.47 官方要求的最低 Android API 保持一致（低于 24 会被 Flutter
+# 构建校验直接判失败），兼顾覆盖率与安全科的第三方库可用性。
+minSdk = "24"
+# ndkVersion 必须与 Flutter 3.47.7 内部常量一致（packages/flutter_tools 中的 ndkVersion），
+# 否则 Flutter 模块构建阶段会被强制改写为 Flutter 期望的版本而报缺失。
+ndkVersion = "28.2.13676358"
+
+# ============================================================================================
+
+[libraries]
+
+## ---- AndroidX 基础 ----
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivity" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifecycle" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "androidxLifecycle" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidxSplashscreen" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "androidxDatastore" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "androidxSecurity" }
+androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "androidxWebkit" }
+androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidxStartup" }
+androidx-fragment = { group = "androidx.fragment", name = "fragment", version.ref = "androidxFragment" }
+
+## ---- Compose ----
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
+
+## ---- 依赖注入 ----
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-core = { group = "com.google.dagger", name = "hilt-core", version.ref = "hilt" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+
+## ---- 异步与序列化 ----
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+## ---- 网络 ----
+okhttp-core = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
+
+## ---- Gradle 插件坐标（供 build-logic 约定插件以 compileOnly 引入）----
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+
+## ---- 测试 ----
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+
+# ============================================================================================
+
+[plugins]
+
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# Porten 自有约定插件：位于 build-logic/convention，见各 plugin id
+porten-android-application = { id = "porten.android.application" }
+porten-android-library = { id = "porten.android.library" }
+porten-android-compose = { id = "porten.android.compose" }
+porten-android-feature = { id = "porten.android.feature" }
+porten-kotlin-library = { id = "porten.kotlin.library" }
+porten-release-hardening = { id = "porten.release.hardening" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

@@ -1,0 +1,190 @@
+{
+  "meta": {
+    "name": "Porten Design Tokens",
+    "version": "1.0.0",
+    "description": "Porten 移动端设计令牌单一数据源。原生（Kotlin）与 Flutter（Dart）两侧的实现必须与本文件保持一致，由 scripts/verify_design_tokens.py 做一致性校验。",
+    "source": "React Web 端 src/index.css + Tailwind 默认值 + 组件内联色统计",
+    "note": "所有颜色以 Web 端实际取值为准，不得臆测；新增令牌必须先在此登记。"
+  },
+
+  "scaling": {
+    "designWidthDp": 375,
+    "designHeightDp": 812,
+    "strategy": "width-first",
+    "maxScale": 1.35,
+    "minScale": 0.8,
+    "scaleText": false,
+    "fontScaleFollowSystem": true,
+    "fontScaleMax": 1.3,
+    "comment": "Web 端为流式布局，无设计稿宽度；移动端取 375dp 作为基准做等比换算。文字是否跟随缩放见 scaleText，超大屏限制拉伸。"
+  },
+
+  "color": {
+    "brand": {
+      "blue": "#5BCEFA",
+      "pink": "#F5A9B8",
+      "white": "#FFFFFF",
+      "bluePressed": "#3BB5E5",
+      "pinkLight": "#F7C5D0"
+    },
+    "neutral": {
+      "gray50": "#F9FAFB",
+      "gray100": "#F3F4F6",
+      "gray200": "#E5E7EB",
+      "gray300": "#D1D5DB",
+      "gray400": "#9CA3AF",
+      "gray500": "#6B7280",
+      "gray600": "#4B5563",
+      "gray700": "#374151",
+      "gray800": "#1F2937",
+      "gray900": "#111827",
+      "black": "#000000",
+      "white": "#FFFFFF",
+      "wash50": "#FAFAFA",
+      "washLight": "#F7F7F7",
+      "washGray": "#F5F5F5"
+    },
+    "trip": {
+      "sandLight": "#FDF3E6",
+      "sandBase": "#F7E9D2",
+      "sandDeep": "#F2DDBC",
+      "inkDeep": "#1C1410",
+      "inkSoft": "#1A1108"
+    },
+    "semantic": {
+      "error": "#EF4444",
+      "errorSoft": "#F87171",
+      "danger": "#E5484D",
+      "success": "#16A34A",
+      "info": "#3B82F6",
+      "disabled": "#B6BDCC"
+    },
+    "alpha": {
+      "scrimStrong": "0.6",
+      "scrimMedium": "0.55",
+      "scrimSoft": "0.35",
+      "scrimFaint": "0.25",
+      "handle": "0.5",
+      "dividerEdge": "0.3",
+      "dividerCore": "0.8"
+    }
+  },
+
+  "gradient": {
+    "brandText": {
+      "angle": 90,
+      "repeat": true,
+      "durationMs": 16000,
+      "stops": [
+        { "position": 0.0, "color": "#5BCEFA" },
+        { "position": 0.3, "color": "#F5A9B8" },
+        { "position": 0.5, "color": "#FFFFFF" },
+        { "position": 0.7, "color": "#F5A9B8" },
+        { "position": 1.0, "color": "#5BCEFA" }
+      ]
+    },
+    "brandSurface": {
+      "angle": 90,
+      "repeat": true,
+      "durationMs": 8000,
+      "stops": [
+        { "position": 0.0, "color": "#5BCEFA" },
+        { "position": 0.5, "color": "#F5A9B8" },
+        { "position": 1.0, "color": "#5BCEFA" }
+      ]
+    },
+    "agreementSurface": {
+      "angle": 135,
+      "repeat": true,
+      "durationMs": 3000,
+      "stops": [
+        { "position": 0.0, "color": "#5BCEFA" },
+        { "position": 0.5, "color": "#F5A9B8" },
+        { "position": 1.0, "color": "#5BCEFA" }
+      ]
+    },
+    "fadeDivider": {
+      "angle": 90,
+      "repeat": false,
+      "stops": [
+        { "position": 0.0, "color": "#D1D5DB", "opacity": 0.0 },
+        { "position": 0.2, "color": "#D1D5DB", "opacity": 0.3 },
+        { "position": 0.5, "color": "#9CA3AF", "opacity": 0.8 },
+        { "position": 0.8, "color": "#D1D5DB", "opacity": 0.3 },
+        { "position": 1.0, "color": "#D1D5DB", "opacity": 0.0 }
+      ]
+    }
+  },
+
+  "typography": {
+    "familySystem": "system-default",
+    "weightRegular": 400,
+    "weightMedium": 500,
+    "weightSemibold": 600,
+    "lineHeightBase": 1.5,
+    "size": {
+      "mini": 10,
+      "micro": 11,
+      "xs": 12,
+      "body13": 13,
+      "sm": 14,
+      "body15": 15,
+      "base": 16,
+      "title17": 17,
+      "lg": 18,
+      "xl": 20,
+      "hero22": 22,
+      "x2l": 24,
+      "big28": 28,
+      "x3l": 30
+    },
+    "note": "取值映射 Web 端 Tailwind：xs=12, sm=14, base=16, lg=18, xl=20, 2xl=24, 3xl=30；另补 Web 端内联使用过的 10/11/13/15/17/22/28。"
+  },
+
+  "spacing": {
+    "xxxs": 2,
+    "xxs": 4,
+    "xs": 6,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "x2l": 24,
+    "x3l": 32,
+    "x4l": 48,
+    "note": "4dp 栅格为主，补充 Web 端常用 2/6/12/20。"
+  },
+
+  "radius": {
+    "base": 4,
+    "sm": 6,
+    "md": 8,
+    "lg": 12,
+    "xl": 16,
+    "pill": 9999,
+    "note": "rounded=4 / rounded-md=6 / rounded-lg=8 / rounded-xl=12 / rounded-2xl=16 / rounded-full=胶囊。"
+  },
+
+  "motion": {
+    "microMs": 100,
+    "shortMs": 200,
+    "mediumMs": 300,
+    "longMs": 500,
+    "expandMs": 300,
+    "splashFadeUpMs": 600,
+    "splashIconMs": 700,
+    "splashExitMs": 400,
+    "contentInMs": 260,
+    "sheetStepMs": 250,
+    "note": "与 Web 端 keyframes 时长一一对应。"
+  },
+
+  "interaction": {
+    "noRipple": true,
+    "pressOpacityMin": 0.6,
+    "pressScaleMin": 0.96,
+    "touchTargetMinDp": 48,
+    "touchTargetRecommendedDp": 56,
+    "rippleNote": "Web 端通过 useTouchInteraction/usePointerInteraction 自行实现按压态，无浏览器默认反馈；移动端同样禁止使用系统水波纹，统一走 PortenPressFeedback。"
+  }
+}

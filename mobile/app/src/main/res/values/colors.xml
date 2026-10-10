@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Porten 颜色资源。
+
+  命名约束（Android 官方 + 本项目补充）：
+    - 不得使用 Android 保留字作为资源名（background / foreground / white / black / icon 等），
+      统一加 porten_ 前缀，避免与系统资源冲突；
+    - 这里只放「非 Compose 场景」必须引用的颜色（窗口背景、状态栏等），
+      UI 组件一律使用 :core:design 的设计令牌。
+-->
+<resources>
+    <color name="porten_white">#FFFFFFFF</color>
+    <color name="porten_background">#FFFFFFFF</color>
+    <color name="porten_brand_blue">#FF5BCEFA</color>
+    <color name="porten_brand_pink">#FFF5A9B8</color>
+    <color name="porten_scrim">#99000000</color>
+</resources>

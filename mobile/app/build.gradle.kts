@@ -1,0 +1,134 @@
+/*
+ * Porten 宿主壳模块（:app）
+ *
+ * 职责边界：
+ *   - 作为唯一的 Android Application 产物模块，负责组装所有 feature / core 模块；
+ *   - 承载 Application 入口、Activity 壳、签名与发布加固配置；
+ *   - **不允许**编写任何业务页面逻辑，业务一律落在 :feature:* 模块。
+ *
+ * 环境与 Mock 切换：
+ *   产品风味 environment = dev | staging | prod，并由 gradle 属性一起决定几个核心开关，
+ *   实现与 Web 端 `VITE_USE_MOCK` 等价的「Mock / 真实 API 一键切换」能力：
+ *     gradle.properties  →  porten.mock.enabled=true
+ *     命令行覆盖        →  -Pporten.mock.enabled=false
+ *   取值优先级：命令行 -P > gradle.properties > flavor 默认值。
+ */
+
+plugins {
+    // 内部已包含：com.android.application + 发布加固（混淆/资源缩减）+ Compose（内置 Kotlin）
+    alias(libs.plugins.porten.release.hardening)
+    alias(libs.plugins.porten.android.compose)
+}
+
+val useMockEngine: Boolean = (providers.gradleProperty("porten.mock.enabled").orNull ?: "true").toBoolean()
+val securityEnabled: Boolean = (providers.gradleProperty("porten.security.enabled").orNull ?: "true").toBoolean()
+val loggingEnabled: Boolean = (providers.gradleProperty("porten.logging.enabled").orNull ?: "true").toBoolean()
+
+android {
+    namespace = "jys.porten.app"
+
+    defaultConfig {
+        applicationId = "jys.porten.app"
+        versionCode = 1
+        versionName = "1.0.0"
+        // 资源语言白名单：Porten 现阶段仅投放简体中文，剔除第三方库带来的多语言资源
+        resourceConfigurations += setOf("zh")
+    }
+
+    buildFeatures {
+        // flavor 使用 resValue 注入各环境应用名，AGP 9 默认关闭该特性，需显式开启
+        resValues = true
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // 环境风味：dev（日常开发）/ staging（预发联调）/ prod（对外发布）
+    // ---------------------------------------------------------------------------------------
+    flavorDimensions += "environment"
+
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "Porten Dev")
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/api/v1\"")
+            buildConfigField("String", "API_WS_URL", "\"ws://10.0.2.2:8000/ws\"")
+            buildConfigField("boolean", "USE_MOCK", useMockEngine.toString())
+            buildConfigField("boolean", "ENABLE_SECURITY", "false")
+            buildConfigField("boolean", "ENABLE_LOGGING", loggingEnabled.toString())
+        }
+
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "Porten 预发")
+            buildConfigField("String", "API_BASE_URL", "\"https://staging.example.com/api/v1\"")
+            buildConfigField("String", "API_WS_URL", "\"wss://staging.example.com/ws\"")
+            buildConfigField("boolean", "USE_MOCK", useMockEngine.toString())
+            buildConfigField("boolean", "ENABLE_SECURITY", securityEnabled.toString())
+            buildConfigField("boolean", "ENABLE_LOGGING", loggingEnabled.toString())
+        }
+
+        create("prod") {
+            dimension = "environment"
+            resValue("string", "app_name", "Porten")
+            buildConfigField("String", "API_BASE_URL", "\"https://example.com/api/v1\"")
+            buildConfigField("String", "API_WS_URL", "\"wss://example.com/ws\"")
+            // 生产包强制关闭 Mock：即使命令行传入 true 也不生效，避免演示数据污染线上
+            buildConfigField("boolean", "USE_MOCK", "false")
+            buildConfigField("boolean", "ENABLE_SECURITY", securityEnabled.toString())
+            buildConfigField("boolean", "ENABLE_LOGGING", "false")
+        }
+    }
+
+    dependenciesInfo {
+        // 对外发布的 APK 不写入依赖清单元数据，减少可被反编译的情报输出
+        includeInApk = false
+        includeInBundle = false
+    }
+}
+
+/*
+ * Flutter 集成（Add-to-App）
+ *
+ * 两种形态由 gradle.properties 的 porten.flutter.mode 决定，业务代码零改动：
+ *   module → 源码依赖 flutter/.android/Flutter（开发期，可源码级断点调试 Flutter）
+ *   aar    → 依赖 `flutter build aar` 产出的本地 Maven 产物（发布期 / CI，原生同学免装 Flutter）
+ */
+val flutterIntegrationMode: String = providers.gradleProperty("porten.flutter.mode").orNull ?: "module"
+
+dependencies {
+    // ---- 功能模块 ----
+    implementation(project(":feature:launcher"))
+    implementation(project(":feature:main"))
+    implementation(project(":feature:hybrid"))
+
+    // ---- 核心能力层 ----
+    implementation(project(":core:model"))
+    implementation(project(":core:common"))
+    implementation(project(":core:design"))
+    implementation(project(":core:security"))
+    implementation(project(":core:storage"))
+    implementation(project(":core:network"))
+    implementation(project(":core:im"))
+    implementation(project(":core:push"))
+    implementation(project(":core:bridge"))
+    implementation(project(":core:webview"))
+    implementation(project(":core:data"))
+    implementation(project(":core:ui"))
+
+    // ---- Flutter 引擎（随 porten.flutter.mode 自动选择源码依赖或 AAR 产物依赖）----
+    if (flutterIntegrationMode == "module") {
+        implementation(project(":flutter"))
+    } else {
+        implementation("jys.porten.porten_flutter:flutter_release:1.0")
+    }
+
+    // ---- 基础 ----
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.startup.runtime)
+    implementation(libs.kotlinx.coroutines.android)
+}

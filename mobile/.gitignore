@@ -1,0 +1,45 @@
+# ============================================================================================
+# Porten 移动端 · Git 忽略规则
+# ============================================================================================
+
+# ------------------------------ Gradle / Android ------------------------------
+.gradle/
+.kotlin/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+# 通用 IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# ------------------------------ 产物与签名 ------------------------------
+*.apk
+*.aab
+*.ap_
+*.dex
+# 签名密钥绝不允许入仓：仅保留 local（CI 使用安全凭据注入）
+keystore/*.jks
+keystore/*.keystore
+keystore/*.p12
+!keystore/README.md
+
+# ------------------------------ Flutter Module ------------------------------
+# Flutter 自身已提供 .gitignore（含 .dart_tool / .idea / build），
+# 这里额外覆盖原生侧的 .android 宿主构建产物，避免 IDE 生成的 demo host 被误提交。
+flutter/porten_flutter/.android/local.properties
+flutter/porten_flutter/.android/**/build/
+flutter/porten_flutter/.android/build/
+flutter/porten_flutter/build/
+flutter/porten_flutter/**/Generated.xcconfig
+flutter/porten_flutter/.ios/
+
+# ------------------------------ 诊断与临时产物 ------------------------------
+*.hprof
+*.log
+outputs-mapping.txt
+renderscript/renderscript-v8.jar
