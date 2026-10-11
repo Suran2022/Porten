@@ -10,8 +10,9 @@ import 'package:flutter/material.dart';
 
 import '../design/porten_colors.dart';
 
-/// 流光动画时长（对齐 Web 端 .porten-gradient 的 16s）。
-const Duration _kFlowDuration = Duration(seconds: 16);
+/// 流光周期（对齐 Web 端 .porten-gradient：16s 完成一次 0%→100%→0% 往返，
+/// 即 8s 去程 + 8s 回程，linear）。
+const Duration _kFlowLegDuration = Duration(seconds: 8);
 
 /// 品牌流光 Logo。
 class GradientLogo extends StatefulWidget {
@@ -32,8 +33,11 @@ class GradientLogo extends StatefulWidget {
 
 class _GradientLogoState extends State<GradientLogo>
     with SingleTickerProviderStateMixin {
+  // Web 端 porten-flow：background-position 0%→100%→0% 线性往返。
+  // 等价实现：8s repeat(reverse: true)（去程/回程各 8s，均线性）。
   late final AnimationController _controller =
-      AnimationController(vsync: this, duration: _kFlowDuration)..repeat();
+      AnimationController(vsync: this, duration: _kFlowLegDuration)
+        ..repeat(reverse: true);
 
   @override
   void dispose() {

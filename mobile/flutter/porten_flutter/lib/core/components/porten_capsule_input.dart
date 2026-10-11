@@ -102,6 +102,8 @@ class _CapsuleInputState extends State<CapsuleInput> {
         onChanged: widget.onChanged,
         onSubmitted: widget.onSubmitted,
         cursorColor: PortenColor.gray900,
+        // isCollapsed 模式下文本默认顶对齐——显式居中（修复文本贴顶歪斜）
+        textAlignVertical: TextAlignVertical.center,
         style: PortenTypography.base.copyWith(color: PortenColor.gray900),
         decoration: InputDecoration(
           isCollapsed: true,

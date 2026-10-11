@@ -148,7 +148,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints cons) {
+            // 键盘弹出时补等高底部内边距（同登录页，保证聚焦输入框滚到键盘上方）
+            final double insetBottom = MediaQuery.viewInsetsOf(context).bottom;
             return SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: insetBottom),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: cons.maxHeight),
                 child: Column(
