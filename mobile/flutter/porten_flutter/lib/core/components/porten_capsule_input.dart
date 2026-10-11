@@ -106,9 +106,12 @@ class _CapsuleInputState extends State<CapsuleInput> {
         textAlignVertical: TextAlignVertical.center,
         style: PortenTypography.base.copyWith(color: PortenColor.gray900),
         decoration: InputDecoration(
-          isCollapsed: true,
+          // isCollapsed 模式下文本/占位符贴顶（多轮 textAlignVertical 均无效），
+          // 改用 isDense + 垂直 contentPadding 强制在 48px 内居中（久验可靠）。
+          isDense: true,
           border: InputBorder.none,
           counterText: '',
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
           hintText: widget.hint,
           hintStyle:
               PortenTypography.base.copyWith(color: PortenColor.gray400),

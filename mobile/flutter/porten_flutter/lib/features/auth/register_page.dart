@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/agreement_checkbox.dart';
+import '../../core/components/adaptive_scroll.dart';
 import '../../core/components/agreement_viewer.dart';
 import '../../core/components/auth_divider.dart';
 import '../../core/components/icon_circle_button.dart';
@@ -146,19 +147,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       backgroundColor: PortenColor.white,
       resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints cons) {
-            // 键盘弹出时补等高底部内边距（同登录页，保证聚焦输入框滚到键盘上方）
-            final double insetBottom = MediaQuery.viewInsetsOf(context).bottom;
-            return SingleChildScrollView(
-              padding: EdgeInsets.only(bottom: insetBottom),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: cons.maxHeight),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    SizedBox(height: 24 * s),
+        // AdaptiveScroll：不超高锁定单屏，超高才滚动；水平 24 对齐 Web px-6。
+        child: AdaptiveScroll(
+          alignment: MainAxisAlignment.spaceBetween,
+          child: Padding(
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(height: 24 * s),
                     // 标题：仅 step=form 显示（text-5xl font-bold）
                     if (isFormStep)
                       Text(
@@ -303,7 +304,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
             // 底部：去登录（与表单同列 spaceBetween，键盘弹出时随滚动让位）
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
               child: Column(
                 children: <Widget>[
                   const AuthDivider(text: '去登录'),
@@ -318,11 +319,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ],
               ),
             ),
-                  ],
-                ),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );

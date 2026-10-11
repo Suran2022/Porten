@@ -27,10 +27,14 @@ class IconCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: onTap,
-      child: Column(
+    // 必须自带 Material 祖先：否则 InkWell 墨水绘制到 Scaffold 的 Material 上，
+    // 在按钮外区域留下矩形残影。
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Container(
@@ -49,6 +53,7 @@ class IconCircleButton extends StatelessWidget {
             style: PortenTypography.xs.copyWith(color: PortenColor.gray500),
           ),
         ],
+      ),
       ),
     );
   }

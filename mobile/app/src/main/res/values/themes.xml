@@ -20,7 +20,8 @@
 
     <style name="Theme.Porten.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/porten_white</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <!-- 图标置空：避免系统启动画面先闪一下 App 图标，再接 Flutter 开屏造成二次闪烁 -->
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
         <item name="postSplashScreenTheme">@style/Theme.Porten</item>
     </style>
 </resources>

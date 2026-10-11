@@ -1,8 +1,10 @@
 /*
- * 全局 Toast（对齐 Web 端 toastStore + Toast 组件）。
+ * 全局 Toast（100% 对齐 Web 端 Toast.tsx + toastStore）。
  *
- * Web 端实现：页面顶部居中浮现的黑底白字圆角条，2.5s 自动消失；
- * App 端实现为 Overlay 顶部插入 + 渐隐动画，无需 BuildContext。
+ * Web 端实现：顶部居中胶囊（fixed top-3.5 left-1/2），rounded-full，
+ * bg-black/75 毛玻璃，px-4 py-2，内含 lucide 图标（w-4 h-4 strokeWidth 2）
+ * + text-sm 白色文字，gap-1.5；2s 后淡出（App 端保持 2.5s 队列节奏）。
+ * 图标类型：info=Info / success=Check / error=X（对齐 Web 端 ICON_MAP）。
  */
 
 import 'dart:async';
@@ -11,29 +13,38 @@ import 'package:flutter/material.dart';
 
 import '../design/porten_colors.dart';
 import '../design/porten_typography.dart';
+import 'porten_icons.dart';
+
+/// Toast 图标类型（对齐 Web 端 ToastIcon）。
+enum ToastIcon { info, success, error }
 
 /// 全局 Toast 入口（无需 BuildContext）。
 abstract final class PortenToast {
   static OverlayEntry? _entry;
-  static final List<String> _queue = <String>[];
+  static final List<_ToastPayload> _queue = <_ToastPayload>[];
 
   /// 展示一条 Toast，默认 2.5s 后消失。
-  static void show(String message,
-      {Duration duration = const Duration(milliseconds: 2500)}) {
+  static void show(
+    String message, {
+    ToastIcon icon = ToastIcon.info,
+    Duration duration = const Duration(milliseconds: 2500),
+  }) {
     if (message.isEmpty) return;
-    _queue.add(message);
+    _queue.add(_ToastPayload(message: message, icon: icon, duration: duration));
     if (_entry != null) return; // 已有 Toast 在展示，等它消失后接续队列
     _present();
   }
 
   static void _present() {
     if (_queue.isEmpty) return;
-    final String message = _queue.removeAt(0);
+    final _ToastPayload payload = _queue.removeAt(0);
     final OverlayState? overlay = _overlayKey.currentState;
     if (overlay == null) return; // Overlay 未挂载（冷启动极早期），静默丢弃
     _entry = OverlayEntry(
       builder: (BuildContext context) => _ToastWidget(
-        message: message,
+        message: payload.message,
+        icon: payload.icon,
+        duration: payload.duration,
         onDismissed: () {
           _entry?.remove();
           _entry = null;
@@ -56,10 +67,29 @@ abstract final class PortenToast {
   }
 }
 
-class _ToastWidget extends StatefulWidget {
-  const _ToastWidget({required this.message, required this.onDismissed});
+class _ToastPayload {
+  const _ToastPayload({
+    required this.message,
+    required this.icon,
+    required this.duration,
+  });
 
   final String message;
+  final ToastIcon icon;
+  final Duration duration;
+}
+
+class _ToastWidget extends StatefulWidget {
+  const _ToastWidget({
+    required this.message,
+    required this.icon,
+    required this.duration,
+    required this.onDismissed,
+  });
+
+  final String message;
+  final ToastIcon icon;
+  final Duration duration;
   final VoidCallback onDismissed;
 
   @override
@@ -70,14 +100,14 @@ class _ToastWidgetState extends State<_ToastWidget>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 200),
+    duration: const Duration(milliseconds: 300),
   );
 
   @override
   void initState() {
     super.initState();
     _controller.forward();
-    Future<void>.delayed(const Duration(milliseconds: 2500), () async {
+    Future<void>.delayed(widget.duration, () async {
       if (!mounted) return;
       await _controller.reverse();
       widget.onDismissed();
@@ -90,12 +120,18 @@ class _ToastWidgetState extends State<_ToastWidget>
     super.dispose();
   }
 
+  String get _iconName => switch (widget.icon) {
+        ToastIcon.success => 'check',
+        ToastIcon.error => 'x',
+        ToastIcon.info => 'info',
+      };
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: MediaQuery.paddingOf(context).top + 24,
-      left: 24,
-      right: 24,
+      top: MediaQuery.paddingOf(context).top + 14, // top-3.5
+      left: 0,
+      right: 0,
       child: FadeTransition(
         opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
         child: SlideTransition(
@@ -105,16 +141,29 @@ class _ToastWidgetState extends State<_ToastWidget>
           ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut)),
           child: Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              constraints: const BoxConstraints(maxWidth: 320),
+              // 胶囊：px-4 py-2 rounded-full bg-black/75
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: PortenColor.gray900.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFF000000).withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(999),
               ),
-              child: Text(
-                widget.message,
-                textAlign: TextAlign.center,
-                style: PortenTypography.sm.copyWith(color: PortenColor.white),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  LucideIcon(
+                    _iconName,
+                    size: 16, // w-4 h-4
+                    strokeWidth: 2,
+                    color: PortenColor.white,
+                  ),
+                  const SizedBox(width: 6), // gap-1.5
+                  Text(
+                    widget.message,
+                    style: PortenTypography.sm.copyWith(
+                      color: PortenColor.white,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/agreement_checkbox.dart';
+import '../../core/components/adaptive_scroll.dart';
 import '../../core/components/agreement_viewer.dart';
 import '../../core/components/auth_divider.dart';
 import '../../core/components/gradient_logo.dart';
@@ -108,7 +109,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (_accountCtrl.text.trim().isEmpty) return;
     if (!_agreementGuard()) return;
     final bool sent = await ref.read(authProvider.notifier).sendCode();
-    PortenToast.show(sent ? '验证码已发送' : '发送失败，请稍后重试');
+    PortenToast.show(
+          sent ? '验证码已发送' : '发送失败，请稍后重试',
+          icon: sent ? ToastIcon.success : ToastIcon.error,
+        );
   }
 
   /// 登录（对齐 Web 端 handleLogin）。
@@ -126,7 +130,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             identifier: account,
           );
       if (ok && mounted) {
-        PortenToast.show('登录成功');
+        PortenToast.show('登录成功', icon: ToastIcon.success);
         widget.onLoginSuccess();
       }
       return;
@@ -143,7 +147,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           identifier: account,
         );
     if (ok && mounted) {
-      PortenToast.show('登录成功');
+      PortenToast.show('登录成功', icon: ToastIcon.success);
       widget.onLoginSuccess();
     }
   }
@@ -166,26 +170,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       backgroundColor: PortenColor.white,
       resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints cons) {
-            // 键盘弹出时补等高底部内边距：滚动视口把键盘区纳入滚动范围，
-            // Flutter 的聚焦自动揭示（ensureVisible）才能把输入框滚到键盘上方。
-            final double insetBottom = MediaQuery.viewInsetsOf(context).bottom;
-            return SingleChildScrollView(
-              padding: EdgeInsets.only(bottom: insetBottom),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: cons.maxHeight),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    _buildTopHelp(),
-                    _buildFormSection(s),
-                    _buildBottomActions(),
-                  ],
-                ),
-              ),
-            );
-          },
+        // AdaptiveScroll：内容不满一屏时锁定不滚动（对齐 Web 端单屏
+        // overflow-hidden），超出才允许滚动；键盘弹出时底部补等高内边距，
+        // 聚焦输入框的自动揭示才能滚到键盘上方。
+        child: AdaptiveScroll(
+          alignment: MainAxisAlignment.spaceBetween,
+          child: Padding(
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                _buildTopHelp(),
+                _buildFormSection(s),
+                _buildBottomActions(),
+              ],
+            ),
+          ),
         ),
       ),
     );

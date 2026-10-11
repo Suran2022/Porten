@@ -41,8 +41,12 @@ public class LauncherViewModel : ViewModel() {
     }
 
     private companion object {
-        /** 与 Web 端 SPLASH_DURATION 完全一致：3000ms。 */
-        const val SPLASH_DURATION_MS: Long = 3_000L
+        /**
+         * 原生侧仅承担「系统启动画面 → Flutter 首帧」的过渡缓冲（400ms）。
+         * 完整的 3s 开屏（图标 + 流光 Logo + 服务声明）由 Flutter 侧统一承担，
+         * 原生再停留 3s 会造成双重开屏。
+         */
+        const val SPLASH_DURATION_MS: Long = 400L
         /** 预留：与 Web 端一致的淡出时长，供后续转场动画使用。 */
         const val FADE_DURATION_MS: Int = PortenMotion.SplashExitMs
     }

@@ -147,6 +147,18 @@ class LucideIcon extends StatelessWidget {
       <String>['M20 6L9 17l-5-5'],
       <List<double>>[],
     ],
+    // Info：圆圈 + 竖线 + 底点（Web 端 Toast info 图标）
+    'info': <Object>[
+      <String>['M12 16v-4', 'M12 8h.01'],
+      <List<double>>[
+        <double>[12, 12, 10],
+      ],
+    ],
+    // X：关闭叉（Web 端 Toast error 图标）
+    'x': <Object>[
+      <String>['M18 6L6 18', 'M6 6l12 12'],
+      <List<double>>[],
+    ],
   };
 
   @override
