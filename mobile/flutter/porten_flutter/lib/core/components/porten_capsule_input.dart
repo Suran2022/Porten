@@ -106,12 +106,14 @@ class _CapsuleInputState extends State<CapsuleInput> {
         textAlignVertical: TextAlignVertical.center,
         style: PortenTypography.base.copyWith(color: PortenColor.gray900),
         decoration: InputDecoration(
-          // isCollapsed 模式下文本/占位符贴顶（多轮 textAlignVertical 均无效），
-          // 改用 isDense + 垂直 contentPadding 强制在 48px 内居中（久验可靠）。
+          // 精确居中推导：hint 行盒 = 16px 字号 × 1.5 行高 = 24px；
+          // 容器高 48 → contentPadding 必须 (48-24)/2 = 12，上下各 12
+          // 精确填满零溢出（15 会导致 15+24+15=54 > 48 溢出错位——
+          // 这就是此前多轮 isCollapsed/textAlignVertical/isDense+15 均失败的原因）。
           isDense: true,
           border: InputBorder.none,
           counterText: '',
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
           hintText: widget.hint,
           hintStyle:
               PortenTypography.base.copyWith(color: PortenColor.gray400),

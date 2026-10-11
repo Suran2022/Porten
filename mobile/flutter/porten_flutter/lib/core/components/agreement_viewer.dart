@@ -94,17 +94,26 @@ class AgreementViewer extends StatelessWidget {
         bottom: false,
         child: Column(
           children: <Widget>[
-            // 顶栏：border-b border-gray-100
+            // 顶栏：border-b border-gray-100（px-4 pt-3 pb-3）
             Container(
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
               ),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(
                 children: <Widget>[
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: PortenBackIcon(size: 28),
+                  // w-10 h-10 点击区 + -ml-2（对齐 Web 端返回按钮）
+                  Transform.translate(
+                    offset: const Offset(-8, 0),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => Navigator.of(context).pop(),
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Center(child: PortenBackIcon(size: 28)),
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: Text(
@@ -118,12 +127,20 @@ class AgreementViewer extends StatelessWidget {
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => PortenToast.show('下载功能建设中（Mock 阶段）'),
-                    child: Text(
-                      '下载',
-                      style: PortenTypography.sm
-                          .copyWith(color: PortenColor.gray600),
+                  // 「下载」：px-2 -mr-2（对齐 Web 端点击区）
+                  Transform.translate(
+                    offset: const Offset(8, 0),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => PortenToast.show('下载功能建设中（Mock 阶段）'),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          '下载',
+                          style: PortenTypography.sm
+                              .copyWith(color: PortenColor.gray600),
+                        ),
+                      ),
                     ),
                   ),
                 ],

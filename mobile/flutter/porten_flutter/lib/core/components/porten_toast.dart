@@ -140,7 +140,13 @@ class _ToastWidgetState extends State<_ToastWidget>
             end: Offset.zero,
           ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut)),
           child: Center(
-            child: Container(
+            // 【关键】Toast 挂在 MaterialApp.builder 的 Overlay 里，
+            // 位于 Navigator/Material 之外——Text 没有 DefaultTextStyle 祖先时
+            // Flutter 引擎会强制绘制黄色双下划线（上轮"双黄线"的真正根因）。
+            // 包一层透明 Material 提供 DefaultTextStyle，彻底根治。
+            child: Material(
+              type: MaterialType.transparency,
+              child: Container(
               // 胶囊：px-4 py-2 rounded-full bg-black/75
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
@@ -165,6 +171,7 @@ class _ToastWidgetState extends State<_ToastWidget>
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ),
