@@ -159,6 +159,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
+                  // 零高占位：spaceBetween 下两个等大空隙把内容块精确
+                  // 垂直居中（对齐 Web 端 main flex-1 justify-center）。
+                  const SizedBox(width: double.infinity),
+                  // 内容块：Web 端 main 区整体（内部间距固定，不被撑散）
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
                   SizedBox(height: 24 * s),
                     // 标题：仅 step=form 显示（text-5xl font-bold）
                     if (isFormStep)
@@ -244,6 +252,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               if (_error != null) setState(() => _error = null);
                             },
                           ),
+                          const SizedBox(height: 8), // mb-2
                           SizedBox(
                             height: 32,
                             child: Center(
@@ -283,14 +292,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       loading: auth.isLoading,
                       onPressed: isFormStep ? _handleNext : _handleRegister,
                     ),
-                    AgreementCheckbox(
-                      checked: _agreed,
-                      onChanged: (bool v) => setState(() {
-                        _agreed = v;
-                        if (v) _agreementError = false;
-                      }),
-                      onOpenAgreement: AgreementViewer.open,
-                    ),
+                    // 协议勾选仅在第一步显示（验证码页不出现，按产品验收要求；
+                    // 勾选状态由第一步保留，注册提交时仍校验）。
+                    if (isFormStep)
+                      AgreementCheckbox(
+                        checked: _agreed,
+                        onChanged: (bool v) => setState(() {
+                          _agreed = v;
+                          if (v) _agreementError = false;
+                        }),
+                        onOpenAgreement: AgreementViewer.open,
+                      ),
                     // agreementError：text-xs text-red-500 text-center mt-2
                     if (_agreementError)
                       Padding(
@@ -302,6 +314,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               .copyWith(color: PortenColor.error),
                         ),
                       ),
+                    const SizedBox(height: 32), // main 区 pb-8
+                  ],
+                  ),
+                  // 底部：去登录（Web 端独立 bottom 区，贴底）
             // 底部：去登录（与表单同列 spaceBetween，键盘弹出时随滚动让位）
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
