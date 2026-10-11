@@ -123,8 +123,14 @@ class AuthController extends Notifier<AuthState> {
 
   /// 发送验证码：Mock 800ms 耗时 + 60s 倒计时
   /// （对齐 Web 端 sendCode / 手机号 mock setTimeout 800ms）。
+  ///
+  /// 注意：Web 端倒计时是各页面自己的局部 state，互不影响；
+  /// Flutter 端 countdown 在共享 provider 里，若在这里用
+  /// `countdown > 0` 拦截，登录页发过的倒计时会误伤注册页发送
+  /// （r8 回归：「发送验证码失败」），故此处仅拦截 isLoading 防连点。
   Future<bool> sendCode() async {
-    if (state.countdown > 0 || state.isLoading) return false;
+    if (state.isLoading) return false;
+    _stopTimer();
     state = state.copyWith(isLoading: true);
     await Future<void>.delayed(const Duration(milliseconds: 800));
     state = state.copyWith(isLoading: false, codeSent: true, countdown: 60);
