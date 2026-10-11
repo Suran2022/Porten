@@ -113,6 +113,8 @@ android {
             } else {
                 signingConfigs.getByName("debug") // 本地兜底，保证包始终可安装
             }
+            // 仅出 arm64-v8a：真机全量覆盖，体积减半，显著降低手机浏览器下载截断概率
+            ndk { abiFilters += "arm64-v8a" }
         }
     }
 

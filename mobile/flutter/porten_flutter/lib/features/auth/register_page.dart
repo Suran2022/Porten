@@ -22,6 +22,7 @@ import '../../core/components/icon_circle_button.dart';
 import '../../core/components/porten_button.dart';
 import '../../core/components/porten_capsule_input.dart';
 import '../../core/design/porten_colors.dart';
+import '../../core/design/porten_scale.dart';
 import '../../core/design/porten_typography.dart';
 import 'state/auth_controller.dart';
 
@@ -137,18 +138,24 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final AuthState auth = ref.watch(authProvider);
     final bool isFormStep = _step == _RegisterStep.form;
 
+    // 单屏三段布局 + resizeToAvoidBottomInset=false：键盘弹出时页面高度
+    // 不变（对齐 Web 端 fixed 视口），聚焦输入框自动滚动揭示，整页不压缩。
+    final double s = PortenScale.of(context);
+
     return Scaffold(
       backgroundColor: PortenColor.white,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints cons) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: cons.maxHeight),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    const SizedBox(height: 48),
+                    SizedBox(height: 24 * s),
                     // 标题：仅 step=form 显示（text-5xl font-bold）
                     if (isFormStep)
                       Text(
@@ -156,14 +163,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         style: TextStyle(
                           inherit: false,
                           fontFamily: PortenTypography.base.fontFamily,
-                          fontSize: 48,
+                          fontSize: 48 * s,
                           fontWeight: FontWeight.w700,
                           height: 1.2,
-                          letterSpacing: -48 * 0.025, // tracking-tight
+                          letterSpacing: -48 * s * 0.025, // tracking-tight
                           color: PortenColor.gray900,
                         ),
                       ),
-                    const SizedBox(height: 48), // mt-12
+                    SizedBox(height: 48 * s), // mt-12
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
@@ -291,11 +298,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               .copyWith(color: PortenColor.error),
                         ),
                       ),
-                  ],
-                ),
-              ),
-            ),
-            // 底部：去登录
+            // 底部：去登录（与表单同列 spaceBetween，键盘弹出时随滚动让位）
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: Column(
@@ -312,7 +315,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ],
               ),
             ),
-          ],
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

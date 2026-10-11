@@ -83,13 +83,15 @@ class _GradientButtonState extends State<GradientButton>
       child: AnimatedBuilder(
         animation: _flow,
         builder: (BuildContext context, Widget? child) {
+          // Web .porten-bg-gradient：background-size 200%，position 0%→100%
+          // 的位移 = 1 倍宽度。画布 2w（4 个 Alignment 单位），左缘 xL = -2t。
           final double t = _flowP.value;
           return DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(widget.height / 2),
               gradient: LinearGradient(
-                begin: Alignment(-2 + 4 * t, 0),
-                end: Alignment(0 + 4 * t, 0),
+                begin: Alignment(-2 + 2 * t, 0),
+                end: Alignment(2 + 2 * t, 0),
                 colors: PortenGradient.brandSurface,
                 stops: PortenGradient.brandSurfaceStops,
               ),

@@ -27,6 +27,7 @@ import '../../core/components/porten_capsule_input.dart';
 import '../../core/components/porten_icons.dart';
 import '../../core/components/porten_toast.dart';
 import '../../core/design/porten_colors.dart';
+import '../../core/design/porten_scale.dart';
 import '../../core/design/porten_typography.dart';
 import 'state/auth_controller.dart';
 
@@ -58,6 +59,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   LoginMethod? _lastMethod;
 
   bool _agreed = false;
+
+  // 对齐 Web 端：showPassword = isPasswordMode || porten；
+  // showCode = codeSent && !showPassword；
+  // 按钮文案：showPassword || codeSent ? '登录' : '获取验证码'。
+  bool get _showPassword =>
+      ref.read(authProvider).isPasswordMode ||
+      ref.read(authProvider).method == LoginMethod.porten;
+
+  bool get _showCode =>
+      ref.read(authProvider).codeSent && !_showPassword;
+
+  bool get _showLogin => _showPassword || _showCode;
 
   @override
   void dispose() {
@@ -142,203 +155,221 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final AuthState auth = ref.watch(authProvider);
     _syncMethodReset(auth);
 
-    // 对齐 Web 端：showPassword = isPasswordMode || porten；
-    // showCode = codeSent && !showPassword；
-    // 按钮文案：showPassword || codeSent ? '登录' : '获取验证码'。
-    final bool isPhone = auth.method == LoginMethod.phone;
-    final bool showPassword =
-        auth.isPasswordMode || auth.method == LoginMethod.porten;
-    final bool showCode = auth.codeSent && !showPassword;
-    final bool showLogin = showPassword || showCode;
+    // 单屏三段布局（对齐 Web 端 h-full flex flex-col）：
+    //   resizeToAvoidBottomInset=false —— 键盘弹出时页面高度不变（对齐 Web
+    //   fixed 视口行为），聚焦输入框由 Flutter 自动滚动揭示，整页不压缩；
+    //   Column spaceBetween —— 顶部帮助 / 中部表单 / 底部操作区，键盘收起时
+    //   恰好单屏铺满，无滚动；内容超高时整体可滚动兜底。
+    final double s = PortenScale.of(context);
 
     return Scaffold(
       backgroundColor: PortenColor.white,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            // Top help text：justify-end px-6 pt-6
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () => PortenToast.show('帮助中心建设中'),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        LucideIcon('help-circle',
-                            size: 14, color: PortenColor.gray400),
-                        const SizedBox(width: 4),
-                        Text(
-                          '帮助',
-                          style: PortenTypography.xs
-                              .copyWith(color: PortenColor.gray400),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // 主内容
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints cons) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: cons.maxHeight),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    const SizedBox(height: 48),
-                    const GradientLogo(fontSize: 48),
-                    const SizedBox(height: 48), // mt-12
-                    // 「登录」标签：text-sm gray-500 mb-3 pl-1
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 12),
-                        child: Text(
-                          '登录',
-                          style: PortenTypography.sm
-                              .copyWith(color: PortenColor.gray500),
-                        ),
-                      ),
-                    ),
-                    CapsuleInput(
-                      controller: _accountCtrl,
-                      hint: kMethodPlaceholders[auth.method]!,
-                      keyboardType: isPhone ? TextInputType.phone : null,
-                    ),
-                    const SizedBox(height: 12),
-                    // 密码区：max-h 过渡
-                    AnimatedCrossFade(
-                      duration: const Duration(milliseconds: 300),
-                      sizeCurve: Curves.easeOut,
-                      crossFadeState: showPassword
-                          ? CrossFadeState.showFirst
-                          : CrossFadeState.showSecond,
-                      firstChild: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          CapsuleInput(
-                            controller: _passwordCtrl,
-                            hint: '请输入密码',
-                            obscureText: true,
-                          ),
-                          // 忘记密码：flex justify-end mt-2 pr-1
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 8, right: 4),
-                              child: GestureDetector(
-                                onTap: () =>
-                                    PortenToast.show('找回密码功能建设中'),
-                                child: Text(
-                                  '忘记密码？',
-                                  style: PortenTypography.xs
-                                      .copyWith(color: PortenColor.gray400),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      secondChild: const SizedBox(width: double.infinity),
-                    ),
-                    const SizedBox(height: 12),
-                    // 验证码区
-                    AnimatedCrossFade(
-                      duration: const Duration(milliseconds: 300),
-                      sizeCurve: Curves.easeOut,
-                      crossFadeState: showCode
-                          ? CrossFadeState.showFirst
-                          : CrossFadeState.showSecond,
-                      firstChild: Column(
-                        children: <Widget>[
-                          CapsuleInput(
-                            controller: _codeCtrl,
-                            hint: '请输入验证码',
-                            keyboardType: TextInputType.number,
-                            maxLength: 6,
-                          ),
-                          SizedBox(
-                            height: 32,
-                            child: Center(
-                              child: auth.countdown > 0
-                                  ? Text(
-                                      '${auth.countdown}s 重新获取验证码',
-                                      style: PortenTypography.xs
-                                          .copyWith(color: PortenColor.gray400),
-                                    )
-                                  : GestureDetector(
-                                      onTap: _handleSendCode,
-                                      child: Text(
-                                        '重新获取验证码',
-                                        style: PortenTypography.xs.copyWith(
-                                          color: PortenColor.brandBlue,
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      secondChild: const SizedBox(width: double.infinity),
-                    ),
-                    GradientButton(
-                      label: showLogin ? '登录' : '获取验证码',
-                      loading: auth.isLoading,
-                      onPressed: () =>
-                          showLogin ? _handleLogin() : _handleSendCode(),
-                    ),
-                    AgreementCheckbox(
-                      checked: _agreed,
-                      onChanged: (bool v) => setState(() => _agreed = v),
-                      onOpenAgreement: AgreementViewer.open,
-                    ),
+                    _buildTopHelp(),
+                    _buildFormSection(s),
+                    _buildBottomActions(),
                   ],
                 ),
               ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// 顶部右侧「帮助」（justify-end px-6 pt-6）。
+  Widget _buildTopHelp() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          GestureDetector(
+            onTap: () => PortenToast.show('帮助中心建设中'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                LucideIcon('help-circle', size: 14, color: PortenColor.gray400),
+                const SizedBox(width: 4),
+                Text(
+                  '帮助',
+                  style:
+                      PortenTypography.xs.copyWith(color: PortenColor.gray400),
+                ),
+              ],
             ),
-            // 底部操作区：px-6 pb-8
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-              child: Column(
-                children: <Widget>[
-                  const AuthDivider(text: '注册/其他登录方式'),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      IconCircleButton(
-                        icon: 'user-plus',
-                        label: '注册',
-                        onTap: widget.onGoRegister,
-                      ),
-                      const SizedBox(width: 32), // gap-8
-                      IconCircleButton(
-                        icon: 'lock',
-                        label: '密码登录',
-                        onTap: () => ref
-                            .read(authProvider.notifier)
-                            .togglePasswordMode(),
-                      ),
-                      const SizedBox(width: 32),
-                      IconCircleButton(
-                        icon: 'more-horizontal',
-                        label: '其他登录方式',
-                        onTap: () => LoginMethodSheet.show(
-                          context,
-                          value: auth.method,
-                          onChange: (LoginMethod m) =>
-                              ref.read(authProvider.notifier).setMethod(m),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 中部表单区（flex-1 居中，px-6）：Logo → mt-12 → 登录标签 → 表单 → 按钮 → 协议。
+  Widget _buildFormSection(double s) {
+    final AuthState auth = ref.watch(authProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+      child: Column(
+        children: <Widget>[
+          GradientLogo(fontSize: 48 * s), // text-5xl
+          SizedBox(height: 48 * s), // mt-12
+          // 「登录」标签：text-sm gray-500 mb-3 pl-1
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 12),
+              child: Text(
+                '登录',
+                style: PortenTypography.sm
+                    .copyWith(color: PortenColor.gray500),
               ),
             ),
-          ],
-        ),
+          ),
+          CapsuleInput(
+            controller: _accountCtrl,
+            hint: kMethodPlaceholders[auth.method]!,
+            keyboardType:
+                auth.method == LoginMethod.phone ? TextInputType.phone : null,
+          ),
+          const SizedBox(height: 12),
+          // 密码区：max-h 过渡
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 300),
+            sizeCurve: Curves.easeOut,
+            crossFadeState: _showPassword
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                CapsuleInput(
+                  controller: _passwordCtrl,
+                  hint: '请输入密码',
+                  obscureText: true,
+                ),
+                // 忘记密码：flex justify-end mt-2 pr-1
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 4),
+                    child: GestureDetector(
+                      onTap: () => PortenToast.show('找回密码功能建设中'),
+                      child: Text(
+                        '忘记密码？',
+                        style: PortenTypography.xs
+                            .copyWith(color: PortenColor.gray400),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            secondChild: const SizedBox(width: double.infinity),
+          ),
+          const SizedBox(height: 12),
+          // 验证码区
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 300),
+            sizeCurve: Curves.easeOut,
+            crossFadeState: _showCode
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Column(
+              children: <Widget>[
+                CapsuleInput(
+                  controller: _codeCtrl,
+                  hint: '请输入验证码',
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                ),
+                SizedBox(
+                  height: 32,
+                  child: Center(
+                    child: auth.countdown > 0
+                        ? Text(
+                            '${auth.countdown}s 重新获取验证码',
+                            style: PortenTypography.xs
+                                .copyWith(color: PortenColor.gray400),
+                          )
+                        : GestureDetector(
+                            onTap: _handleSendCode,
+                            child: Text(
+                              '重新获取验证码',
+                              style: PortenTypography.xs
+                                  .copyWith(color: PortenColor.brandBlue),
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+            secondChild: const SizedBox(width: double.infinity),
+          ),
+          GradientButton(
+            label: _showLogin ? '登录' : '获取验证码',
+            loading: auth.isLoading,
+            onPressed: () => _showLogin ? _handleLogin() : _handleSendCode(),
+          ),
+          AgreementCheckbox(
+            checked: _agreed,
+            onChanged: (bool v) => setState(() => _agreed = v),
+            onOpenAgreement: AgreementViewer.open,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 底部操作区：px-6 pb-8 分隔线 + 三按钮（gap-8）。
+  Widget _buildBottomActions() {
+    final AuthState auth = ref.watch(authProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+      child: Column(
+        children: <Widget>[
+          const AuthDivider(text: '注册/其他登录方式'),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              IconCircleButton(
+                icon: 'user-plus',
+                label: '注册',
+                onTap: widget.onGoRegister,
+              ),
+              const SizedBox(width: 32), // gap-8
+              IconCircleButton(
+                icon: 'lock',
+                label: '密码登录',
+                onTap: () =>
+                    ref.read(authProvider.notifier).togglePasswordMode(),
+              ),
+              const SizedBox(width: 32),
+              IconCircleButton(
+                icon: 'more-horizontal',
+                label: '其他登录方式',
+                onTap: () => LoginMethodSheet.show(
+                  context,
+                  value: auth.method,
+                  onChange: (LoginMethod m) =>
+                      ref.read(authProvider.notifier).setMethod(m),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

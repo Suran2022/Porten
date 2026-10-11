@@ -4,12 +4,16 @@
  * Web 端实现：
  *   - 容器 flex items-start gap-1.5 mt-4；
  *   - 圆点 w-3 h-3（12px）rounded-full border-[1.5px] mt-[3px]，
- *     选中时 border-transparent + .agreement-gradient（135deg 蓝粉白粉蓝流光 3s），
+ *     选中时 border-transparent + .agreement-gradient（135deg 蓝粉蓝流光 3s），
  *     内嵌白色对勾 polyline（strokeWidth 2.5，p-[1px]）；
- *   - 文案 text-xs text-gray-500：「我已阅读并遵守《用户协议》，《跨性别资源》，
- *     《信息收集》继续使用」，链接 #F5A9B8 underline underline-offset-2。
+ *   - 文案 text-xs text-gray-500：《协议》链接为纯内联 <a>（#F5A9B8 下划线），
+ *     与普通文本同一排版流，无额外盒模型空隙，随行自然换行。
+ *
+ * Flutter 侧：链接用 TextSpan + TapGestureRecognizer（纯内联），禁用
+ * WidgetSpan——盒模型 span 会引入多余空隙与异常换行点。
  */
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../design/porten_colors.dart';
@@ -17,7 +21,7 @@ import '../design/porten_typography.dart';
 import 'svg_path.dart';
 
 /// 协议勾选行。
-class AgreementCheckbox extends StatelessWidget {
+class AgreementCheckbox extends StatefulWidget {
   const AgreementCheckbox({
     super.key,
     required this.checked,
@@ -32,14 +36,43 @@ class AgreementCheckbox extends StatelessWidget {
   /// onOpenAgreement 回调架构）。
   final void Function(BuildContext context, String agreementId) onOpenAgreement;
 
-  static const Map<String, String> _links = <String, String>{
-    '《用户协议》': 'user',
-    '《跨性别资源》': 'trans',
-    '《信息收集》': 'privacy',
-  };
+  @override
+  State<AgreementCheckbox> createState() => _AgreementCheckboxState();
+}
+
+class _AgreementCheckboxState extends State<AgreementCheckbox> {
+  final Map<String, TapGestureRecognizer> _recognizers =
+      <String, TapGestureRecognizer>{};
+
+  /// 链接样式（#F5A9B8 下划线，对齐 Web 端 .agreement-link）。
+  static const TextStyle _linkStyle = TextStyle(
+    color: Color(0xFFF5A9B8),
+    decoration: TextDecoration.underline,
+    decorationColor: Color(0xFFF5A9B8),
+    decorationStyle: TextDecorationStyle.solid,
+  );
+
+  TapGestureRecognizer _recognizerFor(String id) {
+    return _recognizers.putIfAbsent(id, () {
+      final TapGestureRecognizer recognizer = TapGestureRecognizer();
+      recognizer.onTap = () => widget.onOpenAgreement(context, id);
+      return recognizer;
+    });
+  }
+
+  @override
+  void dispose() {
+    for (final TapGestureRecognizer recognizer in _recognizers.values) {
+      recognizer.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    // 链接文字沿用正文 xs 字号，仅颜色与下划线不同（对齐 Web 端继承关系）。
+    final TextStyle linkStyle = PortenTypography.xs.merge(_linkStyle);
+
     return Padding(
       padding: const EdgeInsets.only(top: 16), // mt-4
       child: Row(
@@ -48,8 +81,8 @@ class AgreementCheckbox extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 3),
             child: _AgreementDot(
-              checked: checked,
-              onTap: () => onChanged(!checked),
+              checked: widget.checked,
+              onTap: () => widget.onChanged(!widget.checked),
             ),
           ),
           const SizedBox(width: 6), // gap-1.5
@@ -60,73 +93,29 @@ class AgreementCheckbox extends StatelessWidget {
                     .copyWith(color: PortenColor.gray500, height: 1.625),
                 children: <InlineSpan>[
                   const TextSpan(text: '我已阅读并遵守'),
-                  ..._buildLinks(),
+                  TextSpan(
+                    text: '《用户协议》',
+                    style: linkStyle,
+                    recognizer: _recognizerFor('user'),
+                  ),
+                  const TextSpan(text: '，'),
+                  TextSpan(
+                    text: '《跨性别资源》',
+                    style: linkStyle,
+                    recognizer: _recognizerFor('trans'),
+                  ),
+                  const TextSpan(text: '，'),
+                  TextSpan(
+                    text: '《信息收集》',
+                    style: linkStyle,
+                    recognizer: _recognizerFor('privacy'),
+                  ),
                   const TextSpan(text: '继续使用'),
                 ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  List<InlineSpan> _buildLinks() {
-    final List<InlineSpan> spans = <InlineSpan>[];
-    final List<String> keys = _links.keys.toList();
-    for (int i = 0; i < keys.length; i++) {
-      final String label = keys[i];
-      final String id = _links[label]!;
-      spans.add(_AgreementLinkSpan(
-        label: label,
-        id: id,
-        onOpen: onOpenAgreement,
-      ));
-      // Web 端链接之间是中文逗号「，」
-      if (i < keys.length - 1) {
-        spans.add(const TextSpan(text: '，'));
-      }
-    }
-    return spans;
-  }
-}
-
-/// 协议链接（#F5A9B8 下划线，点击打开全文查看器）。
-class _AgreementLinkSpan extends WidgetSpan {
-  _AgreementLinkSpan({
-    required String label,
-    required String id,
-    required void Function(BuildContext, String) onOpen,
-  }) : super(
-          alignment: PlaceholderAlignment.baseline,
-          baseline: TextBaseline.alphabetic,
-          child: _AgreementLinkText(label: label, id: id, onOpen: onOpen),
-        );
-}
-
-class _AgreementLinkText extends StatelessWidget {
-  const _AgreementLinkText({
-    required this.label,
-    required this.id,
-    required this.onOpen,
-  });
-
-  final String label;
-  final String id;
-  final void Function(BuildContext, String) onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onOpen(context, id),
-      child: Text(
-        label,
-        style: PortenTypography.xs.copyWith(
-          color: const Color(0xFFF5A9B8),
-          decoration: TextDecoration.underline,
-          decorationColor: const Color(0xFFF5A9B8),
-          decorationStyle: TextDecorationStyle.solid,
-        ),
       ),
     );
   }
@@ -145,8 +134,8 @@ class _AgreementDot extends StatefulWidget {
 
 class _AgreementDotState extends State<_AgreementDot>
     with SingleTickerProviderStateMixin {
-  // Web 端 .agreement-gradient：135deg 三色渐变，background-size 200%，
-  // 3s ease-in-out 流光（background-position 0%→100%→0% 往返）。
+  // Web 端 .agreement-gradient：135deg 蓝粉蓝三色，background-size 200% 200%，
+  // 3s ease-in-out 流光（position 0%→100%→0% 往返）。
   // 用 3s repeat(reverse: true) + easeInOut 曲线等价还原。
   late final AnimationController _flow = AnimationController(
     vsync: this,
@@ -185,12 +174,17 @@ class _AgreementDotState extends State<_AgreementDot>
                   ? LinearGradient(
                       begin: Alignment(-0.7 + d, -0.7 + d), // 135deg
                       end: Alignment(0.7 + d, 0.7 + d),
-                      colors: PortenGradient.brandText,
-                      stops: PortenGradient.brandTextStops,
+                      colors: const <Color>[
+                        PortenColor.brandBlue,
+                        PortenColor.brandPink,
+                        PortenColor.brandBlue,
+                      ],
+                      stops: const <double>[0.0, 0.5, 1.0],
                     )
                   : null,
               border: Border.all(
-                color: widget.checked ? Colors.transparent : PortenColor.gray300,
+                color:
+                    widget.checked ? Colors.transparent : PortenColor.gray300,
                 width: 1.5, // border-[1.5px]
               ),
             ),
