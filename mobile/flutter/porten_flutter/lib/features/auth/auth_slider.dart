@@ -1,11 +1,12 @@
 /*
- * 认证滑块容器（对齐 Web 端 AuthSlider）。
+ * 认证滑块容器（对齐 Web 端 AuthSlider.tsx）。
  *
  * Web 端实现：200% 宽度容器内并排放置登录页与注册页，
  * 通过 translateX(±50%) 切换，过渡 500ms cubic-bezier(0.25,0.1,0.25,1)；
- * 支持在页面空白处左右滑动手势切换。
+ * 支持页面空白处左右滑动手势切换。
  *
- * Flutter 实现：水平位移动画 + GestureDetector 横滑（阈值 80dp）。
+ * Flutter 实现：注册页作为覆盖层从右侧滑入/滑出（视觉等价 translateX），
+ * 手势为横滑速度阈值 ±300px/s。
  */
 
 import 'package:flutter/material.dart';

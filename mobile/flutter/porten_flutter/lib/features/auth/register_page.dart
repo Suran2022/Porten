@@ -2,22 +2,25 @@
  * 注册页（100% 还原 Web 端 frontend/src/pages/RegisterPage.tsx）。
  *
  * 两步流程：
- *   step=form  —— 标题「注册 Porten」+ 副文案「创建身份继续」
- *                 邮箱/密码/确认密码 + 校验（EMAIL_REGEX、密码≥8 位、
- *                 字母数字混合、两次一致）+ 协议勾选（未勾选显示
- *                 agreementError「请阅读并同意相关协议后继续」）+
- *                 GradientButton「下一步」；
- *   step=code  —— 副文案「输入代码完成身份创建」+ 6 位验证码 + 60s 倒计时
- *                 + GradientButton「立即注册」。
+ *   step=form  —— 「注册 Porten」大标题（text-5xl font-bold）+「创建身份继续」
+ *                 + 邮箱/设置密码/确认密码 + 校验（错误红字居中显示于按钮上方）+
+ *                 GradientButton「下一步」+ 协议勾选（未勾选 → agreementError
+ *                 红字「请阅读并同意相关协议后继续」显示在勾选行下方 mt-2）；
+ *   step=code  —— 「输入代码完成身份创建」+ 6 位验证码 + 60s 倒计时
+ *                 （「{n}s 重新获取验证码」/「重新获取验证码」#5BCEFA）+
+ *                 GradientButton「立即注册」；
+ *   底部：AuthDivider「去登录」+ 单个 LogIn 图标按钮「去登录」。
  */
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/agreement_checkbox.dart';
+import '../../core/components/agreement_viewer.dart';
+import '../../core/components/auth_divider.dart';
+import '../../core/components/icon_circle_button.dart';
 import '../../core/components/porten_button.dart';
 import '../../core/components/porten_capsule_input.dart';
-import '../../core/components/porten_toast.dart';
 import '../../core/design/porten_colors.dart';
 import '../../core/design/porten_typography.dart';
 import 'state/auth_controller.dart';
@@ -46,7 +49,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   _RegisterStep _step = _RegisterStep.form;
   bool _agreed = false;
-  String? _agreementError;
+  bool _agreementError = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -57,55 +61,71 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
-  // ------------------------------ 第一步：表单校验 ------------------------------
+  // ------------------------------ 校验（对齐 Web 端 validateForm） ------------------------------
 
-  void _onNextTap(AuthState auth) {
+  String? _validateForm() {
     final String email = _emailCtrl.text.trim();
-
-    if (_step == _RegisterStep.code) {
-      _onRegisterTap(auth, email);
-      return;
-    }
-
-    if (email.isEmpty) {
-      PortenToast.show('请输入邮箱');
-      return;
-    }
-    if (!AuthController.isValidEmail(email)) {
-      PortenToast.show('请输入正确的邮箱地址');
-      return;
+    if (email.isEmpty || !AuthController.isValidEmail(email)) {
+      return '请输入正确的邮箱地址';
     }
     final String? passwordError = AuthController.validatePassword(_passwordCtrl.text);
-    if (passwordError != null) {
-      PortenToast.show(passwordError);
-      return;
+    if (passwordError != null) return passwordError;
+    if (_passwordCtrl.text != _confirmCtrl.text) {
+      return '两次输入的密码不一致';
     }
-    if (_confirmCtrl.text != _passwordCtrl.text) {
-      PortenToast.show('两次输入的密码不一致');
-      return;
-    }
-    if (!_agreed) {
-      setState(() => _agreementError = '请阅读并同意相关协议后继续');
-      return;
-    }
-    setState(() => _agreementError = null);
-
-    // 进入第二步：发送验证码并启动倒计时。
-    if (ref.read(authProvider.notifier).sendCode()) {
-      setState(() => _step = _RegisterStep.code);
-      PortenToast.show('验证码已发送（Mock 环境任意 6 位可通过）');
-    }
+    return null;
   }
 
-  Future<void> _onRegisterTap(AuthState auth, String email) async {
-    if (_codeCtrl.text.length != 6) {
-      PortenToast.show('请输入 6 位验证码');
+  // ------------------------------ 交互 ------------------------------
+
+  Future<void> _handleNext() async {
+    setState(() {
+      _error = null;
+      if (!_agreed) _agreementError = true;
+    });
+    if (!_agreed) return;
+    setState(() => _agreementError = false);
+    final String? err = _validateForm();
+    if (err != null) {
+      setState(() => _error = err);
       return;
     }
-    final bool ok =
-        await ref.read(authProvider.notifier).registerMock(identifier: email);
+    final bool sent = await ref.read(authProvider.notifier).sendCode();
+    if (!mounted) return;
+    if (!sent) {
+      setState(() => _error = '发送验证码失败');
+      return;
+    }
+    setState(() {
+      _step = _RegisterStep.code;
+      _codeCtrl.clear();
+    });
+  }
+
+  Future<void> _handleResend() async {
+    final AuthState auth = ref.read(authProvider);
+    if (auth.countdown > 0) return;
+    setState(() => _error = null);
+    final bool sent = await ref.read(authProvider.notifier).sendCode();
+    if (!mounted) return;
+    if (!sent) setState(() => _error = '发送验证码失败');
+  }
+
+  Future<void> _handleRegister() async {
+    setState(() {
+      _error = null;
+      if (!_agreed) _agreementError = true;
+    });
+    if (!_agreed) return;
+    setState(() => _agreementError = false);
+    if (_codeCtrl.text.length != 6) {
+      setState(() => _error = '请输入 6 位验证码');
+      return;
+    }
+    final bool ok = await ref
+        .read(authProvider.notifier)
+        .registerMock(identifier: _emailCtrl.text.trim());
     if (ok && mounted) {
-      PortenToast.show('注册成功，欢迎加入 Porten');
       widget.onRegisterSuccess();
     }
   }
@@ -120,140 +140,181 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return Scaffold(
       backgroundColor: PortenColor.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const SizedBox(height: 56),
-              if (isFormStep) ...<Widget>[
-                Text(
-                  '注册 Porten',
-                  style: TextStyle(
-                    inherit: false,
-                    fontFamily: PortenTypography.base.fontFamily,
-                    fontSize: 48,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                    color: PortenColor.gray900,
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ],
-              Text(
-                isFormStep ? '创建身份继续' : '输入代码完成身份创建',
-                style: PortenTypography.sm.copyWith(color: PortenColor.gray500),
-              ),
-              const SizedBox(height: 36),
-              AnimatedCrossFade(
-                duration: const Duration(milliseconds: 300),
-                sizeCurve: Curves.easeInOut,
-                crossFadeState: isFormStep
-                    ? CrossFadeState.showFirst
-                    : CrossFadeState.showSecond,
-                firstChild: Column(
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    CapsuleInput(
-                      controller: _emailCtrl,
-                      hint: '邮箱地址',
-                      prefixIcon: Icons.mail_outline,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 12),
-                    CapsuleInput(
-                      controller: _passwordCtrl,
-                      hint: '密码（至少 8 位，含字母和数字）',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 12),
-                    CapsuleInput(
-                      controller: _confirmCtrl,
-                      hint: '确认密码',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: true,
-                    ),
-                  ],
-                ),
-                secondChild: Column(
-                  children: <Widget>[
-                    CapsuleInput(
-                      controller: _codeCtrl,
-                      hint: '6 位验证码',
-                      prefixIcon: Icons.shield_outlined,
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 48),
+                    // 标题：仅 step=form 显示（text-5xl font-bold）
+                    if (isFormStep)
+                      Text(
+                        '注册 Porten',
+                        style: TextStyle(
+                          inherit: false,
+                          fontFamily: PortenTypography.base.fontFamily,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                          letterSpacing: -48 * 0.025, // tracking-tight
+                          color: PortenColor.gray900,
+                        ),
+                      ),
+                    const SizedBox(height: 48), // mt-12
                     Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed:
-                            auth.countdown > 0 ? null : () => _resendCode(),
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 12),
                         child: Text(
-                          auth.countdown > 0
-                              ? '${auth.countdown} s 后重发'
-                              : '重新发送验证码',
-                          style: PortenTypography.xs.copyWith(
-                            color: auth.countdown > 0
-                                ? PortenColor.gray400
-                                : PortenColor.brandBlue,
-                          ),
+                          isFormStep ? '创建身份继续' : '输入代码完成身份创建',
+                          style: PortenTypography.sm
+                              .copyWith(color: PortenColor.gray500),
                         ),
                       ),
                     ),
+                    // Step 1 表单区：max-h 过渡
+                    AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 300),
+                      sizeCurve: Curves.easeOut,
+                      crossFadeState: isFormStep
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      firstChild: Column(
+                        children: <Widget>[
+                          CapsuleInput(
+                            controller: _emailCtrl,
+                            hint: '请输入邮箱',
+                            keyboardType: TextInputType.emailAddress,
+                            onChanged: (_) {
+                              if (_error != null) setState(() => _error = null);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          CapsuleInput(
+                            controller: _passwordCtrl,
+                            hint: '设置密码',
+                            obscureText: true,
+                            onChanged: (_) {
+                              if (_error != null) setState(() => _error = null);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          CapsuleInput(
+                            controller: _confirmCtrl,
+                            hint: '确认密码',
+                            obscureText: true,
+                            onChanged: (_) {
+                              if (_error != null) setState(() => _error = null);
+                            },
+                          ),
+                          const SizedBox(height: 20), // mb-5
+                        ],
+                      ),
+                      secondChild: const SizedBox(width: double.infinity),
+                    ),
+                    // Step 2 验证码区
+                    AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 300),
+                      sizeCurve: Curves.easeOut,
+                      crossFadeState: isFormStep
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      firstChild: Column(
+                        children: <Widget>[
+                          CapsuleInput(
+                            controller: _codeCtrl,
+                            hint: '请输入验证码',
+                            keyboardType: TextInputType.number,
+                            maxLength: 6,
+                            onChanged: (_) {
+                              if (_error != null) setState(() => _error = null);
+                            },
+                          ),
+                          SizedBox(
+                            height: 32,
+                            child: Center(
+                              child: auth.countdown > 0
+                                  ? Text(
+                                      '${auth.countdown}s 重新获取验证码',
+                                      style: PortenTypography.xs
+                                          .copyWith(color: PortenColor.gray400),
+                                    )
+                                  : GestureDetector(
+                                      onTap: _handleResend,
+                                      child: Text(
+                                        '重新获取验证码',
+                                        style: PortenTypography.xs.copyWith(
+                                          color: PortenColor.brandBlue,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      secondChild: const SizedBox(width: double.infinity),
+                    ),
+                    // 错误红字：text-xs text-red-500 text-center mb-3
+                    if (_error != null) ...<Widget>[
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: PortenTypography.xs
+                            .copyWith(color: PortenColor.error),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    GradientButton(
+                      label: isFormStep ? '下一步' : '立即注册',
+                      loading: auth.isLoading,
+                      onPressed: isFormStep ? _handleNext : _handleRegister,
+                    ),
+                    AgreementCheckbox(
+                      checked: _agreed,
+                      onChanged: (bool v) => setState(() {
+                        _agreed = v;
+                        if (v) _agreementError = false;
+                      }),
+                      onOpenAgreement: AgreementViewer.open,
+                    ),
+                    // agreementError：text-xs text-red-500 text-center mt-2
+                    if (_agreementError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          '请阅读并同意相关协议后继续',
+                          textAlign: TextAlign.center,
+                          style: PortenTypography.xs
+                              .copyWith(color: PortenColor.error),
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              GradientButton(
-                label: isFormStep ? '下一步' : '立即注册',
-                loading: auth.isLoading,
-                onPressed: () => _onNextTap(auth),
-              ),
-              const SizedBox(height: 20),
-              if (isFormStep)
-                AgreementCheckbox(
-                  checked: _agreed,
-                  onChanged: (bool v) => setState(() {
-                    _agreed = v;
-                    if (v) _agreementError = null;
-                  }),
-                  errorText: _agreementError,
-                ),
-              const SizedBox(height: 28),
-              Center(
-                child: TextButton(
-                  onPressed: widget.onGoLogin,
-                  child: Text.rich(
-                    TextSpan(
-                      text: '已有身份？',
-                      style: PortenTypography.sm.copyWith(
-                        color: PortenColor.gray500,
-                      ),
-                      children: <InlineSpan>[
-                        TextSpan(
-                          text: '去登录',
-                          style: PortenTypography.sm.copyWith(
-                            color: PortenColor.brandBlue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+            ),
+            // 底部：去登录
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+              child: Column(
+                children: <Widget>[
+                  const AuthDivider(text: '去登录'),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: IconCircleButton(
+                      icon: 'log-in',
+                      label: '去登录',
+                      onTap: widget.onGoLogin,
                     ),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  void _resendCode() {
-    if (ref.read(authProvider.notifier).sendCode()) {
-      PortenToast.show('验证码已重新发送');
-    }
   }
 }

@@ -1,8 +1,8 @@
 /*
- * 全局 Toast（对齐 Web 端 toastStore + ToastHost）。
+ * 全局 Toast（对齐 Web 端 toastStore + Toast 组件）。
  *
- * Web 端实现：页面顶部浮现的黑底白字圆角条，2.5s 自动消失，
- * 多条 Toast 纵向堆叠；Flutter 实现为 Overlay 顶部插入 + 渐隐动画。
+ * Web 端实现：页面顶部居中浮现的黑底白字圆角条，2.5s 自动消失；
+ * App 端实现为 Overlay 顶部插入 + 渐隐动画，无需 BuildContext。
  */
 
 import 'dart:async';
@@ -15,18 +15,18 @@ import '../design/porten_typography.dart';
 /// 全局 Toast 入口（无需 BuildContext）。
 abstract final class PortenToast {
   static OverlayEntry? _entry;
-  static Timer? _timer;
   static final List<String> _queue = <String>[];
 
   /// 展示一条 Toast，默认 2.5s 后消失。
-  static void show(String message, {Duration duration = const Duration(milliseconds: 2500)}) {
+  static void show(String message,
+      {Duration duration = const Duration(milliseconds: 2500)}) {
     if (message.isEmpty) return;
     _queue.add(message);
     if (_entry != null) return; // 已有 Toast 在展示，等它消失后接续队列
-    _present(duration);
+    _present();
   }
 
-  static void _present(Duration duration) {
+  static void _present() {
     if (_queue.isEmpty) return;
     final String message = _queue.removeAt(0);
     final OverlayState? overlay = _overlayKey.currentState;
@@ -35,17 +35,13 @@ abstract final class PortenToast {
       builder: (BuildContext context) => _ToastWidget(
         message: message,
         onDismissed: () {
-          _removeEntry();
-          if (_queue.isNotEmpty) _present(duration);
+          _entry?.remove();
+          _entry = null;
+          if (_queue.isNotEmpty) _present();
         },
       ),
     );
     overlay.insert(_entry!);
-  }
-
-  static void _removeEntry() {
-    _entry?.remove();
-    _entry = null;
   }
 
   /// 由应用根部注册 Overlay，使 Toast 可脱离 Navigator 使用。
@@ -54,9 +50,9 @@ abstract final class PortenToast {
 
   /// 测试/热重载兜底清理。
   static void clear() {
-    _timer?.cancel();
     _queue.clear();
-    _removeEntry();
+    _entry?.remove();
+    _entry = null;
   }
 }
 

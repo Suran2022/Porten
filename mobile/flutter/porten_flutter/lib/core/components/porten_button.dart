@@ -1,9 +1,10 @@
 /*
- * 品牌渐变按钮（对齐 Web 端 GradientButton + .porten-bg-gradient）。
+ * 品牌渐变按钮（100% 对齐 Web 端 GradientButton.tsx + .porten-bg-gradient）。
  *
- * Web 端实现：h-12 rounded-full 的胶囊按钮，背景 .porten-bg-gradient
- * （蓝→粉→蓝，90deg，8s 循环流光），文本白色 font-medium；
- * loading 状态显示 .spinner（白色圆环，0.8s/圈）。
+ * Web 端实现：h-12 w-full rounded-full 胶囊按钮，背景 .porten-bg-gradient
+ * （蓝→粉→蓝，90deg，8s 流光），文本白色 text-base font-medium；
+ * loading 时文本替换为 .spinner（白色圆环 20px，0.8s/圈）；
+ * disabled 时 opacity-50。
  */
 
 import 'package:flutter/material.dart';
@@ -18,8 +19,6 @@ const Duration _kSurfaceFlowDuration = Duration(seconds: 8);
 const Duration _kSpinnerDuration = Duration(milliseconds: 800);
 
 /// 品牌渐变按钮。
-///
-/// [onPressed] 为 null 时进入禁用态（灰底，对齐 Web 端 disabled:bg-gray-300）。
 class GradientButton extends StatefulWidget {
   const GradientButton({
     super.key,
@@ -28,7 +27,6 @@ class GradientButton extends StatefulWidget {
     this.loading = false,
     this.height = 48,
     this.fontSize = 16,
-    this.enabledBackground,
   });
 
   final String label;
@@ -36,9 +34,6 @@ class GradientButton extends StatefulWidget {
   final bool loading;
   final double height;
   final double fontSize;
-
-  /// 禁用态底色（可由主题覆写）。
-  final Color? enabledBackground;
 
   @override
   State<GradientButton> createState() => _GradientButtonState();
@@ -77,7 +72,7 @@ class _GradientButtonState extends State<GradientButton>
   Widget build(BuildContext context) {
     final bool disabled = widget.onPressed == null || widget.loading;
     return Opacity(
-      opacity: widget.onPressed == null && !widget.loading ? 0.6 : 1.0,
+      opacity: disabled ? 0.85 : 1.0,
       child: AnimatedBuilder(
         animation: _flow,
         builder: (BuildContext context, Widget? child) {
@@ -105,8 +100,8 @@ class _GradientButtonState extends State<GradientButton>
               child: Center(
                 child: widget.loading
                     ? SizedBox(
-                        width: widget.fontSize * 1.1,
-                        height: widget.fontSize * 1.1,
+                        width: 20, // .spinner 20px
+                        height: 20,
                         child: AnimatedBuilder(
                           animation: _spinner,
                           builder: (BuildContext context, _) {
@@ -117,7 +112,8 @@ class _GradientButtonState extends State<GradientButton>
                                 valueColor: const AlwaysStoppedAnimation<Color>(
                                   PortenColor.white,
                                 ),
-                                backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                backgroundColor:
+                                    PortenColor.white.withValues(alpha: 0.3),
                               ),
                             );
                           },

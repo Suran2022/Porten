@@ -1,8 +1,8 @@
 /*
- * 认证页分隔行（对齐 Web 端 AuthDivider + .fade-divider）。
+ * 认证页分隔行（100% 对齐 Web 端 AuthDivider.tsx）。
  *
- * Web 端实现：左右两条 1px 渐变淡出线（transparent → gray-300/30 → transparent），
- * 中央文字包在白色圆角背景里，形成「线穿文字」的视觉。
+ * Web 端实现：relative 容器 py-2，.fade-divider 横贯线（transparent →
+ * gray-300/30 → transparent），中央 text-xs text-gray-400 px-3 bg-white 文字。
  */
 
 import 'package:flutter/material.dart';
@@ -10,30 +10,32 @@ import 'package:flutter/material.dart';
 import '../design/porten_colors.dart';
 import '../design/porten_typography.dart';
 
-/// 认证页「其他方式」分隔行。
+/// 认证页分隔行。
 class AuthDivider extends StatelessWidget {
-  const AuthDivider({super.key, required this.label});
+  const AuthDivider({super.key, required this.text});
 
-  final String label;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        const Expanded(child: _FadeLine()),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          decoration: BoxDecoration(
+    return SizedBox(
+      height: 32, // py-2 + 文本行高
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          // .fade-divider：absolute inset-x-0
+          const Positioned.fill(child: _FadeLine()),
+          // relative z-10 px-3 bg-white 文字
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             color: PortenColor.white,
-            borderRadius: BorderRadius.circular(8),
+            child: Text(
+              text,
+              style: PortenTypography.xs.copyWith(color: PortenColor.gray400),
+            ),
           ),
-          child: Text(
-            label,
-            style: PortenTypography.xs.copyWith(color: PortenColor.gray400),
-          ),
-        ),
-        const Expanded(child: _FadeLine()),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -43,17 +45,20 @@ class _FadeLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 1,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: <Color>[
-              PortenColor.gray300.withValues(alpha: 0),
-              PortenColor.gray300.withValues(alpha: 0.3),
-              PortenColor.gray300.withValues(alpha: 0),
-            ],
-            stops: const <double>[0.0, 0.5, 1.0],
+    return Align(
+      alignment: Alignment.center,
+      child: SizedBox(
+        height: 1,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: <Color>[
+                PortenColor.gray300.withValues(alpha: 0),
+                PortenColor.gray300.withValues(alpha: 0.3),
+                PortenColor.gray300.withValues(alpha: 0),
+              ],
+              stops: const <double>[0.0, 0.5, 1.0],
+            ),
           ),
         ),
       ),

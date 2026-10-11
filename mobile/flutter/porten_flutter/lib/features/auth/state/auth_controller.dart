@@ -3,12 +3,11 @@
  *
  * 职责：
  *   1. 登录方式（email/phone/porten）与 密码/验证码 模式管理；
- *   2. 验证码 60s 倒计时（页面销毁即停止，无泄漏）；
- *   3. Mock 登录/注册（对齐 Web 端 loginAsMock / mockEngine 认证路由）；
- *   4. 协议勾选前置校验（未勾选时 toast「请先同意相关协议」由页面触发）。
+ *   2. 验证码发送（Mock 800ms 耗时）+ 60s 倒计时（页面销毁即停止）；
+ *   3. Mock 登录/注册（对齐 Web 端 loginAsMock）；
+ *   4. 协议勾选前置校验文案由页面触发（「请先同意相关协议」）。
  *
- * 防御性设计：所有异步操作带 loading 态与 try/catch，异常统一转 Toast 文案，
- * 绝不把裸异常抛进 UI 层。
+ * 防御性设计：所有异步操作带 loading 态与异常兜底，不把裸异常抛进 UI 层。
  */
 
 import 'dart:async';
@@ -23,7 +22,11 @@ enum LoginCredentialType { email, phone }
 
 /// 认证会话（Mock 阶段）。
 class AuthSession {
-  const AuthSession({required this.uid, required this.identifier, required this.nickname});
+  const AuthSession({
+    required this.uid,
+    required this.identifier,
+    required this.nickname,
+  });
 
   final String uid;
   final String identifier;
@@ -35,6 +38,7 @@ class AuthState {
   const AuthState({
     this.method = LoginMethod.email,
     this.isPasswordMode = true,
+    this.codeSent = false,
     this.countdown = 0,
     this.isLoading = false,
     this.session,
@@ -45,6 +49,9 @@ class AuthState {
   /// true = 密码模式；false = 验证码模式。
   final bool isPasswordMode;
 
+  /// 验证码是否已发送（对齐 Web 端 isCodeSent）。
+  final bool codeSent;
+
   /// 验证码重发倒计时（秒），0 表示可发送。
   final int countdown;
   final bool isLoading;
@@ -53,6 +60,7 @@ class AuthState {
   AuthState copyWith({
     LoginMethod? method,
     bool? isPasswordMode,
+    bool? codeSent,
     int? countdown,
     bool? isLoading,
     AuthSession? session,
@@ -61,6 +69,7 @@ class AuthState {
     return AuthState(
       method: method ?? this.method,
       isPasswordMode: isPasswordMode ?? this.isPasswordMode,
+      codeSent: codeSent ?? this.codeSent,
       countdown: countdown ?? this.countdown,
       isLoading: isLoading ?? this.isLoading,
       session: clearSession ? null : (session ?? this.session),
@@ -82,8 +91,7 @@ class AuthController extends Notifier<AuthState> {
 
   /// 邮箱格式（对齐 Web 端 EMAIL_REGEX）。
   static bool isValidEmail(String value) {
-    final RegExp regex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    return regex.hasMatch(value);
+    return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value);
   }
 
   /// 手机号格式（大陆 11 位）。
@@ -113,11 +121,13 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(isPasswordMode: !state.isPasswordMode);
   }
 
-  /// 发送验证码：启动 60s 倒计时（对齐 Web 端 sendVerificationCode）。
-  /// 返回是否成功触发（倒计时进行中会拒绝重复发送）。
-  bool sendCode() {
-    if (state.countdown > 0) return false;
-    state = state.copyWith(countdown: 60);
+  /// 发送验证码：Mock 800ms 耗时 + 60s 倒计时
+  /// （对齐 Web 端 sendCode / 手机号 mock setTimeout 800ms）。
+  Future<bool> sendCode() async {
+    if (state.countdown > 0 || state.isLoading) return false;
+    state = state.copyWith(isLoading: true);
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    state = state.copyWith(isLoading: false, codeSent: true, countdown: 60);
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       if (state.countdown <= 1) {
         _stopTimer();
@@ -134,7 +144,13 @@ class AuthController extends Notifier<AuthState> {
     _timer = null;
   }
 
-  // ------------------------------ Mock 登录 ------------------------------
+  /// 切换方式/模式时清空输入相关状态（对齐 Web 端 useEffect 重置）。
+  void resetInputState() {
+    _stopTimer();
+    state = state.copyWith(codeSent: false, countdown: 0, isLoading: false);
+  }
+
+  // ------------------------------ Mock 登录/注册 ------------------------------
 
   /// Mock 登录：任意格式合法凭证 + 任意密码/验证码均可通过（对齐 Web 端 loginAsMock）。
   Future<bool> loginMock({
@@ -161,7 +177,7 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /// Mock 注册：两步流程的第二步（验证码提交后创建会话）。
+  /// Mock 注册：验证码提交后创建会话（对齐 Web 端 register）。
   Future<bool> registerMock({required String identifier}) async {
     if (state.isLoading) return false;
     state = state.copyWith(isLoading: true);
@@ -186,11 +202,7 @@ class AuthController extends Notifier<AuthState> {
   /// 退出登录（占位：本轮仅清空会话）。
   void signOut() {
     _stopTimer();
-    state = state.copyWith(
-      countdown: 0,
-      isLoading: false,
-      clearSession: true,
-    );
+    state = state.copyWith(countdown: 0, isLoading: false, clearSession: true);
   }
 }
 
