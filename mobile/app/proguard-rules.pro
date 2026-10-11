@@ -95,3 +95,9 @@
     public static void check*(...);
     public static void require*(...);
 }
+
+# ---------------------------------------------------------------------------------------------
+# 8. Play Core（Flutter split AOT 集成引入的编译期依赖，运行时不需要）
+#    R8 缺类告警兜底：missing_rules.txt 自动生成的 -dontwarn 清单
+# ---------------------------------------------------------------------------------------------
+-dontwarn com.google.android.play.core.**

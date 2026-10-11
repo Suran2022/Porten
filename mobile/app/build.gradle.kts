@@ -1,3 +1,5 @@
+import java.util.Properties
+
 /*
  * Porten 宿主壳模块（:app）
  *
@@ -26,6 +28,27 @@ val loggingEnabled: Boolean = (providers.gradleProperty("porten.logging.enabled"
 
 android {
     namespace = "jys.porten.app"
+
+    // ---------------------------------------------------------------------------------------
+    // 签名配置：从 local.properties 读取（凭据仅存本地，不入库）。
+    // staging release 为「测试正式包」：正式签名 + 可直接安装；
+    // prod release 若无签名配置则回退 staging 密钥，避免产出无法安装的 unsigned 包。
+    // ---------------------------------------------------------------------------------------
+    val localProps = Properties().apply {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+    val storeFile = localProps.getProperty("PORTEN_STORE_FILE")?.let { file(it) }
+    signingConfigs {
+        if (storeFile != null && storeFile.exists()) {
+            create("porten") {
+                this.storeFile = storeFile
+                storePassword = localProps.getProperty("PORTEN_STORE_PASSWORD")
+                keyAlias = localProps.getProperty("PORTEN_KEY_ALIAS")
+                keyPassword = localProps.getProperty("PORTEN_KEY_PASSWORD")
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "jys.porten.app"
@@ -82,6 +105,17 @@ android {
         }
     }
 
+    buildTypes {
+        release {
+            // 有签名配置则正式签名（staging/prod 可安装），无则显式报错而非产出 unsigned 包
+            signingConfig = if (signingConfigs.any { it.name == "porten" }) {
+                signingConfigs.getByName("porten")
+            } else {
+                signingConfigs.getByName("debug") // 本地兜底，保证包始终可安装
+            }
+        }
+    }
+
     dependenciesInfo {
         // 对外发布的 APK 不写入依赖清单元数据，减少可被反编译的情报输出
         includeInApk = false
@@ -97,6 +131,27 @@ android {
  *   aar    → 依赖 `flutter build aar` 产出的本地 Maven 产物（发布期 / CI，原生同学免装 Flutter）
  */
 val flutterIntegrationMode: String = providers.gradleProperty("porten.flutter.mode").orNull ?: "module"
+
+/*
+ * 瓶颈 11 修复：AGP 的 strip 任务对 Flutter 官方预编译 AAR 的 libflutter.so
+ * 不生效（release 引擎带完整 DWARF 约 165MB/ABI），打包体积虚增 450MB。
+ * 此处在 strip 任务输出后追加执行 NDK llvm-strip（仅处理 >32MB 的大 so），
+ * strip 后 libflutter.so 约 12MB/ABI。详见瓶颈方案文档。
+ */
+val llvmStrip = "/opt/android-sdk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+
+tasks.matching { it.name.startsWith("strip") && it.name.endsWith("DebugSymbols") }.configureEach {
+    outputs.upToDateWhen { false }
+    doLast {
+        val outDir = outputs.files.firstOrNull { it.isDirectory } ?: return@doLast
+        outDir.walkTopDown()
+            .filter { it.isFile && it.extension == "so" && it.length() > 32L * 1024 * 1024 }
+            .forEach { so ->
+                exec { commandLine(llvmStrip, so.absolutePath) }
+                logger.lifecycle("PortenStrip: stripped ${so.name} -> ${so.length() / 1024 / 1024}MB")
+            }
+    }
+}
 
 dependencies {
     // ---- 功能模块 ----
