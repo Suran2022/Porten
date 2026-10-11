@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import jys.porten.core.ui.theme.PortenTheme
+import jys.porten.feature.hybrid.FlutterContainer
+import jys.porten.feature.hybrid.FlutterHost
 import jys.porten.feature.launcher.PortenLauncherHost
 
 /**
@@ -22,9 +24,16 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
+        // 冷启动即预热 Flutter 引擎（幂等），开屏 3s 期间 Dart 侧并行完成
+        // bootstrap → PortenApp 初始化，开屏结束直接呈现登录界面零等待。
+        // 入口为 main.dart 的 main()（内部调 runPortenFlutterApp）。
+        FlutterHost.warmUp(this)
+
         setContent {
             PortenTheme {
-                PortenLauncherHost()
+                PortenLauncherHost(
+                    readyContent = { FlutterContainer() },
+                )
             }
         }
     }

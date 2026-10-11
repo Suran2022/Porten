@@ -41,10 +41,17 @@ class GradientButton extends StatefulWidget {
 
 class _GradientButtonState extends State<GradientButton>
     with SingleTickerProviderStateMixin {
+  // Web 端 .porten-bg-gradient：8s ease-in-out，background-position 0%→100%→0%
+  // 往返（pingpong）。用 8s repeat(reverse: true) + easeInOut 曲线等价还原。
   late final AnimationController _flow = AnimationController(
     vsync: this,
     duration: _kSurfaceFlowDuration,
-  )..repeat();
+  )..repeat(reverse: true);
+
+  late final Animation<double> _flowP = CurvedAnimation(
+    parent: _flow,
+    curve: Curves.easeInOut,
+  );
 
   late final AnimationController _spinner = AnimationController(
     vsync: this,
@@ -76,7 +83,7 @@ class _GradientButtonState extends State<GradientButton>
       child: AnimatedBuilder(
         animation: _flow,
         builder: (BuildContext context, Widget? child) {
-          final double t = _flow.value;
+          final double t = _flowP.value;
           return DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(widget.height / 2),

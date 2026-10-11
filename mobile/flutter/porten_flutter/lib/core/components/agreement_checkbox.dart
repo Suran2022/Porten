@@ -145,10 +145,18 @@ class _AgreementDot extends StatefulWidget {
 
 class _AgreementDotState extends State<_AgreementDot>
     with SingleTickerProviderStateMixin {
+  // Web 端 .agreement-gradient：135deg 三色渐变，background-size 200%，
+  // 3s ease-in-out 流光（background-position 0%→100%→0% 往返）。
+  // 用 3s repeat(reverse: true) + easeInOut 曲线等价还原。
   late final AnimationController _flow = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 3),
-  )..repeat();
+  )..repeat(reverse: true);
+
+  late final Animation<double> _flowP = CurvedAnimation(
+    parent: _flow,
+    curve: Curves.easeInOut,
+  );
 
   @override
   void dispose() {
@@ -163,8 +171,10 @@ class _AgreementDotState extends State<_AgreementDot>
       behavior: HitTestBehavior.opaque,
       onTap: widget.onTap,
       child: AnimatedBuilder(
-        animation: _flow,
+        animation: _flowP,
         builder: (BuildContext context, _) {
+          // 135deg 方向固定，沿对角线平移渐变（对齐 Web background-position 动画）
+          final double d = -1.0 + 2.0 * _flowP.value;
           return Container(
             width: size,
             height: size,
@@ -173,11 +183,10 @@ class _AgreementDotState extends State<_AgreementDot>
               color: widget.checked ? null : PortenColor.white,
               gradient: widget.checked
                   ? LinearGradient(
-                      begin: Alignment(-0.7, -0.7), // 135deg
-                      end: const Alignment(0.7, 0.7),
+                      begin: Alignment(-0.7 + d, -0.7 + d), // 135deg
+                      end: Alignment(0.7 + d, 0.7 + d),
                       colors: PortenGradient.brandText,
                       stops: PortenGradient.brandTextStops,
-                      transform: GradientRotation(_flow.value * 2 * 3.14159265),
                     )
                   : null,
               border: Border.all(

@@ -21,6 +21,13 @@ import jys.porten.core.design.tokens.PortenColor
 public fun PortenLauncherHost(
     modifier: Modifier = Modifier,
     viewModel: LauncherViewModel = viewModel(),
+    // 就绪后的承载内容：默认保留骨架占位（独立调试用），
+    // 由 :app 注入 Flutter 容器，实现「开屏 → 登录界面」的交接。
+    readyContent: @Composable () -> Unit = {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            SkeletonPlaceholder()
+        }
+    },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -30,9 +37,7 @@ public fun PortenLauncherHost(
     ) {
         when (state) {
             LauncherState.Splash -> SplashContent()
-            LauncherState.Ready -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                SkeletonPlaceholder()
-            }
+            LauncherState.Ready -> readyContent()
         }
     }
 }
