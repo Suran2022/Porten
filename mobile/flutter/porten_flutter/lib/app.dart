@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'core/bridge/porten_navigator_key.dart';
 import 'core/components/gradient_logo.dart';
 import 'core/components/porten_toast.dart';
 import 'core/design/porten_colors.dart';
@@ -22,6 +23,7 @@ import 'features/auth/auth_slider.dart';
 import 'features/auth/login_page.dart';
 import 'features/auth/register_page.dart';
 import 'features/auth/state/auth_controller.dart';
+import 'features/home/home_view.dart';
 
 /// 应用启动阶段。
 enum AppStage { splash, auth, home }
@@ -42,6 +44,7 @@ class PortenApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Porten',
         debugShowCheckedModeBanner: false,
+        navigatorKey: portenNavigatorKey, // r20：原生返回桥用
         home: const _PortenFlowPage(),
         builder: (BuildContext context, Widget? child) {
           // 挂载全局 Toast Overlay，使 PortenToast 脱离 Navigator 可用。
@@ -89,6 +92,13 @@ class _PortenFlowPageState extends ConsumerState<_PortenFlowPage> {
   Widget build(BuildContext context) {
     final AuthSession? session = ref.watch(authProvider).session;
 
+    // r21：退出登录（会话清空）→ 状态机切回认证滑块（对齐 Web logout → /login）。
+    if (session == null && _stage == AppStage.home) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _stage = AppStage.auth);
+      });
+    }
+
     // Mock 登录/注册成功后统一进入 Home。
     if (session != null &&
         _stage != AppStage.home &&
@@ -114,7 +124,7 @@ class _PortenFlowPageState extends ConsumerState<_PortenFlowPage> {
           ),
         );
       case AppStage.home:
-        return const _HomePage();
+        return const HomeView();
     }
   }
 }
@@ -304,21 +314,6 @@ class _SplashFadeUpState extends State<_SplashFadeUp>
           end: Offset.zero,
         ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut)),
         child: widget.child,
-      ),
-    );
-  }
-}
-
-/// 已登录首页占位（后续迭代接入会话/消息/行程等业务域）。
-class _HomePage extends StatelessWidget {
-  const _HomePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: PortenColor.white,
-      body: Center(
-        child: Text('Porten', style: PortenTypography.x3l),
       ),
     );
   }

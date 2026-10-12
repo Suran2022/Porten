@@ -3,6 +3,7 @@ package jys.porten.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import jys.porten.core.ui.theme.PortenTheme
 import jys.porten.feature.hybrid.FlutterContainer
@@ -22,6 +23,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // 必须在 super 之前安装：接管冷启动首帧白屏，避免出现未知时长的空白窗口
         installSplashScreen()
+        // r21：edge-to-edge——内容绘制到状态栏/导航栏之后，
+        // 个人资料页背景图（380px）需要覆盖状态栏区域；
+        // 各页面内边距由 Flutter 侧 SafeArea / MediaQuery 自行消化。
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         // 冷启动即预热 Flutter 引擎（幂等），开屏 3s 期间 Dart 侧并行完成

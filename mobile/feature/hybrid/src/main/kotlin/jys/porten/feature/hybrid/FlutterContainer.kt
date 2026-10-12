@@ -15,6 +15,9 @@
 package jys.porten.feature.hybrid
 
 import android.content.Context
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.OnBackPressedDispatcherOwner
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,6 +30,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import io.flutter.embedding.android.FlutterView
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import jys.porten.core.bridge.PortenChannels
 import jys.porten.core.common.log.AppLogger
 
 /** 呈现 Flutter 内容（当前为认证流程页），引擎未就绪时呈现空白并重试预热。 */
@@ -83,4 +88,66 @@ public fun FlutterContainer(modifier: Modifier = Modifier) {
             }
         },
     )
+
+    // 系统返回键转发（r20）：缓存引擎 + 手动 attach 的 FlutterView 没有
+    // FlutterActivity/FlutterFragment 的背书，系统返回默认走 Activity.finish()
+    // 直接退出应用。此处注册 OnBackPressedCallback：先经导航桥询问 Dart 侧
+    // canPop——可弹则向引擎发 popRoute（Flutter 内 pop 一级），不可弹（已在根）
+    // 才 finish() 退出，与官方 FlutterActivity 行为语义一致。
+    val backDispatcherOwner = LocalOnBackPressedDispatcherOwner.current
+    DisposableEffect(engine, backDispatcherOwner) {
+        if (engine == null || backDispatcherOwner == null) {
+            return@DisposableEffect onDispose { }
+        }
+        val dispatcher = backDispatcherOwner.onBackPressedDispatcher
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                runCatching {
+                    MethodChannel(
+                        engine.dartExecutor.binaryMessenger,
+                        PortenChannels.NAVIGATION,
+                    ).invokeMethod(
+                        "canPop",
+                        null,
+                        object : MethodChannel.Result {
+                            override fun success(result: Any?) {
+                                if (result == true) {
+                                    engine.navigationChannel.popRoute()
+                                } else {
+                                    backDispatcherOwner.finishActivitySafely()
+                                }
+                            }
+
+                            override fun error(
+                                errorCode: String,
+                                errorMessage: String?,
+                                errorDetails: Any?,
+                            ) {
+                                AppLogger.e(
+                                    "FlutterContainer",
+                                    "canPop 通道错误: $errorCode $errorMessage",
+                                )
+                                backDispatcherOwner.finishActivitySafely()
+                            }
+
+                            override fun notImplemented() {
+                                backDispatcherOwner.finishActivitySafely()
+                            }
+                        },
+                    )
+                }.onFailure {
+                    AppLogger.e("FlutterContainer", "返回键转发失败: ${it.message}")
+                    // 通道异常兜底：维持可退出，不困死用户
+                    backDispatcherOwner.finishActivitySafely()
+                }
+            }
+        }
+        dispatcher.addCallback(backDispatcherOwner, callback)
+        onDispose { callback.remove() }
+    }
+}
+
+/** Activity 安全收尾（测试/非 Activity 宿主防御）。 */
+private fun OnBackPressedDispatcherOwner.finishActivitySafely() {
+    (this as? android.app.Activity)?.finish()
 }

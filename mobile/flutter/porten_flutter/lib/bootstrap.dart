@@ -8,14 +8,33 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/bridge/porten_channels.dart';
+import 'core/bridge/porten_navigator_key.dart';
 
 /// Flutter 侧唯一入口。
 ///
 /// 原生壳通过 FlutterEngine 缓存预热后调用此入口；保持极简，禁止在此追加逻辑。
 void runPortenFlutterApp() {
   WidgetsFlutterBinding.ensureInitialized();
+  _registerNavigationBridge();
   runApp(const ProviderScope(child: PortenApp()));
+}
+
+/// 导航桥（r20）：系统返回键由原生转发。
+///
+/// 原生 OnBackPressedCallback 先调 canPop：
+///   - true  → 原生走引擎 popRoute（Dart 内正常 pop 一级页面）；
+///   - false → Flutter 导航栈已在根，原生 finish() 退出应用。
+/// 通道路径与 Kotlin 侧 PortenChannels.NAVIGATION 严格一致。
+void _registerNavigationBridge() {
+  PortenChannels.navigation.setMethodCallHandler(
+    (MethodCall call) async => switch (call.method) {
+      'canPop' => portenNavigatorKey.currentState?.canPop() ?? false,
+      _ => null,
+    },
+  );
 }

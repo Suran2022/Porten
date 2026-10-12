@@ -29,6 +29,9 @@ class PortenColor {
   /// 品牌粉浅色（Web 端用于描边、弱填充）。
   static const Color brandPinkLight = Color(0xFFF7C5D0);
 
+  /// 伙伴头像渐变深端粉（Web 端 PortenPartnerCard 渐变终点）。
+  static const Color brandPartnerPinkDeep = Color(0xFFE48BA4);
+
   // ---------------------------------------------------------------------------
   // 中性灰阶：对齐 Tailwind gray-50 ~ gray-900
   // ---------------------------------------------------------------------------
@@ -50,6 +53,11 @@ class PortenColor {
   static const Color washLight = Color(0xFFF7F7F7);
   static const Color washGray = Color(0xFFF5F5F5);
 
+  /// Web 端知识板块 zinc 灰：分段控件轨道 / 次级文本 / 深色文本。
+  static const Color zinc100 = Color(0xFFF4F4F5);
+  static const Color zinc600 = Color(0xFF52525B);
+  static const Color inkDark = Color(0xFF1A1A1A);
+
   // ---------------------------------------------------------------------------
   // 行程（Trip）模块专用色：Web 端行程页的米棕色系
   // ---------------------------------------------------------------------------
@@ -66,6 +74,9 @@ class PortenColor {
   static const Color errorSoft = Color(0xFFF87171);
   static const Color danger = Color(0xFFE5484D);
   static const Color success = Color(0xFF16A34A);
+
+  /// 亮绿（Web 端 green-500，行程安全标签）。
+  static const Color successBright = Color(0xFF22C55E);
   static const Color info = Color(0xFF3B82F6);
   static const Color disabled = Color(0xFFB6BDCC);
 

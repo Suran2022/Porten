@@ -25,7 +25,8 @@
       "pink": "#F5A9B8",
       "white": "#FFFFFF",
       "bluePressed": "#3BB5E5",
-      "pinkLight": "#F7C5D0"
+      "pinkLight": "#F7C5D0",
+      "partnerPinkDeep": "#E48BA4"
     },
     "neutral": {
       "gray50": "#F9FAFB",
@@ -42,7 +43,10 @@
       "white": "#FFFFFF",
       "wash50": "#FAFAFA",
       "washLight": "#F7F7F7",
-      "washGray": "#F5F5F5"
+      "washGray": "#F5F5F5",
+      "zinc100": "#F4F4F5",
+      "zinc600": "#52525B",
+      "inkDark": "#1A1A1A"
     },
     "trip": {
       "sandLight": "#FDF3E6",
@@ -56,6 +60,7 @@
       "errorSoft": "#F87171",
       "danger": "#E5484D",
       "success": "#16A34A",
+      "successBright": "#22C55E",
       "info": "#3B82F6",
       "disabled": "#B6BDCC"
     },

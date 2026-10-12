@@ -40,7 +40,7 @@ class GradientButton extends StatefulWidget {
 }
 
 class _GradientButtonState extends State<GradientButton>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // Web 端 .porten-bg-gradient：8s ease-in-out，background-position 0%→100%→0%
   // 往返（pingpong）。用 8s repeat(reverse: true) + easeInOut 曲线等价还原。
   late final AnimationController _flow = AnimationController(

@@ -21,34 +21,31 @@ enum ToastIcon { info, success, error }
 /// 全局 Toast 入口（无需 BuildContext）。
 abstract final class PortenToast {
   static OverlayEntry? _entry;
-  static final List<_ToastPayload> _queue = <_ToastPayload>[];
 
   /// 展示一条 Toast，默认 2.5s 后消失。
+  /// 新提示立即替换当前提示（不排队等待），消除逐条等待的延迟。
   static void show(
     String message, {
     ToastIcon icon = ToastIcon.info,
     Duration duration = const Duration(milliseconds: 2500),
   }) {
     if (message.isEmpty) return;
-    _queue.add(_ToastPayload(message: message, icon: icon, duration: duration));
-    if (_entry != null) return; // 已有 Toast 在展示，等它消失后接续队列
-    _present();
-  }
-
-  static void _present() {
-    if (_queue.isEmpty) return;
-    final _ToastPayload payload = _queue.removeAt(0);
     final OverlayState? overlay = _overlayKey.currentState;
     if (overlay == null) return; // Overlay 未挂载（冷启动极早期），静默丢弃
+    // 移除当前 Toast（若在展示中），新条目立即顶上
+    if (_entry != null) {
+      final OverlayEntry old = _entry!;
+      _entry = null;
+      old.remove();
+    }
     _entry = OverlayEntry(
       builder: (BuildContext context) => _ToastWidget(
-        message: payload.message,
-        icon: payload.icon,
-        duration: payload.duration,
+        message: message,
+        icon: icon,
+        duration: duration,
         onDismissed: () {
           _entry?.remove();
           _entry = null;
-          if (_queue.isNotEmpty) _present();
         },
       ),
     );
@@ -61,22 +58,9 @@ abstract final class PortenToast {
 
   /// 测试/热重载兜底清理。
   static void clear() {
-    _queue.clear();
     _entry?.remove();
     _entry = null;
   }
-}
-
-class _ToastPayload {
-  const _ToastPayload({
-    required this.message,
-    required this.icon,
-    required this.duration,
-  });
-
-  final String message;
-  final ToastIcon icon;
-  final Duration duration;
 }
 
 class _ToastWidget extends StatefulWidget {

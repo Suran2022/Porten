@@ -28,6 +28,9 @@ public object PortenColor {
     /** 品牌粉浅色（Web 端用于描边、弱填充）。 */
     public val BrandPinkLight: Color = Color(0xFFF7C5D0)
 
+    /** 伙伴头像渐变深端粉（Web 端 PortenPartnerCard 渐变终点）。 */
+    public val BrandPartnerPinkDeep: Color = Color(0xFFE48BA4)
+
     // ----------------------------------------------------------------------------------
     // 中性灰阶：对齐 Tailwind gray-50 ~ gray-900
     // ----------------------------------------------------------------------------------
@@ -49,6 +52,11 @@ public object PortenColor {
     public val WashLight: Color = Color(0xFFF7F7F7)
     public val WashGray: Color = Color(0xFFF5F5F5)
 
+    /** Web 端知识板块 zinc 灰：分段控件轨道 / 次级文本 / 深色文本。 */
+    public val Zinc100: Color = Color(0xFFF4F4F5)
+    public val Zinc600: Color = Color(0xFF52525B)
+    public val InkDark: Color = Color(0xFF1A1A1A)
+
     // ----------------------------------------------------------------------------------
     // 行程（Trip）模块专用色：Web 端行程页的米棕色系
     // ----------------------------------------------------------------------------------
@@ -65,6 +73,9 @@ public object PortenColor {
     public val ErrorSoft: Color = Color(0xFFF87171)
     public val Danger: Color = Color(0xFFE5484D)
     public val Success: Color = Color(0xFF16A34A)
+
+    /** 亮绿（Web 端 green-500，行程安全标签）。 */
+    public val SuccessBright: Color = Color(0xFF22C55E)
     public val Info: Color = Color(0xFF3B82F6)
     public val Disabled: Color = Color(0xFFB6BDCC)
 

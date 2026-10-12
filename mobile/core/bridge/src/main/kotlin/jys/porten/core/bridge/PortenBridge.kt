@@ -17,6 +17,9 @@ public object PortenChannels {
     public const val PUSH: String = "porten/push"
     public const val SECURE_STORE: String = "porten/secure_store"
     public const val ENV: String = "porten/env"
+
+    /** 导航桥：Add-to-App 系统返回键转发（r20）。 */
+    public const val NAVIGATION: String = "porten/navigation"
 }
 
 /** IM 桥事件类型（与 Dart 侧 PortenImEvents 一致）。 */

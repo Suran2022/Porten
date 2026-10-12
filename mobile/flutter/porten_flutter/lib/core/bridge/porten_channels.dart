@@ -25,6 +25,11 @@ abstract final class PortenChannels {
 
   /// 环境与配置桥：Mock 开关、API 地址等由原生注入。
   static const MethodChannel env = MethodChannel('porten/env');
+
+  /// 导航桥：Add-to-App 缓存引擎模式无 FlutterActivity 背书，
+  /// 系统返回键由原生转发——原生先调 canPop 判断 Flutter 导航栈，
+  /// 可弹则发系统 popRoute（Dart 内 pop 一级），不可弹则原生收尾 Activity。
+  static const MethodChannel navigation = MethodChannel('porten/navigation');
 }
 
 /// IM 桥事件类型常量（EventChannel 流中的 type 字段）。
