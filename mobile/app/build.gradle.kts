@@ -52,7 +52,7 @@ android {
 
     defaultConfig {
         applicationId = "jys.porten.app"
-        versionCode = 22 // 每次分发递增：防止同号覆盖安装被安装器拒绝/静默失败
+        versionCode = 25 // 每次分发递增：防止同号覆盖安装被安装器拒绝/静默失败
         versionName = "1.0.0"
         // 资源语言白名单：Porten 现阶段仅投放简体中文，剔除第三方库带来的多语言资源
         resourceConfigurations += setOf("zh")

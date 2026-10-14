@@ -15,6 +15,8 @@ import '../../../core/components/porten_avatar.dart';
 import '../../../core/components/porten_lucide_icons.dart';
 import '../../../core/components/porten_toast.dart';
 import '../../../core/components/porten_page_transitions.dart';
+import '../../../core/data/current_user_store.dart';
+import '../../../core/data/emotion_diary_mock.dart';
 import '../../../core/data/home_mock.dart';
 import '../contacts_page.dart';
 import '../../../core/design/porten_colors.dart';
@@ -32,6 +34,16 @@ class HomeTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // mood：getMoodOption(user.mood) ? 「emoji label」: 静态默认
+    // （Web TopBar 自 data/mock 的 currentUser.mood = '😊 开心'）；
+    // latestDiary 为空时不渲染分隔符与日记（Web latestDiary ? … : null）。
+    final CurrentUserDiaryState diaryState =
+        ref.watch(currentUserDiaryProvider);
+    final MoodOption? moodOption = moodOptionOf(diaryState.mood);
+    final String mood = moodOption != null
+        ? '${moodOption.emoji} ${moodOption.label}'
+        : PortenCurrentUser.mood;
+    final String? latestDiary = diaryState.latestDiary;
     return Material(
       color: PortenColor.white,
       child: SizedBox(
@@ -76,42 +88,47 @@ class HomeTopBar extends ConsumerWidget {
                                     height: 1.25, // leading-tight
                                   ),
                                 ),
+                                // mood/最新日记：mood tag →「emoji label」
+                                // （见 build 顶部）；latestDiary 为空时
+                                // 不渲染分隔符与日记。
                                 SizedBox(
                                   height: 18, // mt-0.5 + 一行 xs
                                   child: Row(
                                     children: <Widget>[
                                       Text(
-                                        PortenCurrentUser.mood,
+                                        mood,
                                         style: PortenTypography.xs.copyWith(
                                           color: PortenColor.gray500,
                                           height: 1.25,
                                         ),
                                       ),
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 4),
-                                        child: Text(
-                                          '｜',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: PortenColor.gray300,
-                                            height: 1.25,
+                                      if (latestDiary != null) ...<Widget>[
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 4),
+                                          child: Text(
+                                            '｜',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: PortenColor.gray300,
+                                              height: 1.25,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          PortenCurrentUser.latestDiary,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: PortenTypography.xs.copyWith(
-                                            color: PortenColor.gray500,
-                                            // r21：行高收紧 + 底对齐——省略号
-                                            // 三点贴近行底而非垂直居中（对齐 Web）
-                                            height: 1.1,
+                                        Expanded(
+                                          child: Text(
+                                            latestDiary,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: PortenTypography.xs.copyWith(
+                                              color: PortenColor.gray500,
+                                              // r21：行高收紧 + 底对齐——省略号
+                                              // 三点贴近行底而非垂直居中（对齐 Web）
+                                              height: 1.1,
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 ),

@@ -5,7 +5,9 @@
  *   图标 24px strokeWidth≈1.8、文字 xs（12px）；
  *   激活态：图标蓝→粉渐变 + 文字品牌渐变 medium，非激活 gray-400；
  *   消息 Tab 显示未读徽标（red-500 圆角、>99 显示 99+）；
- *   切换时图标 300ms 弹跳（animate-bounce-icon）。
+ *   切换时图标 300ms 弹跳（animate-bounce-icon）；
+ *   showMusic 开启时追加「悦音乐」入口（Music2 图标，点击不切视图，
+ *   走 onMusicClick，对齐 Web）。
  */
 
 import 'package:flutter/material.dart';
@@ -19,17 +21,23 @@ import '../state/home_providers.dart';
 
 /// 底部 Tab 定义。
 class _NavTab {
-  const _NavTab(this.label, this.icon);
+  const _NavTab(this.label, this.icon, {this.isMusic = false});
 
   final String label;
   final String icon; // lucide 图标名
+
+  /// 「悦音乐」入口：点击不切换视图，回调 onMusicClick（对齐 Web）。
+  final bool isMusic;
 }
 
-const List<_NavTab> _kTabs = <_NavTab>[
+const List<_NavTab> _kBaseTabs = <_NavTab>[
   _NavTab('消息', 'message-square'),
   _NavTab('资源', 'folder-open'),
   _NavTab('知识', 'book-open'),
 ];
+
+/// 「悦音乐」入口（对齐 Web musicTab：Music2 图标）。
+const _NavTab _kMusicTab = _NavTab('悦音乐', 'music2', isMusic: true);
 
 /// 底部导航栏。
 class PortenBottomNav extends ConsumerStatefulWidget {
@@ -37,10 +45,16 @@ class PortenBottomNav extends ConsumerStatefulWidget {
     super.key,
     required this.activeIndex,
     required this.onChange,
+    this.showMusic = false,
+    this.onMusicClick,
   });
 
   final int activeIndex;
   final ValueChanged<int> onChange;
+
+  /// 应用栏管理开关：开启后底部栏追加「悦音乐」入口（对齐 Web）。
+  final bool showMusic;
+  final VoidCallback? onMusicClick;
 
   @override
   ConsumerState<PortenBottomNav> createState() => _PortenBottomNavState();
@@ -69,7 +83,14 @@ class _PortenBottomNavState extends ConsumerState<PortenBottomNav>
     super.dispose();
   }
 
-  void _handleTap(int index) {
+  void _handleTap(int index, _NavTab tab) {
+    // 「悦音乐」入口：不切换视图，走 onMusicClick 回调（对齐 Web handleClick）
+    if (tab.isMusic) {
+      widget.onMusicClick?.call();
+      final AnimationController? controller = _controllerFor(index);
+      controller?.forward(from: 0);
+      return;
+    }
     if (index == widget.activeIndex) return;
     widget.onChange(index);
     final AnimationController? controller = _controllerFor(index);
@@ -79,6 +100,9 @@ class _PortenBottomNavState extends ConsumerState<PortenBottomNav>
   @override
   Widget build(BuildContext context) {
     final int totalUnread = ref.watch(totalUnreadProvider);
+    // showMusic 开启时追加「悦音乐」入口（对齐 Web tabs 动态拼接）
+    final List<_NavTab> tabs =
+        widget.showMusic ? <_NavTab>[..._kBaseTabs, _kMusicTab] : _kBaseTabs;
     return Material(
       color: PortenColor.white,
       child: SizedBox(
@@ -88,8 +112,8 @@ class _PortenBottomNavState extends ConsumerState<PortenBottomNav>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              for (int i = 0; i < _kTabs.length; i++)
-                _buildTab(i, _kTabs[i], totalUnread),
+              for (int i = 0; i < tabs.length; i++)
+                _buildTab(i, tabs[i], totalUnread),
             ],
           ),
         ),
@@ -125,7 +149,7 @@ class _PortenBottomNavState extends ConsumerState<PortenBottomNav>
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => _handleTap(index),
+      onTap: () => _handleTap(index, tab),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[

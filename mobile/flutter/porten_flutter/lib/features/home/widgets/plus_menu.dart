@@ -3,15 +3,21 @@
  *
  * 结构与动效逐条对应：
  *   - 灰色透明遮罩：fixed 全屏 z-60 bg-gray-100/60，opacity 0→1
- *     （250ms ease-out）；点击遮罩收起；
- *   - 菜单弹层：锚定顶栏 plus 按钮下方（top-full right-0 mt-2），
- *     bg-black rounded-2xl py-2.5，transform-origin(top right)；
- *     展开：scale 0→1 + opacity，250ms cubic-bezier(0.16,1,0.3,1)（快出缓停）；
- *     收起：scale→0，250ms cubic-bezier(0.55,0,0.85,0.36)（先慢后快缩回）；
+ *     （250ms ease-out）；点击遮罩收起；遮罩后绘制故覆盖底部导航
+ *     （Web 端 BottomNav 为 z-50，同样被遮罩盖住）；
+ *   - 菜单弹层：锚定顶栏加号按钮组下方（absolute top-full right-0
+ *     mt-2，w-max 自适应内容），bg-black rounded-2xl py-2.5，
+ *     transform-origin(top right)；
+ *     展开：scale 0→1 + opacity 0→1，250ms cubic-bezier(0.16,1,0.3,1)
+ *     （快出缓停，Web transition-all 对 transform/opacity 同曲线）；
+ *     收起：scale 1→0 + opacity 1→0，250ms cubic-bezier(0.55,0,0.85,0.36)
+ *     （先慢后快缩回加号位置）；
  *     收起动效完成后 260ms 再真正移除（对齐 Web closeTimer）；
  *   - 三角指针：12×12 bg-black rotate-45，top -6，right 14（对齐加号中心）；
  *   - 菜单项：px-5 py-3 gap-3.5，图标 w-5 h-5 strokeWidth 1.8，
- *     文本 text-base white/90，按压态 bg-white/10；
+ *     文本 text-base white/90；
+ *     菜单容器 IntrinsicWidth 等效 Web w-max（取最宽菜单项内容宽），
+ *     Column(stretch) + 菜单项 Row(mainAxisSize.min) 等效 w-full 撑满；
  *     首项 rounded-t-2xl、末项 rounded-b-2xl；
  *   - 菜单项（10 项与 Web 完全一致），点击后先执行回调再 onClose()。
  */
@@ -19,6 +25,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/components/porten_lucide_icons.dart';
+import '../../../core/design/porten_colors.dart';
 
 /// 菜单项定义。
 class _PlusMenuItem {
@@ -48,11 +55,15 @@ class PortenPlusMenu extends StatefulWidget {
     super.key,
     required this.open,
     required this.onClose,
+    required this.menuTop,
     this.onItem,
   });
 
   final bool open;
   final VoidCallback onClose;
+
+  /// 弹层顶坐标（屏幕坐标）：消息顶栏内按钮组底 + mt-2。
+  final double menuTop;
 
   /// 菜单项回调（携带 item.key 与标签），执行后自动收起。
   final void Function(String key, String label)? onItem;
@@ -122,28 +133,56 @@ class _PortenPlusMenuState extends State<PortenPlusMenu>
   Widget build(BuildContext context) {
     if (!_visible) return const SizedBox.shrink();
 
-    final double t = Curves.ease.transform(_ctrl.value);
-    final bool expanding = _entering;
-    // 展开 cubic-bezier(0.16,1,0.3,1)（快出缓停）/ 收起 (0.55,0,0.85,0.36)（先慢后快）
-    final double eased = expanding
-        ? const Cubic(0.16, 1, 0.3, 1).transform(_ctrl.value)
-        : const Cubic(0.55, 0, 0.85, 0.36).transform(1 - _ctrl.value);
+    // 动画控制器逐 tick 必须驱动重建：AnimationController 不是隐式动画，
+    // 不会自行 setState。若仅在 build 里裸读 _ctrl.value，控制器后续 tick
+    // 不触发重建，菜单将永远停在展开前的 scale 0 / opacity 0（完全不可见）。
+    // AnimatedBuilder 监听 _ctrl，每次 tick 重建弹层（菜单子树不依赖动画值，
+    // 作为静态 child 传入，避免逐帧重建 10 个菜单项）。
+    return AnimatedBuilder(
+      animation: _ctrl,
+      child: _buildMenu(),
+      builder: (BuildContext context, Widget? child) {
+        final double t = _ctrl.value;
+        final bool expanding = _entering;
+        // Web transition-all：transform 与 opacity 共用同一 timing function。
+        // 展开 cubic-bezier(0.16,1,0.3,1)（快出缓停）；
+        // 收起 cubic-bezier(0.55,0,0.85,0.36)（先慢后快，缩回加号位置）。
+        // 收起时 _ctrl.value 1→0，曲线对 value 直接取值：1→1、0→0。
+        final double eased = (expanding
+                ? const Cubic(0.16, 1, 0.3, 1).transform(t)
+                : const Cubic(0.55, 0, 0.85, 0.36).transform(t))
+            .clamp(0.0, 1.0);
+        // 遮罩独立过渡：opacity 250ms ease-out（展开收起同曲线）
+        final double overlayOpacity = Curves.easeOut.transform(t).clamp(0.0, 1.0);
 
-    // r22：按需求去掉灰色遮罩层，直接显示展开的菜单内容；
-    // 收起由「点击菜单项 / 再次点加号 / 切视图」驱动。
-    return Align(
-      alignment: Alignment.topRight,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 16), // 对齐 px-4 右缘；mt-2 由外层锚定
-        child: Transform.scale(
-          scale: eased.clamp(0.0, 1.0),
-          alignment: Alignment.topRight, // transform-origin: top right
-          child: Opacity(
-            opacity: t.clamp(0.0, 1.0),
-            child: _buildMenu(),
-          ),
-        ),
-      ),
+        return Stack(
+          children: <Widget>[
+            // 灰色遮罩（fixed inset-0 z-[60] bg-gray-100/60，点击关闭）
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: widget.onClose,
+                child: ColoredBox(
+                  color: PortenColor.gray100.withValues(alpha: 0.6 * overlayOpacity),
+                ),
+              ),
+            ),
+            // 菜单弹层（absolute top-full right-0 mt-2，z-[80]）
+            Positioned(
+              top: widget.menuTop,
+              right: 10, // 按钮组 -mr-1.5：16 - 6 = 屏幕右缘 10px
+              child: Transform.scale(
+                scale: eased,
+                alignment: Alignment.topRight, // transform-origin: top right
+                child: Opacity(
+                  opacity: eased,
+                  child: child,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -151,19 +190,23 @@ class _PortenPlusMenuState extends State<PortenPlusMenu>
     return Stack(
       clipBehavior: Clip.none,
       children: <Widget>[
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(16), // rounded-2xl
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 10), // py-2.5
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              for (int i = 0; i < _kMenuItems.length; i++)
-                _menuItem(_kMenuItems[i], i),
-            ],
+        // IntrinsicWidth 等效 Web w-max：容器宽 = 最宽菜单项的内容宽
+        IntrinsicWidth(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(16), // rounded-2xl
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 10), // py-2.5
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              // stretch + 菜单项 Row(min) 等效 Web「w-max 容器 + w-full 项」
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                for (int i = 0; i < _kMenuItems.length; i++)
+                  _menuItem(_kMenuItems[i], i),
+              ],
+            ),
           ),
         ),
         // 三角指针（对齐加号按钮中心）
@@ -197,6 +240,7 @@ class _PortenPlusMenuState extends State<PortenPlusMenu>
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             PortenLucideIcon(
               item.icon,

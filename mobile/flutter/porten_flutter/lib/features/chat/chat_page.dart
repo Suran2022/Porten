@@ -1154,6 +1154,8 @@ class _PanelIcon extends StatelessWidget {
 
 /// 相册图片面板（r21 #15，对齐 QQ 做法）：功能图标下方展开，
 /// 相册图片正方形、左对齐流式排布，点击即发送该图片。
+/// r23：面板高度恒为 236，GridView 去掉 shrinkWrap/禁用滚动，
+/// 超出两行的相册图片经内部滚动完整可达（修复第 3 行被裁且不可滑动）。
 class _ImagePanel extends StatelessWidget {
   const _ImagePanel({required this.onPick});
 
@@ -1169,10 +1171,10 @@ class _ImagePanel extends StatelessWidget {
           color: const Color(0xFFF3F4F6).withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(16),
         ),
+        // 父级 AnimatedContainer 已限定 236 高并裁剪，GridView 取满该高度，
+        // 默认（Android Clamping）物理滚动展示全部相册图片
         child: GridView.count(
           crossAxisCount: 4,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
           childAspectRatio: 1, // 正方形

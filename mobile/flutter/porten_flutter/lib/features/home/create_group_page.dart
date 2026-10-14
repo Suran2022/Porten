@@ -12,17 +12,21 @@
 import 'package:flutter/material.dart';
 
 import '../../core/components/porten_lucide_icons.dart';
+import '../../core/components/porten_page_transitions.dart';
 import '../profile/profile_page.dart' show kGray900, kGray700, kGray100;
+import 'group_profile_page.dart';
 
 class CreateGroupPage extends StatelessWidget {
   const CreateGroupPage({super.key});
 
-  static const List<(String, String)> _categories = <(String, String)>[
-    ('跨儿同行', 'users'),
-    ('跨儿组织', 'building2'),
-    ('二次元', 'sparkles'),
-    ('医疗机构', 'stethoscope'),
-    ('院校', 'graduation-cap'),
+  /// 分类（key 对齐 Web GROUP_CATEGORIES：peer / org / acg / medical / school）。
+  static const List<(String, String, String)> _categories =
+      <(String, String, String)>[
+    ('peer', '跨儿同行', 'users'),
+    ('org', '跨儿组织', 'building2'),
+    ('acg', '二次元', 'sparkles'),
+    ('medical', '医疗机构', 'stethoscope'),
+    ('school', '院校', 'graduation-cap'),
   ];
 
   @override
@@ -73,7 +77,11 @@ class CreateGroupPage extends StatelessWidget {
                     if (i > 0) const SizedBox(width: 12), // gap-3
                     Expanded(
                       child: _CategoryItem(
-                          label: _categories[i].$1, icon: _categories[i].$2),
+                        key: ValueKey<String>(_categories[i].$1),
+                        categoryKey: _categories[i].$1,
+                        label: _categories[i].$2,
+                        icon: _categories[i].$3,
+                      ),
                     ),
                   ],
                 ],
@@ -87,14 +95,27 @@ class CreateGroupPage extends StatelessWidget {
 }
 
 class _CategoryItem extends StatelessWidget {
-  const _CategoryItem({required this.label, required this.icon});
+  const _CategoryItem({
+    super.key,
+    required this.categoryKey,
+    required this.label,
+    required this.icon,
+  });
 
+  final String categoryKey;
   final String label;
   final String icon;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      // 点击分类 → 营地资料完善页（同 Web onSelectCategory → GroupProfilePage，
+      // 从左滑入叠于本页之上）
+      onTap: () => Navigator.of(context).push(PortenSlideFromLeftRoute<void>(
+        builder: (_) => GroupProfilePage(groupType: categoryKey),
+      )),
+      child: Column(
       children: <Widget>[
         Container(
           width: 48,
@@ -114,6 +135,7 @@ class _CategoryItem extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 12, color: kGray700)),
       ],
+    ),
     );
   }
 }

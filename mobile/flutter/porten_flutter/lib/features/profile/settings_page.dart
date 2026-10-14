@@ -14,8 +14,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/porten_back_icon.dart';
 import '../../core/components/porten_lucide_icons.dart';
+import '../../core/components/porten_page_transitions.dart';
 import '../../core/components/porten_toast.dart';
 import '../auth/state/auth_controller.dart';
+import 'porten_app_bar_page.dart';
+import 'porten_security_page.dart';
 import 'profile_page.dart' show kGray900, kGray400;
 
 class SettingsPage extends ConsumerWidget {
@@ -81,11 +84,19 @@ class SettingsPage extends ConsumerWidget {
                   children: <Widget>[
                     _OptionRow(
                       label: 'Porten安全',
-                      onTap: () => PortenToast.show('Porten安全即将上线，敬请期待'),
+                      onTap: () => Navigator.of(context).push(
+                        PortenSlideFromRightRoute<void>(
+                          builder: (_) => const PortenSecurityPage(),
+                        ),
+                      ),
                     ),
                     _OptionRow(
                       label: '应用栏管理',
-                      onTap: () => PortenToast.show('应用栏管理即将上线，敬请期待'),
+                      onTap: () => Navigator.of(context).push(
+                        PortenSlideFromRightRoute<void>(
+                          builder: (_) => const PortenAppBarPage(),
+                        ),
+                      ),
                     ),
                     _OptionRow(
                       label: '关于 Porten',

@@ -13,12 +13,17 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/porten_lucide_icons.dart';
 import '../../core/components/porten_page_transitions.dart';
+import '../../core/data/current_user_store.dart';
+import '../../core/data/emotion_diary_mock.dart';
 
+import 'edit_profile_page.dart';
 import 'profile_data.dart';
 import 'settings_page.dart';
+import 'state/profile_edit_provider.dart';
 import '../home/system_messages_page.dart';
 
 /// gray-700 / gray-500 / gray-400 / gray-900 等色值统一来源。
@@ -164,43 +169,61 @@ class _ProfileTopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          // 心情胶囊
-          Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                PortenLucideIcon('smile-plus', size: 16, color: Colors.white, strokeWidth: 1.8),
-                SizedBox(width: 6),
-                Text('开心',
-                    style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
-              ],
-            ),
+          // 心情胶囊：mood tag → 中文标签（Web ProfileTopBar
+          // MOOD_LABELS 映射，未映射时回退原值）；mood 为 null 时
+          // 整胶囊不渲染（Web moodLabel ? … : null）。
+          Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              final MoodOption? moodOption =
+                  moodOptionOf(ref.watch(currentUserDiaryProvider).mood);
+              if (moodOption == null) return const SizedBox.shrink();
+              return Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const PortenLucideIcon('smile-plus',
+                        size: 16, color: Colors.white, strokeWidth: 1.8),
+                    const SizedBox(width: 6),
+                    Text(moodOption.label,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white)),
+                  ],
+                ),
+              );
+            },
           ),
-          // 编辑资料胶囊
-          Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                PortenLucideIcon('pencil', size: 16, color: Colors.white, strokeWidth: 1.8),
-                SizedBox(width: 6),
-                Text('编辑资料',
-                    style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
-              ],
+          // 编辑资料胶囊（点击进入编辑资料页，从左滑入）
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).push(PortenSlideFromLeftRoute<void>(
+              builder: (_) => const EditProfilePage(),
+            )),
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  PortenLucideIcon('pencil', size: 16, color: Colors.white, strokeWidth: 1.8),
+                  SizedBox(width: 6),
+                  Text('编辑资料',
+                      style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                ],
+              ),
             ),
           ),
         ],
@@ -209,12 +232,14 @@ class _ProfileTopBar extends StatelessWidget {
   }
 }
 
-/// 资料卡（对齐 ProfileCard.tsx）。
-class _ProfileCard extends StatelessWidget {
+/// 资料卡（对齐 ProfileCard.tsx）；昵称/性别实时读 profileEditProvider
+/// （编辑资料页修改后同步回显，对齐 Web authStore.updateUser 全量回显）。
+class _ProfileCard extends ConsumerWidget {
   const _ProfileCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ProfileEditState editState = ref.watch(profileEditProvider);
     return Padding(
       padding: const EdgeInsets.all(20), // p-5
       child: Column(
@@ -247,10 +272,10 @@ class _ProfileCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Text(PortenProfileData.nickname,
+                      Text(editState.nickname,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
                               color: kGray900,
@@ -275,7 +300,7 @@ class _ProfileCard extends StatelessWidget {
                     children: <Widget>[
                       Text(<String>[
                         '${PortenProfileData.friendCount}',
-                        PortenProfileData.genderLabel,
+                        editState.genderLabel,
                         '${PortenProfileData.transDays}天',
                       ][i],
                           maxLines: 1,
@@ -296,10 +321,23 @@ class _ProfileCard extends StatelessWidget {
           const SizedBox(height: 20),
           const Text('最新日记', style: TextStyle(fontSize: 12, color: kGray400)),
           const SizedBox(height: 6),
-          Text(PortenProfileData.latestDiary,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, color: kGray700, height: 1.6)),
+          // 最新日记跟随后端数据（Web ProfileCard：latestDiary 为空 →
+          // 「还没有记录过情绪哦」；情绪日记页保存/删除会同步 store）。
+          Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              final String? latestDiary =
+                  ref.watch(currentUserDiaryProvider).latestDiary;
+              if (latestDiary == null) {
+                return const Text('还没有记录过情绪哦',
+                    style: TextStyle(
+                        fontSize: 14, color: kGray400, height: 1.6));
+              }
+              return Text(latestDiary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 14, color: kGray700, height: 1.6));
+            },
+          ),
           const SizedBox(height: 20),
           // 接收同胞通知按钮：h-10 rounded-full border-gray-700
           SizedBox(

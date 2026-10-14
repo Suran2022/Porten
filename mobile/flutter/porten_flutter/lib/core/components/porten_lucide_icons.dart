@@ -118,6 +118,13 @@ const Map<String, _IconDef> _kPortenLucideDefs = <String, _IconDef>{
     <String>['M12 5v14', 'm19 12-7 7-7-7'],
     <List<double>>[],
   ],
+  // User（聊天页会话无头像资产时的回退图标，对齐 lucide user）
+  'user': <Object>[
+    <String>['M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2'],
+    <List<double>>[
+      <double>[12, 7, 4],
+    ],
+  ],
   // UserPlus（加号菜单：添加同胞/营地）
   'user-plus': <Object>[
     <String>['M2 21a8 8 0 0 1 13.292-6', 'M19 16v6', 'M22 19h-6'],
@@ -498,6 +505,141 @@ const Map<String, _IconDef> _kPortenLucideDefs = <String, _IconDef>{
   ],
   'chevron-down': <Object>[
     <String>['m6 9 6 6 6-6'],
+    <List<double>>[],
+  ],
+  // ShieldCheck（Porten 安全中心盾牌，w-12 h-12 text-blue-500 strokeWidth 1.5）
+  'shield-check': <Object>[
+    <String>[
+      'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z',
+      'm9 12 2 2 4-4',
+    ],
+    <List<double>>[],
+  ],
+  // CalendarClock（换绑冷却弹窗，w-6 h-6 text-amber-500 strokeWidth 1.5）
+  'calendar-clock': <Object>[
+    <String>[
+      'M16 14v2.2l1.6 1',
+      'M16 2v3',
+      'M21 7.338V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h2.338',
+      'M3 9h5.859',
+      'M8 2v3',
+    ],
+    <List<double>>[
+      <double>[16, 16, 6],
+    ],
+  ],
+  // Loader2（换绑流程 SystemToast loading 旋转图标，w-7 h-7）
+  'loader-2': <Object>[
+    <String>['M21 12a9 9 0 1 1-6.219-8.56'],
+    <List<double>>[],
+  ],
+  // Camera（营地资料完善头像上传入口，w-8 h-8 text-gray-400 strokeWidth 1.5）
+  'camera': <Object>[
+    <String>[
+      'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z',
+    ],
+    <List<double>>[<double>[12, 13, 3]],
+  ],
+  // Repeat（悦音乐循环模式按钮，w-6 h-6 text-white/70 strokeWidth 1.6）
+  'repeat': <Object>[
+    <String>[
+      'm17 2 4 4-4 4',
+      'M3 11v-1a4 4 0 0 1 4-4h14',
+      'm7 22-4-4 4-4',
+      'M21 13v1a4 4 0 0 1-4 4H3',
+    ],
+    <List<double>>[],
+  ],
+  // SkipBack（悦音乐上一首，w-7 h-7 text-white strokeWidth 1.8）
+  'skip-back': <Object>[
+    <String>[
+      'M19 20 9 12 19 4Z',
+      'M5 19V5',
+    ],
+    <List<double>>[],
+  ],
+  // SkipForward（悦音乐下一首，w-7 h-7 text-white strokeWidth 1.8）
+  'skip-forward': <Object>[
+    <String>[
+      'M5 4 15 12 5 20Z',
+      'M19 5v14',
+    ],
+    <List<double>>[],
+  ],
+  // ListMusic（悦音乐播放列表按钮，w-6 h-6 text-white/70 strokeWidth 1.6）
+  'list-music': <Object>[
+    <String>[
+      'M21 15V6',
+      'M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+      'M12 12H3',
+      'M16 6H3',
+      'M12 18H3',
+    ],
+    <List<double>>[],
+  ],
+  // Share2（悦音乐分享按钮，w-4 h-4 text-white/70 strokeWidth 1.8）
+  'share2': <Object>[
+    <String>[
+      'M8.59 13.51 15.42 17.49',
+      'M15.41 6.51 8.59 10.49',
+    ],
+    <List<double>>[
+      <double>[18, 5, 3],
+      <double>[6, 12, 3],
+      <double>[18, 19, 3],
+    ],
+  ],
+
+  // ===== r25 记笔记 / 情绪日记新增（lucide v0.511.0 官方 path） =====
+
+  // Archive（记笔记卡片菜单：归档笔记，w-4 h-4 strokeWidth 1.7）
+  // 官方 rect x=2 y=3 w=20 h=5 rx=1 转为 arc path（圆角 1）
+  'archive': <Object>[
+    <String>[
+      'M3 3h18a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z',
+      'M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8',
+      'M10 12h4',
+    ],
+    <List<double>>[],
+  ],
+  // ArchiveRestore（记笔记卡片菜单：取消归档，w-4 h-4 strokeWidth 1.7）
+  'archive-restore': <Object>[
+    <String>[
+      'M3 3h18a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z',
+      'M4 8v11a2 2 0 0 0 2 2h2',
+      'M20 8v11a2 2 0 0 1-2 2h-2',
+      'm9 15 3-3 3 3',
+      'M12 12v9',
+    ],
+    <List<double>>[],
+  ],
+  // MoreHorizontal（记笔记卡片更多操作钮，w-5 h-5 strokeWidth 1.7）
+  'more-horizontal': <Object>[
+    <String>[],
+    <List<double>>[
+      <double>[12, 12, 1],
+      <double>[19, 12, 1],
+      <double>[5, 12, 1],
+    ],
+  ],
+  // Trash2（记笔记卡片菜单：删除笔记，w-4 h-4 strokeWidth 1.7）
+  'trash-2': <Object>[
+    <String>[
+      'M3 6h18',
+      'M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6',
+      'M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2',
+      'M10 11v6',
+      'M14 11v6',
+    ],
+    <List<double>>[],
+  ],
+  // History（情绪日记顶栏历史钮，w-5 h-5 strokeWidth 1.5）
+  'history': <Object>[
+    <String>[
+      'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8',
+      'M3 3v5h5',
+      'M12 7v5l4 2',
+    ],
     <List<double>>[],
   ],
 };
