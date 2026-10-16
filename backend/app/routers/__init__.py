@@ -8,8 +8,11 @@ from app.routers.contacts import router as contacts_router
 from app.routers.emotion_diary import router as emotion_diary_router
 from app.routers.friend_requests import router as friend_requests_router
 from app.routers.groups import router as groups_router
+from app.routers.honeypot import router as honeypot_router
+from app.routers.security_admin import router as security_admin_router
 from app.routers.messages import router as messages_router
 from app.routers.notifications import router as notifications_router
+from app.routers.retention import router as retention_router
 from app.routers.search import router as search_router
 from app.routers.system_messages import router as system_messages_router
 from app.routers.upload import router as upload_router
@@ -24,6 +27,8 @@ __all__ = [
     "contacts_router",
     "friend_requests_router",
     "groups_router",
+    "honeypot_router",
+    "security_admin_router",
     "conversations_router",
     "messages_router",
     "notifications_router",
@@ -32,4 +37,5 @@ __all__ = [
     "websocket_router",
     "emotion_diary_router",
     "search_router",
+    "retention_router",
 ]

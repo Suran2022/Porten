@@ -14,6 +14,12 @@ from pydantic import ValidationError
 from app.config import get_settings
 from app.database import engine
 from app.database import SessionLocal
+from app.middleware.security import (
+    BlocklistMiddleware,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+    WafMiddleware,
+)
 from app.models import Base, Friendship, User
 from app.routers import (
     agreements_router,
@@ -24,17 +30,37 @@ from app.routers import (
     emotion_diary_router,
     friend_requests_router,
     groups_router,
+    honeypot_router,
+    security_admin_router,
     messages_router,
     notifications_router,
     search_router,
+    retention_router,
     system_messages_router,
     upload_router,
     user_router,
     websocket_router,
 )
 from app.schemas.common import ResponseModel
+from app.security.singleton import get_security_capabilities
 from app.services.conversation_service import ConversationService
 from app.services.media_cleanup import cleanup_expired_media_task
+from app.services.approval_service import (
+    approval_expiry_task,
+    approval_service,
+)
+from app.services.ueba_aggregation_service import (
+    ueba_aggregation_service,
+    ueba_aggregation_task,
+)
+from app.services.siem_export_service import (
+    build_siem_exporter,
+    siem_export_task,
+)
+from app.services.threat_intel_feed_service import (
+    build_threat_intel_feed_service,
+    threat_intel_feed_task,
+)
 from app.services.assistant_article_service import AssistantArticleService
 from app.services.system_message_service import SystemMessageService
 
@@ -76,6 +102,13 @@ async def lifespan(app: FastAPI):
     """Create database tables on startup and start background tasks."""
     Base.metadata.create_all(bind=engine)
 
+    # Build the security capability set at startup. A required-but-
+    # unreachable dependency (e.g. Redis in the standard profile with
+    # SECURITY_REDIS_REQUIRED) fails fast here instead of degrading
+    # silently at request time; this also warms the singleton so the
+    # first request does not pay the assembly cost.
+    get_security_capabilities()
+
     # Seed built-in system messages on every startup so new versions are
     # published automatically.
     db = SessionLocal()
@@ -87,6 +120,35 @@ async def lifespan(app: FastAPI):
 
     _ensure_friendship_conversations()
     asyncio.create_task(cleanup_expired_media_task())
+    # External threat-intel feed: config-gated, disabled by default.
+    # build_threat_intel_feed_service returns None (no loop) when the
+    # feed URL is unset or Redis is unreachable, so the default lite
+    # deployment never starts it.
+    feed_service = build_threat_intel_feed_service()
+    if feed_service is not None:
+        asyncio.create_task(threat_intel_feed_task(feed_service))
+    # SIEM export: config-gated, disabled by default. Returns None when
+    # disabled, no webhook URL is set or Redis is unreachable, so a
+    # misconfigured SIEM never starts a background loop.
+    siem_exporter = build_siem_exporter()
+    if siem_exporter is not None:
+        asyncio.create_task(
+            siem_export_task(siem_exporter, settings.security_siem_interval_seconds)
+        )
+    # Advanced profile background jobs: the two-person approval expiry
+    # sweep and the UEBA windowed aggregation. Both swallow iteration
+    # failures and neither runs in lite/standard.
+    if settings.security_profile == "advanced":
+        asyncio.create_task(
+            approval_expiry_task(
+                approval_service, settings.security_approval_sweep_interval_seconds
+            )
+        )
+        asyncio.create_task(
+            ueba_aggregation_task(
+                ueba_aggregation_service, settings.security_ueba_interval_seconds
+            )
+        )
     yield
 
 
@@ -106,6 +168,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Security middleware (registered after CORS so headers are applied to
+# all responses including CORS preflight ones)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
+# WAF runs outermost: rejected attacks never consume rate-limit budget.
+# It is a no-op when the active profile provides no rule provider.
+app.add_middleware(WafMiddleware)
+# Blocklist sits outside WAF: banned clients are rejected before any
+# rule matching. No-op when the profile provides no blocklist.
+app.add_middleware(BlocklistMiddleware)
 
 
 async def _build_validation_response(exc):
@@ -194,7 +267,16 @@ app.include_router(system_messages_router)
 app.include_router(upload_router)
 app.include_router(emotion_diary_router)
 app.include_router(search_router)
+app.include_router(retention_router)
 app.include_router(websocket_router)
+# Honeypot decoys: registered unconditionally; each endpoint answers
+# 404 while security_honeypot_enabled is off, so the routes look
+# undeployed unless an operator turns the honeypot on.
+app.include_router(honeypot_router)
+
+# Admin security surface: event triage, response actions, rule
+# versions, retention adjustment and audit report export.
+app.include_router(security_admin_router)
 
 # Serve uploaded media files
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

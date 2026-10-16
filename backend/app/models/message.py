@@ -3,10 +3,11 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+from app.models.types import EncryptedText
 
 
 class Message(Base):
@@ -25,7 +26,11 @@ class Message(Base):
         nullable=True,
         index=True,
     )
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str] = mapped_column(
+        EncryptedText,
+        nullable=False,
+        comment="Message body; P0 field, encrypted at rest (design doc §5.4.2)",
+    )
     extra: Mapped[Optional[dict]] = mapped_column(
         JSON,
         nullable=True,

@@ -1,6 +1,6 @@
 """Email verification code model."""
 
-from sqlalchemy import BigInteger, Boolean, DateTime, String
+from sqlalchemy import BigInteger, Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin, utc_now
@@ -39,4 +39,10 @@ class VerificationCode(Base, TimestampMixin):
         default=False,
         nullable=False,
         comment="Whether the code has been consumed",
+    )
+    attempts: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+        comment="Failed verification attempts against this code",
     )

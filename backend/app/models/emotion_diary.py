@@ -9,12 +9,12 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     String,
-    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, utc_now
+from app.models.types import EncryptedText
 
 
 class MoodTag(str, PyEnum):
@@ -59,9 +59,9 @@ class EmotionDiary(Base, TimestampMixin):
         index=True,
     )
     content: Mapped[str] = mapped_column(
-        Text,
+        EncryptedText,
         nullable=False,
-        comment="Diary body text",
+        comment="Diary body text; P0 field, encrypted at rest (design doc §5.4.2)",
     )
     mood: Mapped[str] = mapped_column(
         String(20),

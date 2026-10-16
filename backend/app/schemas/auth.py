@@ -7,9 +7,14 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.utils.validators import validate_password
 
 
+class LogoutRequest(BaseModel):
+    """Logout request; device_id revokes just that device."""
+
+    device_id: Optional[str] = Field(default=None, max_length=64)
+
+
 class SendVerificationCodeRequest(BaseModel):
     """Request to send an email verification code."""
-
     email: EmailStr
     purpose: str = Field(
         default="register",
@@ -24,6 +29,16 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, max_length=128)
     confirm_password: str = Field(..., min_length=8, max_length=128)
     verification_code: str = Field(..., min_length=6, max_length=10)
+    # Optional device binding fields; omitting them keeps tokens
+    # device-unbound (backward compatible).
+    device_id: Optional[str] = Field(
+        default=None, max_length=64, description="Stable client device id"
+    )
+    device_name: Optional[str] = Field(default=None, max_length=100)
+    platform: Optional[str] = Field(
+        default=None, max_length=30, pattern="^(ios|android|web|desktop)?$"
+    )
+
 
     @field_validator("password")
     @classmethod
@@ -44,6 +59,16 @@ class EmailPasswordLoginRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=1, max_length=128)
+    # Optional device binding fields; omitting them keeps tokens
+    # device-unbound (backward compatible).
+    device_id: Optional[str] = Field(
+        default=None, max_length=64, description="Stable client device id"
+    )
+    device_name: Optional[str] = Field(default=None, max_length=100)
+    platform: Optional[str] = Field(
+        default=None, max_length=30, pattern="^(ios|android|web|desktop)?$"
+    )
+
 
 
 class EmailCodeLoginRequest(BaseModel):
@@ -51,6 +76,16 @@ class EmailCodeLoginRequest(BaseModel):
 
     email: EmailStr
     verification_code: str = Field(..., min_length=6, max_length=10)
+    # Optional device binding fields; omitting them keeps tokens
+    # device-unbound (backward compatible).
+    device_id: Optional[str] = Field(
+        default=None, max_length=64, description="Stable client device id"
+    )
+    device_name: Optional[str] = Field(default=None, max_length=100)
+    platform: Optional[str] = Field(
+        default=None, max_length=30, pattern="^(ios|android|web|desktop)?$"
+    )
+
 
 
 class PortenIdLoginRequest(BaseModel):
@@ -58,6 +93,16 @@ class PortenIdLoginRequest(BaseModel):
 
     porten_id: str = Field(..., min_length=6, max_length=12, pattern="^[0-9]+$")
     password: str = Field(..., min_length=1, max_length=128)
+    # Optional device binding fields; omitting them keeps tokens
+    # device-unbound (backward compatible).
+    device_id: Optional[str] = Field(
+        default=None, max_length=64, description="Stable client device id"
+    )
+    device_name: Optional[str] = Field(default=None, max_length=100)
+    platform: Optional[str] = Field(
+        default=None, max_length=30, pattern="^(ios|android|web|desktop)?$"
+    )
+
 
 
 class TokenResponse(BaseModel):

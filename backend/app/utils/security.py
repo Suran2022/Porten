@@ -1,5 +1,7 @@
-"""Security utilities for password hashing and JWT tokens."""
+"""Security utilities for password hashing, IP hashing and JWT tokens."""
 
+import hashlib
+import hmac
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -45,3 +47,17 @@ def decode_access_token(token: str) -> Optional[dict[str, Any]]:
         return payload
     except JWTError:
         return None
+
+
+def hash_ip(ip: str) -> str:
+    """Return a keyed hash of a client IP (stable per deployment).
+
+    Used wherever an IP must be stored for forensics or auditing but
+    must not be recoverable from the stored value.
+    """
+    digest = hmac.new(
+        settings.secret_key.encode("utf-8"),
+        ip.encode("utf-8"),
+        hashlib.sha256,
+    )
+    return digest.hexdigest()

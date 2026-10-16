@@ -16,6 +16,8 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models import MediaFile, User
 from app.schemas.common import ResponseModel
+from app.security.singleton import get_security_capabilities
+from app.services.file_sanitizer_service import SanitizeError
 
 router = APIRouter(prefix="/api/v1/upload", tags=["upload"])
 
@@ -102,6 +104,33 @@ def _public_url(file_path: Path) -> str:
     return f"/uploads/{rel.as_posix()}"
 
 
+def _sanitize_upload(dest: Path, content_type: str, db: Session, current_user: User) -> Path:
+    """Run the profile's file sanitizer when one is configured.
+
+    Returns the sanitized path. On refusal the file is deleted, a
+    security event is recorded, and the request fails with 400.
+    """
+    capabilities = get_security_capabilities()
+    sanitizer = getattr(capabilities, "file_sanitizer", None)
+    if sanitizer is None:
+        return dest
+    try:
+        return Path(sanitizer.sanitize(str(dest), content_type))
+    except SanitizeError as exc:
+        dest.unlink(missing_ok=True)
+        capabilities.event_sink.emit(
+            db,
+            event_type="upload_rejected",
+            severity="warning",
+            user_id=current_user.id,
+            detail=f"upload rejected: {exc}",
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="file rejected by security policy",
+        ) from exc
+
+
 def _generate_image_thumbnail(source: Path) -> Optional[Path]:
     """用 ffmpeg 生成图片缩略图，宽度限制为 THUMB_MAX_WIDTH，等比缩放。
     生成 JPEG 格式（体积小），保存到 images/_thumbs/ 目录。
@@ -182,6 +211,7 @@ def upload_image(
     from datetime import timedelta
 
     dest = _save_upload_file(file, "images")
+    dest = _sanitize_upload(dest, content_type, db, current_user)
     # 生成缩略图（失败不影响上传，预览用原图，列表用缩略图）
     thumb_path = _generate_image_thumbnail(dest)
     media = MediaFile(
@@ -229,6 +259,7 @@ def upload_video(
         )
 
     dest = _save_upload_file(file, "videos")
+    dest = _sanitize_upload(dest, content_type, db, current_user)
     # 非 mp4 视频转码为 H.264 mp4（浏览器兼容），转码成功后删除原文件
     final_path = dest
     if dest.suffix.lower() != ".mp4":
@@ -279,6 +310,7 @@ def upload_file(
         )
 
     dest = _save_upload_file(file, "files")
+    dest = _sanitize_upload(dest, content_type, db, current_user)
     media = MediaFile(
         uploader_id=current_user.id,
         file_path=str(dest),
@@ -321,6 +353,7 @@ def upload_voice(
         )
 
     dest = _save_upload_file(file, "voice")
+    dest = _sanitize_upload(dest, content_type, db, current_user)
     media = MediaFile(
         uploader_id=current_user.id,
         file_path=str(dest),

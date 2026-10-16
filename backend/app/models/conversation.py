@@ -9,6 +9,7 @@ from sqlalchemy import BigInteger, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, utc_now
+from app.models.types import EncryptedText
 
 
 class ConversationType(str, PyEnum):
@@ -51,7 +52,7 @@ class Conversation(Base, TimestampMixin):
         comment="For group conversations: the group id",
     )
     last_message_text: Mapped[Optional[str]] = mapped_column(
-        String(500),
+        EncryptedText,
         nullable=True,
         comment="Preview text of the last message",
     )

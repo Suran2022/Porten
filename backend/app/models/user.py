@@ -8,6 +8,7 @@ from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
+from app.models.types import EncryptedText
 
 
 class UserRole(str, PyEnum):
@@ -100,12 +101,12 @@ class User(Base, TimestampMixin):
         comment="Whether the email has been verified",
     )
     gender: Mapped[Optional[str]] = mapped_column(
-        String(50),
+        EncryptedText,
         nullable=True,
-        comment="User gender identity",
+        comment="User gender identity; P0 field, encrypted at rest (design doc §5.4.2)",
     )
     latest_diary: Mapped[Optional[str]] = mapped_column(
-        LONGTEXT,
+        EncryptedText,
         nullable=True,
         comment="Cached content of the user's current emotion diary entry",
     )

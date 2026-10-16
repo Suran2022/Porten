@@ -1,7 +1,7 @@
 """Email service for sending verification codes."""
 
 import logging
-import random
+import secrets
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 
@@ -22,6 +22,9 @@ class EmailService:
     CODE_LENGTH = 6
     CODE_TTL_MINUTES = 10
     RESEND_COOLDOWN_SECONDS = 60
+    # Cap failed verification attempts per code so the 6-digit space
+    # cannot be brute-forced against a single issued code.
+    MAX_VERIFY_ATTEMPTS = 5
 
     def __init__(self) -> None:
         self.host = settings.smtp_host
@@ -31,8 +34,10 @@ class EmailService:
         self.sender = settings.sender_address
 
     def _generate_code(self) -> str:
-        """Generate a numeric verification code."""
-        return "".join(random.choices("0123456789", k=self.CODE_LENGTH))
+        """Generate a numeric verification code using a CSPRNG."""
+        return "".join(
+            secrets.choice("0123456789") for _ in range(self.CODE_LENGTH)
+        )
 
     @staticmethod
     def _ensure_utc(value: datetime) -> datetime:
@@ -131,6 +136,9 @@ class EmailService:
         """
         Validate a verification code without consuming it.
 
+        Each failed attempt is counted; after MAX_VERIFY_ATTEMPTS the
+        code stops validating and a new one must be requested.
+
         Call consume_code after the dependent operation succeeds.
         """
         record = (
@@ -144,7 +152,13 @@ class EmailService:
         expires_at = self._ensure_utc(record.expires_at)
         if expires_at < datetime.now(timezone.utc):
             return False
-        return record.code == code
+        if record.attempts >= self.MAX_VERIFY_ATTEMPTS:
+            return False
+        if record.code == code:
+            return True
+        record.attempts += 1
+        db.commit()
+        return False
 
     def consume_code(self, db: Session, email: str, code: str, purpose: str) -> bool:
         """Mark a verification code as used."""

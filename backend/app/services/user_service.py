@@ -10,6 +10,7 @@ from app.config import get_settings
 from app.models import Friendship, User
 from app.models.user import CIS_GENDERS
 from app.schemas.auth import LoginResponse, TokenResponse, UserBriefResponse
+from app.services.device_binding_service import device_binding_service
 from app.services.porten_id_service import PortenIdService
 from app.utils.security import create_access_token, hash_password, verify_password
 
@@ -153,9 +154,27 @@ class UserService:
             raise ValueError("invalid Porten ID or password")
         return user
 
-    def build_login_response(self, user: User) -> LoginResponse:
-        """Build a login response with JWT token and user info."""
-        token = create_access_token({"sub": str(user.id), "tv": user.token_version})
+    def build_login_response(
+        self,
+        db: Session,
+        user: User,
+        device_id: Optional[str] = None,
+        device_name: Optional[str] = None,
+        platform: Optional[str] = None,
+    ) -> LoginResponse:
+        """Build a login response with JWT token and user info.
+
+        When a device_id is supplied the token is bound to that device
+        (``did`` claim) and the binding is recorded; otherwise the
+        token stays device-unbound.
+        """
+        claims: dict = {"sub": str(user.id), "tv": user.token_version}
+        if device_id:
+            device_binding_service.bind_device(
+                db, user, device_id, device_name, platform
+            )
+            claims["did"] = device_id
+        token = create_access_token(claims)
         return LoginResponse(
             token=TokenResponse(
                 access_token=token,
