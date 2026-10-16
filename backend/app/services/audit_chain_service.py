@@ -161,10 +161,21 @@ class AuditChainService:
                 created_at=created_at,
             )
             db.add(entry)
+            # Release the advisory lock before committing: GET_LOCK is
+            # connection-scoped and Session.commit() hands the pooled
+            # connection back, so releasing afterwards could run on a
+            # different pooled connection and leak the lock (observed:
+            # every later append then timed out on GET_LOCK and failed
+            # closed). The FOR UPDATE row lock above stays held until
+            # the commit lands, so writers remain serialized either way.
+            if locked:
+                self._release_lock(db)
             db.commit()
             db.refresh(entry)
             return entry
         finally:
+            # Safety net for the error path before the release above;
+            # a no-op on connections that no longer hold the lock.
             if locked:
                 self._release_lock(db)
 
