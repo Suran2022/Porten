@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 
 import aiosmtplib
+import httpx
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,40 @@ class EmailService:
         self.username = settings.smtp_username
         self.password = settings.smtp_password
         self.sender = settings.sender_address
+        self.use_resend_api = settings.use_resend_api
+
+    async def _send_via_resend(
+        self,
+        recipient: str,
+        subject: str,
+        text_body: str,
+        html_body: str | None = None,
+    ) -> None:
+        """Send an email via the Resend HTTPS API (port 443).
+
+        Railway and comparable platforms block outbound SMTP ports, so the
+        HTTP API is the supported delivery path there.
+        """
+        payload: dict = {
+            "from": settings.resend_sender,
+            "to": [recipient],
+            "subject": subject,
+            "text": text_body,
+        }
+        if html_body:
+            payload["html"] = html_body
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+                json=payload,
+            )
+        if response.status_code >= 400:
+            raise RuntimeError(
+                f"Resend API rejected the message: "
+                f"{response.status_code} {response.text}"
+            )
+        logger.info("email sent via Resend API to %s (id=%s)", recipient, response.json().get("id"))
 
     def _generate_code(self) -> str:
         """Generate a numeric verification code using a CSPRNG."""
@@ -86,18 +121,24 @@ class EmailService:
         return code
 
     async def send_verification_email(self, recipient: str, code: str) -> None:
-        """Send the verification code email via SMTP."""
-        message = EmailMessage()
-        message["From"] = self.sender
-        message["To"] = recipient
-        message["Subject"] = f"[{settings.app_name}] 您的验证码"
-        message.set_content(
+        """Send the verification code email (Resend API if configured, else SMTP)."""
+        subject = f"[{settings.app_name}] 您的验证码"
+        text_body = (
             f"您好，\n\n"
             f"您的验证码是：{code}\n"
             f"验证码将在 {self.CODE_TTL_MINUTES} 分钟后失效，请勿泄露给他人。\n\n"
             f"如非本人操作，请忽略此邮件。\n\n"
             f"{settings.app_name} 团队"
         )
+        if self.use_resend_api:
+            await self._send_via_resend(recipient, subject, text_body)
+            return
+
+        message = EmailMessage()
+        message["From"] = self.sender
+        message["To"] = recipient
+        message["Subject"] = subject
+        message.set_content(text_body)
 
         await aiosmtplib.send(
             message,
@@ -110,16 +151,21 @@ class EmailService:
         )
 
     async def send_agreement_email(self, recipient: str, subject: str, html_body: str) -> None:
-        """Send an agreement email as HTML via SMTP."""
-        message = EmailMessage()
-        message["From"] = self.sender
-        message["To"] = recipient
-        message["Subject"] = subject
-        message.set_content(
+        """Send an agreement email as HTML (Resend API if configured, else SMTP)."""
+        text_body = (
             "您好，这是 Porten 平台发送的协议文本。"
             "如无法查看 HTML 格式，请访问 https://your-domain.com 查看相关协议。\n\n"
             "Porten 团队"
         )
+        if self.use_resend_api:
+            await self._send_via_resend(recipient, subject, text_body, html_body)
+            return
+
+        message = EmailMessage()
+        message["From"] = self.sender
+        message["To"] = recipient
+        message["Subject"] = subject
+        message.set_content(text_body)
         message.add_alternative(html_body, subtype="html")
 
         await aiosmtplib.send(

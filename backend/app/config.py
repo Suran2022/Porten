@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     smtp_sender_name: str = "Porten"
     # 发件人地址；缺省回退 smtp_username（兼容 QQ 邮箱等登录名即发件人的服务）。
     smtp_from_address: str = ""
+    # Resend HTTP API（https://api.resend.com/emails，走 443）。
+    # Railway 等平台封锁 SMTP 出站端口（465/587 连接直接超时），
+    # 官方建议此类平台走邮件服务商的 HTTPS API。
+    # 优先级：配置了 resend_api_key 即走 API，否则回退 SMTP。
+    resend_api_key: str = ""
+    # API 路径的发件人；缺省回退 smtp_from_address → smtp_username。
+    resend_from_address: str = ""
 
     # Application
     default_avatar_url: str = "https://haowallpaper.com/link//common/file/previewFileImg/19197325717754752"
@@ -173,6 +180,19 @@ class Settings(BaseSettings):
     @property
     def sender_address(self) -> str:
         from_address = self.smtp_from_address or self.smtp_username
+        return f"{self.smtp_sender_name} <{from_address}>"
+
+    @property
+    def use_resend_api(self) -> bool:
+        """Whether to send via the Resend HTTPS API instead of SMTP."""
+        return bool(self.resend_api_key)
+
+    @property
+    def resend_sender(self) -> str:
+        """Formatted From header for the Resend API path."""
+        from_address = (
+            self.resend_from_address or self.smtp_from_address or self.smtp_username
+        )
         return f"{self.smtp_sender_name} <{from_address}>"
 
 
