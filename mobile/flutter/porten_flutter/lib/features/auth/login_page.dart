@@ -30,7 +30,6 @@ import '../../core/components/porten_toast.dart';
 import '../../core/design/porten_colors.dart';
 import '../../core/design/porten_scale.dart';
 import '../../core/design/porten_typography.dart';
-import '../../core/mock/mock_mode.dart';
 import 'state/auth_controller.dart';
 
 /// 登录方式 → 占位符（对齐 Web 端 methodLabels）。
@@ -340,31 +339,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             onChanged: (bool v) => setState(() => _agreed = v),
             onOpenAgreement: AgreementViewer.open,
           ),
-          // 运行环境标识：数据源模式 + API 地址（排查「数据是否为演示数据」用）
-          _buildEnvironmentLabel(),
         ],
       ),
-    );
-  }
-
-  /// 数据源模式一行展示（Mock 引擎 / 真实 API · 后端地址）。
-  Widget _buildEnvironmentLabel() {
-    final AsyncValue<EnvironmentInfo> env = ref.watch(environmentInfoProvider);
-    return env.maybeWhen(
-      data: (EnvironmentInfo info) => Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Text(
-          info.summary,
-          textAlign: TextAlign.center,
-          style: PortenTypography.xs.copyWith(
-            color: info.mode == PortenMockMode.live
-                ? PortenColor.gray400
-                : PortenColor.brandBlue,
-            fontSize: 10,
-          ),
-        ),
-      ),
-      orElse: () => const SizedBox.shrink(),
     );
   }
 
