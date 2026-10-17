@@ -52,6 +52,22 @@ public abstract class PortenRepository<T>(
         }
     }
 
+    /**
+     * 写操作分发助手：与 [fetch] 相同的模式选择与防御语义，
+     * 供子类的 create / update / delete 等方法复用（避免每个方法重复 when）。
+     */
+    protected suspend fun <R> dispatch(
+        live: suspend () -> R,
+        mock: suspend () -> R,
+    ): R {
+        val mode = modeProvider()
+        AppLogger.d(TAG, "dispatch mode=$mode")
+        return when (mode) {
+            DataSourceMode.Live -> live()
+            DataSourceMode.Mock -> mock()
+        }
+    }
+
     /** 真实后端读取（子类实现，禁止返回演示数据）。 */
     protected abstract suspend fun fetchLive(): T
 
@@ -61,4 +77,18 @@ public abstract class PortenRepository<T>(
     public companion object {
         private const val TAG: String = "Repository"
     }
+}
+
+/**
+ * 仓储外的模式分发助手（供非 [PortenRepository] 语义的域使用，如认证）。
+ *
+ * 与 [PortenRepository.dispatch] 同一套防御语义：Live 通道异常不静默回退 Mock。
+ */
+internal suspend fun <R> dispatchByMode(
+    mode: DataSourceMode,
+    live: suspend () -> R,
+    mock: suspend () -> R,
+): R = when (mode) {
+    DataSourceMode.Live -> live()
+    DataSourceMode.Mock -> mock()
 }

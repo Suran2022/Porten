@@ -108,7 +108,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _handleSendCode() async {
     if (_accountCtrl.text.trim().isEmpty) return;
     if (!_agreementGuard()) return;
-    final bool sent = await ref.read(authProvider.notifier).sendCode();
+    final bool sent = await ref
+        .read(authProvider.notifier)
+        .sendCode(email: _accountCtrl.text.trim(), purpose: 'login');
     PortenToast.show(
           sent ? '验证码已发送' : '发送失败，请稍后重试',
           icon: sent ? ToastIcon.success : ToastIcon.error,
@@ -124,10 +126,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     if (isPhone) {
       if (_codeCtrl.text.length != 6) return;
-      // Mock 阶段：任意手机号 + 6 位验证码直接进入（loginAsMock）。
-      final bool ok = await ref.read(authProvider.notifier).loginMock(
+      // Mock：任意手机号 + 6 位验证码直接进入；Live：服务端仅支持邮箱登录，
+      // 控制器会透出「请使用邮箱登录」。
+      final bool ok = await ref.read(authProvider.notifier).login(
             type: LoginCredentialType.phone,
             identifier: account,
+            verificationCode: _codeCtrl.text,
           );
       if (ok && mounted) {
         PortenToast.show('登录成功', icon: ToastIcon.success);
@@ -136,15 +140,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
 
-    if (account.isEmpty || _passwordCtrl.text.isEmpty) return;
-    if (auth.method == LoginMethod.email &&
-        !AuthController.isValidEmail(account)) {
+    if (account.isEmpty) return;
+    if (!AuthController.isValidEmail(account)) {
       PortenToast.show('请输入正确的邮箱地址');
       return;
     }
-    final bool ok = await ref.read(authProvider.notifier).loginMock(
+    // 密码模式与验证码模式分别取对应输入（mock 模式不校验，任意放行）。
+    final bool usePassword = auth.isPasswordMode;
+    if (usePassword ? _passwordCtrl.text.isEmpty : _codeCtrl.text.length != 6) return;
+    final bool ok = await ref.read(authProvider.notifier).login(
           type: LoginCredentialType.email,
           identifier: account,
+          password: usePassword ? _passwordCtrl.text : null,
+          verificationCode: usePassword ? null : _codeCtrl.text,
         );
     if (ok && mounted) {
       PortenToast.show('登录成功', icon: ToastIcon.success);

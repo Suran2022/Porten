@@ -92,7 +92,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       setState(() => _error = err);
       return;
     }
-    final bool sent = await ref.read(authProvider.notifier).sendCode();
+    final bool sent = await ref
+        .read(authProvider.notifier)
+        .sendCode(email: _emailCtrl.text.trim(), purpose: 'register');
     if (!mounted) return;
     if (!sent) {
       setState(() => _error = '发送验证码失败');
@@ -108,7 +110,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final AuthState auth = ref.read(authProvider);
     if (auth.countdown > 0) return;
     setState(() => _error = null);
-    final bool sent = await ref.read(authProvider.notifier).sendCode();
+    final bool sent = await ref
+        .read(authProvider.notifier)
+        .sendCode(email: _emailCtrl.text.trim(), purpose: 'register');
     if (!mounted) return;
     if (!sent) setState(() => _error = '发送验证码失败');
   }
@@ -124,9 +128,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       setState(() => _error = '请输入 6 位验证码');
       return;
     }
-    final bool ok = await ref
-        .read(authProvider.notifier)
-        .registerMock(identifier: _emailCtrl.text.trim());
+    final bool ok = await ref.read(authProvider.notifier).register(
+          email: _emailCtrl.text.trim(),
+          password: _passwordCtrl.text,
+          confirmPassword: _confirmCtrl.text,
+          verificationCode: _codeCtrl.text,
+        );
     if (ok && mounted) {
       widget.onRegisterSuccess();
     }

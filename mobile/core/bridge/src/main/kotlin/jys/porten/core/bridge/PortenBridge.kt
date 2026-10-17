@@ -20,6 +20,54 @@ public object PortenChannels {
 
     /** 导航桥：Add-to-App 系统返回键转发（r20）。 */
     public const val NAVIGATION: String = "porten/navigation"
+
+    /**
+     * 业务数据桥：Flutter 经本通道读取 / 提交业务数据（日程、旅程、笔记）。
+     *
+     * 架构约束（混合开发核心）：Flutter 禁止直接访问网络，业务数据一律经
+     * 本通道下沉到 :core:data 的 Repository（Mock / Live 双通道由原生决策），
+     * 与官方 Add-to-App「核心能力在原生、表现层在 Flutter」的分工一致。
+     */
+    public const val DATA: String = "porten/data"
+}
+
+/**
+ * 业务数据桥方法名（与 Dart 侧 PortenDataMethods 严格一致）。
+ *
+ * 命名规范：动词 + 领域名词（listSchedules / createSchedule / ...），
+ * 请求参数与返回值均为 JSON Map，由各端 Model 的序列化约定承载。
+ */
+public object PortenDataMethods {
+    // ---- 认证（登录 / 注册 / 验证码 / 登出）----
+    public const val AUTH_SEND_CODE: String = "authSendCode"
+    public const val AUTH_REGISTER: String = "authRegister"
+    public const val AUTH_LOGIN_PASSWORD: String = "authLoginPassword"
+    public const val AUTH_LOGIN_EMAIL_CODE: String = "authLoginEmailCode"
+    public const val AUTH_LOGOUT: String = "authLogout"
+
+    // ---- 我的日程 ----
+    public const val LIST_SCHEDULES: String = "listSchedules"
+    public const val CREATE_SCHEDULE: String = "createSchedule"
+    public const val UPDATE_SCHEDULE: String = "updateSchedule"
+
+    // ---- 我的旅程 ----
+    public const val LIST_TRIPS: String = "listTrips"
+    public const val CREATE_TRIP: String = "createTrip"
+
+    // ---- 记笔记 ----
+    public const val LIST_NOTES: String = "listNotes"
+    public const val CREATE_NOTE: String = "createNote"
+    public const val UPDATE_NOTE: String = "updateNote"
+    public const val DELETE_NOTE: String = "deleteNote"
+}
+
+/** 业务数据桥参数键（与 Dart 侧 PortenDataArgs 严格一致）。 */
+public object PortenDataArgs {
+    /** 日程 / 笔记更新时的条目 id。 */
+    public const val ID: String = "id"
+
+    /** 创建 / 更新载荷（JSON Map，字段与各端 Model 一致）。 */
+    public const val PAYLOAD: String = "payload"
 }
 
 /** IM 桥事件类型（与 Dart 侧 PortenImEvents 一致）。 */

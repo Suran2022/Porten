@@ -26,10 +26,51 @@ abstract final class PortenChannels {
   /// 环境与配置桥：Mock 开关、API 地址等由原生注入。
   static const MethodChannel env = MethodChannel('porten/env');
 
+  /// 业务数据桥：日程 / 旅程 / 笔记的读取与提交（Flutter 禁止直连网络，
+  /// 业务数据一律经本通道下沉到原生 Repository，Mock / Live 由原生决策）。
+  static const MethodChannel data = MethodChannel('porten/data');
+
   /// 导航桥：Add-to-App 缓存引擎模式无 FlutterActivity 背书，
   /// 系统返回键由原生转发——原生先调 canPop 判断 Flutter 导航栈，
   /// 可弹则发系统 popRoute（Dart 内 pop 一级），不可弹则原生收尾 Activity。
   static const MethodChannel navigation = MethodChannel('porten/navigation');
+}
+
+/// 业务数据桥方法名（与 Kotlin 侧 PortenDataMethods 严格一致）。
+///
+/// 命名规范：动词 + 领域名词；请求参数与返回值均为 JSON Map
+/// （参数键见 [PortenDataArgs]，字段由各端 Model 的序列化约定承载）。
+abstract final class PortenDataMethods {
+  // ---- 认证 ----
+  static const String authSendCode = 'authSendCode';
+  static const String authRegister = 'authRegister';
+  static const String authLoginPassword = 'authLoginPassword';
+  static const String authLoginEmailCode = 'authLoginEmailCode';
+  static const String authLogout = 'authLogout';
+
+  // ---- 我的日程 ----
+  static const String listSchedules = 'listSchedules';
+  static const String createSchedule = 'createSchedule';
+  static const String updateSchedule = 'updateSchedule';
+
+  // ---- 我的旅程 ----
+  static const String listTrips = 'listTrips';
+  static const String createTrip = 'createTrip';
+
+  // ---- 记笔记 ----
+  static const String listNotes = 'listNotes';
+  static const String createNote = 'createNote';
+  static const String updateNote = 'updateNote';
+  static const String deleteNote = 'deleteNote';
+}
+
+/// 业务数据桥参数键（与 Kotlin 侧 PortenDataArgs 严格一致）。
+abstract final class PortenDataArgs {
+  /// 日程 / 笔记更新时的条目 id。
+  static const String id = 'id';
+
+  /// 创建 / 更新载荷（JSON Map，字段与各端 Model 一致）。
+  static const String payload = 'payload';
 }
 
 /// IM 桥事件类型常量（EventChannel 流中的 type 字段）。
