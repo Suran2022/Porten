@@ -1,22 +1,40 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import tripIcon from "@/assets/trip-icon.svg";
+import { fetchTripAssistant } from "@/lib/api";
 
 interface TripAssistantCardProps {
   onClick?: () => void;
 }
 
-/** 行程消息徽标数（示例数据：当前有 1 条行程消息）。 */
-const TRIP_MESSAGE_COUNT = 1;
-
-/** 名称下方的最新一条旅程消息，超长由 truncate 自动省略。 */
-const TRIP_LAST_MESSAGE = "您有一条在2天后前往大连的旅程";
-
 /**
  * 「我的旅程」功能入口卡片：头像 / 名称 + 「行程安全」标签 + 行程消息徽标。
  * 名称下方展示最近创建的旅程，前缀 [行程助手]：，与 Porten 伙伴入口卡片并列展示。
+ *
+ * 徽标数与最新旅程摘要来自 /trips/assistant（API 模式）或 mock 引擎。
  */
 export function TripAssistantCard({ onClick }: TripAssistantCardProps) {
   const navigate = useNavigate();
+  const [count, setCount] = useState(0);
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchTripAssistant()
+      .then((data) => {
+        if (!active) return;
+        setCount(data.count);
+        setLastMessage(data.lastMessage);
+      })
+      .catch(() => {
+        if (!active) return;
+        setCount(0);
+        setLastMessage(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div
@@ -42,18 +60,20 @@ export function TripAssistantCard({ onClick }: TripAssistantCardProps) {
             行程安全
           </span>
           <span className="flex-1" />
-          {TRIP_MESSAGE_COUNT > 0 && (
+          {count > 0 && (
             <span
-              aria-label={`${TRIP_MESSAGE_COUNT} 条行程消息`}
+              aria-label={`${count} 条行程消息`}
               className="flex-shrink-0 h-[18px] px-1.5 min-w-[18px] rounded-full bg-red-500 text-white text-[11px] font-medium flex items-center justify-center"
             >
-              {TRIP_MESSAGE_COUNT > 99 ? "99+" : TRIP_MESSAGE_COUNT}
+              {count > 99 ? "99+" : count}
             </span>
           )}
         </div>
-        <p className="mt-0.5 text-sm text-gray-500 truncate">
-          [行程助手]：{TRIP_LAST_MESSAGE}
-        </p>
+        {lastMessage && (
+          <p className="mt-0.5 text-sm text-gray-500 truncate">
+            [行程助手]：{lastMessage}
+          </p>
+        )}
       </div>
     </div>
   );

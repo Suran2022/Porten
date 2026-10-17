@@ -25,16 +25,21 @@ import {
   mockFriends,
   mockGroupRequests,
   mockMessages,
+  mockNotes,
   mockSchedules,
   mockSearchFiles,
   mockSearchImages,
   mockSystemMessages,
+  mockTripAssistant,
+  mockTripCards,
   mockTrips,
   mockUsers,
   MockConversation,
   MockMessage,
+  MockNote,
   MockSchedule,
   MockSystemMessage,
+  MockTripCard,
   MockUser,
 } from "@/data/mockServerData";
 import { sharePosts } from "@/data/knowledgeMock";
@@ -871,6 +876,89 @@ route("PATCH", /^\/schedules\/(\d+)$/, (ctx) => {
       : [];
   }
   return item;
+});
+
+/* ---- 旅程 ---- */
+
+route("GET", /^\/trips$/, () => ({ items: mockTripCards }));
+
+route("GET", /^\/trips\/assistant$/, () => mockTripAssistant);
+
+route("POST", /^\/trips$/, (ctx) => {
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  const arrivalCity = String(body.arrival_city ?? "");
+  const departureAt = String(body.departure_at ?? "");
+  const departureDate = departureAt ? new Date(departureAt) : new Date();
+  const days = Math.max(
+    0,
+    Math.ceil(
+      (departureDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000)
+    )
+  );
+  const item: MockTripCard = {
+    title: `${days}天后将前往${arrivalCity}`,
+    departure_city: String(body.departure_city ?? ""),
+    departure_airport: String(body.departure_airport ?? ""),
+    departure_time: `${String(departureDate.getHours()).padStart(2, "0")}:${String(
+      departureDate.getMinutes()
+    ).padStart(2, "0")}`,
+    arrival_city: arrivalCity,
+    arrival_airport: String(body.arrival_airport ?? ""),
+    arrival_time: null,
+    transfer_type: body.transfer_type === "中转" ? "中转" : "直达",
+    airline: String(body.airline ?? ""),
+    airline_icon: "",
+    tips: null,
+  };
+  mockTripCards.push(item);
+  return item;
+});
+
+/* ---- 笔记 ---- */
+
+function mockNoteTimeLabel(): string {
+  return `今天 ${new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date())}`;
+}
+
+route("GET", /^\/notes$/, () => ({ items: mockNotes }));
+
+route("POST", /^\/notes$/, (ctx) => {
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  const tags = Array.isArray(body.tags)
+    ? body.tags.map(String)
+    : [];
+  const item: MockNote = {
+    id: Math.max(...mockNotes.map((n) => n.id), 0) + 1,
+    content: String(body.content ?? ""),
+    time: mockNoteTimeLabel(),
+    tags: tags.length ? tags : ["随记"],
+    archived: false,
+  };
+  mockNotes.unshift(item);
+  return item;
+});
+
+route("PATCH", /^\/notes\/(\d+)$/, (ctx) => {
+  const item = mockNotes.find((n) => n.id === Number(ctx.params[0]));
+  if (!item) throw new Error("note not found");
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  if (body.content != null) item.content = String(body.content);
+  if (body.tags !== undefined) {
+    item.tags = Array.isArray(body.tags) ? body.tags.map(String) : [];
+  }
+  if (body.archived !== undefined) item.archived = Boolean(body.archived);
+  return item;
+});
+
+route("DELETE", /^\/notes\/(\d+)$/, (ctx) => {
+  const index = mockNotes.findIndex((n) => n.id === Number(ctx.params[0]));
+  if (index < 0) throw new Error("note not found");
+  mockNotes.splice(index, 1);
+  return { deleted: true };
 });
 
 /* ============================= 入口 ============================= */

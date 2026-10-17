@@ -904,6 +904,161 @@ export const mockTrips: MockRelatedItem[] = [
   { id: 3, label: "杭州 → 厦门 · 12月20日" },
 ];
 
+/** 旅程卡片（mock），字段与后端 TripResponse 一致（snake_case）。 */
+export interface MockTripCard {
+  title: string;
+  departure_city: string;
+  departure_airport: string;
+  departure_time: string;
+  arrival_city: string;
+  arrival_airport: string;
+  arrival_time: string | null;
+  transfer_type: "直达" | "中转";
+  airline: string;
+  /** Web 端由 api 层按航司名重映射为本地资源，mock 固定为空串 */
+  airline_icon: string;
+  tips: string | null;
+}
+
+/** 旅程卡片种子数据（mock），对应「我的行程」页面。 */
+export const mockTripCards: MockTripCard[] = [
+  {
+    title: "2天后将前往大连",
+    departure_city: "广州",
+    departure_airport: "白云机场",
+    departure_time: "08:35",
+    arrival_city: "大连",
+    arrival_airport: "周水子机场",
+    arrival_time: "12:05",
+    transfer_type: "直达",
+    airline: "四川航空",
+    airline_icon: "",
+    tips: "两天后可进行线上选座，当天有雨，注意带伞哦！",
+  },
+  {
+    title: "7天后将前往东京",
+    departure_city: "大连",
+    departure_airport: "周水子机场",
+    departure_time: "09:30",
+    arrival_city: "东京",
+    arrival_airport: "羽田机场",
+    arrival_time: "13:00",
+    transfer_type: "直达",
+    airline: "东方航空",
+    airline_icon: "",
+    tips: "请注意日本签证，注意出行安全！",
+  },
+  {
+    title: "12天后将前往旧金山",
+    departure_city: "东京",
+    departure_airport: "羽田机场",
+    departure_time: "17:10",
+    arrival_city: "旧金山",
+    arrival_airport: "旧金山国际机场",
+    arrival_time: "10:30",
+    transfer_type: "中转",
+    airline: "中国航空",
+    airline_icon: "",
+    tips: "请注意美国签证，注意出行安全！",
+  },
+];
+
+/** 「我的旅程」入口卡片（mock），字段与后端 TripAssistantResponse 一致。 */
+export const mockTripAssistant = {
+  count: 3,
+  last_message: "您有一条在2天后前往大连的旅程",
+};
+
+/** 笔记（mock），字段与后端 NoteResponse 一致。 */
+export interface MockNote {
+  id: number;
+  content: string;
+  time: string;
+  tags: string[];
+  archived: boolean;
+}
+
+/** 笔记种子数据（mock），对应「记笔记」页面。 */
+export const mockNotes: MockNote[] = [
+  {
+    id: 1,
+    content: "今天把消息列表的交互流程重新梳理了一遍。优先让核心路径保持简单，再逐步补充细节和反馈。",
+    time: "今天 10:24",
+    tags: ["工作", "灵感"],
+    archived: false,
+  },
+  {
+    id: 2,
+    content: "周末想去城南的植物园走走，带上相机，顺便记录春天刚长出来的新叶和傍晚的光。",
+    time: "昨天 21:16",
+    tags: ["生活", "计划"],
+    archived: false,
+  },
+  {
+    id: 3,
+    content: "产品细节：动画不只是装饰，它应该帮助用户理解页面之间的空间关系，进入和退出必须保持方向一致。",
+    time: "7月30日 16:08",
+    tags: ["设计", "产品"],
+    archived: false,
+  },
+  {
+    id: 4,
+    content: "最近循环播放的歌单很适合夜晚写东西。舒缓的节奏能让思绪慢下来，也更容易专注。",
+    time: "7月28日 23:42",
+    tags: ["音乐", "日常"],
+    archived: false,
+  },
+  {
+    id: 5,
+    content: "下次社区分享会可以讨论如何建立更安全的表达空间，让每个人都能被认真倾听和温柔回应。",
+    time: "7月26日 14:30",
+    tags: ["社区", "想法"],
+    archived: false,
+  },
+  {
+    id: 6,
+    content: "阅读摘录：真正的勇敢并不是从不害怕，而是在理解自己的害怕之后，仍然愿意向前走一步。",
+    time: "7月24日 09:12",
+    tags: ["阅读", "摘录"],
+    archived: false,
+  },
+  {
+    id: 7,
+    content: "体检需要准备的材料：身份证、预约单、既往检查报告。提前半小时出门，避免早高峰。",
+    time: "7月22日 18:05",
+    tags: ["健康", "待办"],
+    archived: false,
+  },
+  {
+    id: 8,
+    content: "新功能的颜色尽量降低饱和度，蓝色与粉色不要直接硬切，用更大的渐变半径自然融入白色背景。",
+    time: "7月20日 11:47",
+    tags: ["设计", "灵感"],
+    archived: false,
+  },
+  {
+    id: 9,
+    content: "给未来的自己：不需要急着证明什么，按照自己的节奏生活，每一次认真选择都算数。",
+    time: "7月18日 22:19",
+    tags: ["心情", "给自己"],
+    archived: false,
+  },
+  {
+    id: 10,
+    content: "会议记录：先完成移动端消息体验，再统一桌面端布局；测试阶段重点关注弱网和离线状态。",
+    time: "7月16日 15:36",
+    tags: ["工作", "会议"],
+    archived: false,
+  },
+  {
+    id: 11,
+    content: "想学着做一道简单的番茄炖牛腩，少放一点糖，最后加几颗烤过的小番茄增加香气。",
+    time: "7月14日 12:04",
+    tags: ["生活", "美食"],
+    archived: false,
+  },
+];
+
 /** 可关联约定（mock）：对应加号菜单「创建约定」产生的约定项。 */
 export const mockAgreements: MockRelatedItem[] = [
   { id: 1, label: "每周三线上互助会" },

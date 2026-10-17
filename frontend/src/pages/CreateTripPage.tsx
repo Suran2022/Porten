@@ -9,6 +9,7 @@ import { TimePickerSheet } from "@/components/trip/TimePickerSheet";
 import { AirlinePickerSheet } from "@/components/trip/AirlinePickerSheet";
 import { SHEET_BTN_CANCEL, SHEET_BTN_CONFIRM } from "@/components/trip/BottomSheet";
 import { useToastStore } from "@/store/toastStore";
+import { createTrip } from "@/lib/api";
 import tripIcon from "@/assets/trip-icon.svg";
 import type { City, CityAirport } from "@/data/cities";
 import type { Airline } from "@/data/airlines";
@@ -43,6 +44,7 @@ export default function CreateTripPage() {
   const [arrival, setArrival] = useState<EndpointSelection | null>(null);
   const [time, setTime] = useState<Date | null>(null);
   const [airline, setAirline] = useState<Airline | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
@@ -90,10 +92,30 @@ export default function CreateTripPage() {
   // 三部分全部选择完成后显示底部操作按钮
   const completed = departure !== null && arrival !== null && time !== null && airline !== null;
 
-  const handleCreate = () => {
-    // Mock 阶段：提示成功并返回；后续接入接口后替换为真实创建请求
-    showToast("旅程创建成功", "success");
-    navigate(-1);
+  const handleCreate = async () => {
+    if (!completed || submitting) return;
+    setSubmitting(true);
+    try {
+      // 标题与提醒文案由服务端生成；表单未收集到达时间与航段类型，
+      // arrival_at 缺省、transfer_type 走默认「直达」。
+      await createTrip({
+        departureCity: departure.city.name,
+        departureAirport: departure.airport.name,
+        arrivalCity: arrival.city.name,
+        arrivalAirport: arrival.airport.name,
+        departureAt: time.toISOString(),
+        airline: airline.name,
+      });
+      showToast("旅程创建成功", "success");
+      navigate(-1);
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "旅程创建失败，请稍后重试",
+        "error"
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -241,9 +263,10 @@ export default function CreateTripPage() {
             <button
               type="button"
               onClick={handleCreate}
-              className={SHEET_BTN_CONFIRM}
+              disabled={submitting}
+              className={cn(SHEET_BTN_CONFIRM, submitting && "opacity-60")}
             >
-              创建旅程
+              {submitting ? "创建中……" : "创建旅程"}
             </button>
           </div>
         )}

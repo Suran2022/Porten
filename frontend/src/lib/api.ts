@@ -299,6 +299,149 @@ export async function updateSchedule(
   });
 }
 
+/* ---- 旅程 ---- */
+
+import { AIRLINES } from "@/data/airlines";
+
+/** 旅程卡片（页面视图模型，字段与渲染逻辑一致，由后端 snake_case 响应转换而来）。 */
+export interface TripItem {
+  title: string;
+  departureCity: string;
+  departureAirport: string;
+  departureTime: string;
+  arrivalCity: string;
+  arrivalAirport: string;
+  arrivalTime: string | null;
+  /** 航段类型：直达 / 中转 */
+  transferType: "直达" | "中转";
+  airline: string;
+  airlineIcon: string;
+  tips: string | null;
+}
+
+/** 后端 /trips 响应条目（snake_case，与 TripItem 一一对应）。 */
+interface TripResponsePayload {
+  title: string;
+  departure_city: string;
+  departure_airport: string;
+  departure_time: string;
+  arrival_city: string;
+  arrival_airport: string;
+  arrival_time: string | null;
+  transfer_type: string;
+  airline: string;
+  /** 后端给的 assets/icons/*.svg 相对路径（App 端资源），Web 端按航司名重新映射 */
+  airline_icon: string;
+  tips: string | null;
+}
+
+function toTripItem(payload: TripResponsePayload): TripItem {
+  return {
+    title: payload.title,
+    departureCity: payload.departure_city,
+    departureAirport: payload.departure_airport,
+    departureTime: payload.departure_time,
+    arrivalCity: payload.arrival_city,
+    arrivalAirport: payload.arrival_airport,
+    arrivalTime: payload.arrival_time,
+    transferType: payload.transfer_type === "中转" ? "中转" : "直达",
+    airline: payload.airline,
+    airlineIcon: AIRLINES.find((a) => a.name === payload.airline)?.icon ?? "",
+    tips: payload.tips,
+  };
+}
+
+export async function fetchTrips(): Promise<TripItem[]> {
+  const res = await apiRequest<{ items: TripResponsePayload[] }>("/trips");
+  return res.items.map(toTripItem);
+}
+
+/** 「我的旅程」入口卡片数据（消息列表）。 */
+export interface TripAssistantData {
+  count: number;
+  lastMessage: string | null;
+}
+
+export async function fetchTripAssistant(): Promise<TripAssistantData> {
+  const res = await apiRequest<{ count: number; last_message: string | null }>(
+    "/trips/assistant"
+  );
+  return { count: res.count, lastMessage: res.last_message };
+}
+
+export interface TripCreatePayload {
+  departureCity: string;
+  departureAirport: string;
+  arrivalCity: string;
+  arrivalAirport: string;
+  /** 出发时间 ISO 字符串 */
+  departureAt: string;
+  /** 到达时间 ISO 字符串；表单未收集时缺省 */
+  arrivalAt?: string | null;
+  transferType?: "直达" | "中转";
+  airline: string;
+}
+
+export async function createTrip(payload: TripCreatePayload): Promise<TripItem> {
+  return toTripItem(
+    await apiRequest<TripResponsePayload>("/trips", {
+      method: "POST",
+      body: JSON.stringify({
+        departure_city: payload.departureCity,
+        departure_airport: payload.departureAirport,
+        arrival_city: payload.arrivalCity,
+        arrival_airport: payload.arrivalAirport,
+        departure_at: payload.departureAt,
+        arrival_at: payload.arrivalAt ?? null,
+        transfer_type: payload.transferType ?? "直达",
+        airline: payload.airline,
+      }),
+    })
+  );
+}
+
+/* ---- 笔记 ---- */
+
+/** 笔记条目（字段与后端 NoteResponse 完全一致）。 */
+export interface NoteItem {
+  id: number;
+  content: string;
+  time: string;
+  tags: string[];
+  archived: boolean;
+}
+
+export async function fetchNotes(): Promise<NoteItem[]> {
+  const res = await apiRequest<{ items: NoteItem[] }>("/notes");
+  return res.items;
+}
+
+export interface NoteCreatePayload {
+  content: string;
+  tags?: string[];
+}
+
+export async function createNote(payload: NoteCreatePayload): Promise<NoteItem> {
+  return apiRequest<NoteItem>("/notes", {
+    method: "POST",
+    body: JSON.stringify({ content: payload.content, tags: payload.tags ?? [] }),
+  });
+}
+
+export async function updateNote(
+  id: number,
+  payload: { content?: string; tags?: string[]; archived?: boolean }
+): Promise<NoteItem> {
+  return apiRequest<NoteItem>(`/notes/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteNote(id: number): Promise<void> {
+  await apiRequest(`/notes/${id}`, { method: "DELETE" });
+}
+
 export async function register(email: string, password: string, verificationCode: string): Promise<LoginData> {
   return apiRequest<LoginData>("/auth/register", {
     method: "POST",

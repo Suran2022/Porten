@@ -11,88 +11,19 @@ import {
 } from "lucide-react";
 import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
-
-interface NoteItem {
-  id: number;
-  content: string;
-  time: string;
-  tags: string[];
-  archived?: boolean;
-}
+import {
+  createNote,
+  deleteNote as removeNote,
+  fetchNotes,
+  updateNote,
+} from "@/lib/api";
+import type { NoteItem } from "@/lib/api";
+import { useToastStore } from "@/store/toastStore";
 
 interface NotesPageProps {
   visible: boolean;
   onClose: () => void;
 }
-
-const MOCK_NOTES: NoteItem[] = [
-  {
-    id: 1,
-    content: "今天把消息列表的交互流程重新梳理了一遍。优先让核心路径保持简单，再逐步补充细节和反馈。",
-    time: "今天 10:24",
-    tags: ["工作", "灵感"],
-  },
-  {
-    id: 2,
-    content: "周末想去城南的植物园走走，带上相机，顺便记录春天刚长出来的新叶和傍晚的光。",
-    time: "昨天 21:16",
-    tags: ["生活", "计划"],
-  },
-  {
-    id: 3,
-    content: "产品细节：动画不只是装饰，它应该帮助用户理解页面之间的空间关系，进入和退出必须保持方向一致。",
-    time: "7月30日 16:08",
-    tags: ["设计", "产品"],
-  },
-  {
-    id: 4,
-    content: "最近循环播放的歌单很适合夜晚写东西。舒缓的节奏能让思绪慢下来，也更容易专注。",
-    time: "7月28日 23:42",
-    tags: ["音乐", "日常"],
-  },
-  {
-    id: 5,
-    content: "下次社区分享会可以讨论如何建立更安全的表达空间，让每个人都能被认真倾听和温柔回应。",
-    time: "7月26日 14:30",
-    tags: ["社区", "想法"],
-  },
-  {
-    id: 6,
-    content: "阅读摘录：真正的勇敢并不是从不害怕，而是在理解自己的害怕之后，仍然愿意向前走一步。",
-    time: "7月24日 09:12",
-    tags: ["阅读", "摘录"],
-  },
-  {
-    id: 7,
-    content: "体检需要准备的材料：身份证、预约单、既往检查报告。提前半小时出门，避免早高峰。",
-    time: "7月22日 18:05",
-    tags: ["健康", "待办"],
-  },
-  {
-    id: 8,
-    content: "新功能的颜色尽量降低饱和度，蓝色与粉色不要直接硬切，用更大的渐变半径自然融入白色背景。",
-    time: "7月20日 11:47",
-    tags: ["设计", "灵感"],
-  },
-  {
-    id: 9,
-    content: "给未来的自己：不需要急着证明什么，按照自己的节奏生活，每一次认真选择都算数。",
-    time: "7月18日 22:19",
-    tags: ["心情", "给自己"],
-  },
-  {
-    id: 10,
-    content: "会议记录：先完成移动端消息体验，再统一桌面端布局；测试阶段重点关注弱网和离线状态。",
-    time: "7月16日 15:36",
-    tags: ["工作", "会议"],
-  },
-  {
-    id: 11,
-    content: "想学着做一道简单的番茄炖牛腩，少放一点糖，最后加几颗烤过的小番茄增加香气。",
-    time: "7月14日 12:04",
-    tags: ["生活", "美食"],
-  },
-];
 
 const TAG_STYLES = [
   "bg-sky-100/80 text-sky-700",
@@ -109,18 +40,13 @@ function tagStyle(tag: string) {
   return TAG_STYLES[hash % TAG_STYLES.length];
 }
 
-function currentTimeLabel() {
-  return `今天 ${new Intl.DateTimeFormat("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date())}`;
-}
 
 export function NotesPage({ visible, onClose }: NotesPageProps) {
+  const showToast = useToastStore((state) => state.show);
   const [shouldRender, setShouldRender] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
-  const [notes, setNotes] = useState<NoteItem[]>(MOCK_NOTES);
+  // 笔记列表：每次打开页面从 /notes 拉取（API 模式）或 mock 引擎读取
+  const [notes, setNotes] = useState<NoteItem[]>([]);
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [editingNote, setEditingNote] = useState<NoteItem | null>(null);
   const [editorVisible, setEditorVisible] = useState(false);
@@ -146,6 +72,27 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
     };
   }, [visible]);
 
+  // 打开页面时拉取笔记列表；关闭期间的响应丢弃，避免竞态写入
+  useEffect(() => {
+    if (!visible) return;
+    let active = true;
+    fetchNotes()
+      .then((items) => {
+        if (active) setNotes(items);
+      })
+      .catch((err) => {
+        if (active) {
+          showToast(
+            err instanceof Error ? err.message : "笔记加载失败",
+            "error"
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [visible, showToast]);
+
   const openEditor = (note?: NoteItem) => {
     setEditingNote(note ?? null);
     setDraftContent(note?.content ?? "");
@@ -154,7 +101,7 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
     setEditorVisible(true);
   };
 
-  const saveNote = () => {
+  const saveNote = async () => {
     const content = draftContent.trim();
     if (!content) return;
     const tags = draftTags
@@ -163,39 +110,49 @@ export function NotesPage({ visible, onClose }: NotesPageProps) {
       .filter(Boolean)
       .slice(0, 4);
 
-    if (editingNote) {
-      setNotes((items) =>
-        items.map((note) =>
-          note.id === editingNote.id
-            ? { ...note, content, tags, time: currentTimeLabel() }
-            : note
-        )
+    try {
+      if (editingNote) {
+        await updateNote(editingNote.id, { content, tags });
+      } else {
+        await createNote({ content, tags });
+      }
+      // time 由服务端生成，保存后重新拉取以拿到权威列表
+      setNotes(await fetchNotes());
+      setEditorVisible(false);
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "笔记保存失败",
+        "error"
       );
-    } else {
-      setNotes((items) => [
-        {
-          id: Date.now(),
-          content,
-          time: currentTimeLabel(),
-          tags: tags.length ? tags : ["随记"],
-        },
-        ...items,
-      ]);
     }
-    setEditorVisible(false);
   };
 
-  const deleteNote = (noteId: number) => {
-    setNotes((items) => items.filter((note) => note.id !== noteId));
+  const deleteNote = async (noteId: number) => {
+    try {
+      await removeNote(noteId);
+      setNotes((items) => items.filter((note) => note.id !== noteId));
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "笔记删除失败",
+        "error"
+      );
+    }
     setActiveMenuId(null);
   };
 
-  const toggleArchive = (noteId: number) => {
-    setNotes((items) =>
-      items.map((note) =>
-        note.id === noteId ? { ...note, archived: !note.archived } : note
-      )
-    );
+  const toggleArchive = async (noteId: number) => {
+    const note = notes.find((item) => item.id === noteId);
+    if (!note) return;
+    try {
+      await updateNote(noteId, { archived: !note.archived });
+      setNotes((items) =>
+        items.map((item) =>
+          item.id === noteId ? { ...item, archived: !item.archived } : item
+        )
+      );
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "操作失败", "error");
+    }
     setActiveMenuId(null);
   };
 

@@ -1,75 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { BackIcon } from "@/components/common/BackIcon";
 import { cn } from "@/lib/utils";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
+import { fetchTrips } from "@/lib/api";
+import type { TripItem } from "@/lib/api";
 import tripIcon from "@/assets/trip-icon.svg";
-import sichuanAirlineIcon from "@/assets/airline-sichuan.svg";
-import easternAirlineIcon from "@/assets/airline-eastern.svg";
-import chinaAirlineIcon from "@/assets/airline-china.svg";
 
 /** 顶部淡咖啡色（偏橙），用于高斯模糊背景，并动态同步到状态栏 theme-color。 */
 const TRIP_HEADER_COLOR = "#F2DDBC";
-
-/** 示例行程数据（mock 阶段静态展示，后续接入接口后替换）。 */
-interface TripItem {
-  title: string;
-  departureCity: string;
-  departureAirport: string;
-  departureTime: string;
-  arrivalCity: string;
-  arrivalAirport: string;
-  arrivalTime: string;
-  /** 航段类型：直达 / 中转，显示在卡片中间飞机图标上方 */
-  transferType: "直达" | "中转";
-  /** 航司名称与品牌图标：显示在卡片第一行右对齐 */
-  airline: string;
-  airlineIcon: string;
-  tips?: string;
-}
-
-const TRIP_ITEMS: TripItem[] = [
-  {
-    title: "2天后将前往大连",
-    departureCity: "广州",
-    departureAirport: "白云机场",
-    departureTime: "08:35",
-    arrivalCity: "大连",
-    arrivalAirport: "周水子机场",
-    arrivalTime: "12:05",
-    transferType: "直达",
-    airline: "四川航空",
-    airlineIcon: sichuanAirlineIcon,
-    tips: "两天后可进行线上选座，当天有雨，注意带伞哦！",
-  },
-  {
-    title: "7天后将前往东京",
-    departureCity: "大连",
-    departureAirport: "周水子机场",
-    departureTime: "09:30",
-    arrivalCity: "东京",
-    arrivalAirport: "羽田机场",
-    arrivalTime: "13:00",
-    transferType: "直达",
-    airline: "东方航空",
-    airlineIcon: easternAirlineIcon,
-    tips: "请注意日本签证，注意出行安全！",
-  },
-  {
-    title: "12天后将前往旧金山",
-    departureCity: "东京",
-    departureAirport: "羽田机场",
-    departureTime: "17:10",
-    arrivalCity: "旧金山",
-    arrivalAirport: "旧金山国际机场",
-    arrivalTime: "10:30",
-    transferType: "中转",
-    airline: "中国航空",
-    airlineIcon: chinaAirlineIcon,
-    tips: "请注意美国签证，注意出行安全！",
-  },
-];
 
 /**
  * 我的行程独立页面（不包含首页底部导航栏）。
@@ -85,6 +25,9 @@ export default function TripPage() {
   // 退出：先滑出（leaving），动画结束后再真正卸载路由。
   const [entered, setEntered] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  // 旅程列表：进入页面与下拉刷新时从 /trips 拉取（API 模式）或 mock 引擎获取
+  const [trips, setTrips] = useState<TripItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
@@ -92,6 +35,21 @@ export default function TripPage() {
     });
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  const loadTrips = useCallback(async () => {
+    try {
+      const items = await fetchTrips();
+      setTrips(items);
+    } catch {
+      setTrips([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTrips();
+  }, [loadTrips]);
 
   const handleBack = () => {
     if (!leaving) setLeaving(true);
@@ -102,10 +60,9 @@ export default function TripPage() {
     if (leaving) navigate(-1);
   };
 
-  // 下拉刷新（复用全站通用 PullToRefresh 动效）。
-  // Mock 阶段模拟重新拉取行程数据；后续接入接口后替换为真实请求。
+  // 下拉刷新（复用全站通用 PullToRefresh 动效）：重新拉取旅程列表。
   const handleRefresh = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await loadTrips();
   };
 
   useEffect(() => {
@@ -206,13 +163,21 @@ export default function TripPage() {
         <div className="w-8 mr-2" />
       </div>
 
-      {/* 主内容区：行程卡片列表（PullToRefresh 自带滚动容器：三张卡片
+      {/* 主内容区：行程卡片列表（PullToRefresh 自带滚动容器：多张卡片
           超一屏可滑动，顶部下拉触发全站统一的下拉刷新动效） */}
       <div className="relative z-10 flex-1 min-h-0">
         <PullToRefresh onRefresh={handleRefresh}>
-          <div className="px-4 pt-3 pb-8 flex flex-col gap-3">
-            {TRIP_ITEMS.map((item) => (
-              <div key={item.title} className="bg-white rounded-2xl p-4">
+          {loading ? (
+            <p className="px-4 pt-16 text-center text-sm text-gray-400">加载中……</p>
+          ) : trips.length === 0 ? (
+            <div className="flex flex-col items-center px-4 pt-16">
+              <img src={tripIcon} alt="" className="h-12 w-12 object-contain opacity-40" />
+              <p className="mt-3 text-sm text-gray-400">还没有旅程，去加号菜单创建吧</p>
+            </div>
+          ) : (
+            <div className="px-4 pt-3 pb-8 flex flex-col gap-3">
+              {trips.map((item, index) => (
+                <div key={`${item.departureCity}-${item.departureTime}-${index}`} className="bg-white rounded-2xl p-4">
                 {/* 第一行：绿色胶囊竖条 + 行程标题 + 右对齐航司信息
                     （图标 12px 与 text-xs 汉字字面等大，视觉一致） */}
                 <div className="flex items-center gap-2.5">
@@ -288,7 +253,8 @@ export default function TripPage() {
                 )}
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </PullToRefresh>
       </div>
     </div>
