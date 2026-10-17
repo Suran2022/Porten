@@ -66,7 +66,11 @@ class EmailService:
                 f"Resend API rejected the message: "
                 f"{response.status_code} {response.text}"
             )
-        logger.info("email sent via Resend API to %s (id=%s)", recipient, response.json().get("id"))
+        # 应用未配置 logging 级别，root logger 默认只输出 WARNING+，
+        # 故成功记录用 warning 级以保证在 Railway 日志可见。
+        logger.warning(
+            "email sent via Resend API to %s (id=%s)", recipient, response.json().get("id")
+        )
 
     def _generate_code(self) -> str:
         """Generate a numeric verification code using a CSPRNG."""
