@@ -45,3 +45,29 @@ Future<PortenMockMode> resolveInitialMockMode() async {
       return PortenMockMode.mock;
   }
 }
+
+/// 运行环境信息（登录页展示：数据源模式 + API 地址，便于现场分辨
+/// Mock / Live，排查「数据是否为演示数据」类问题）。
+class EnvironmentInfo {
+  const EnvironmentInfo({required this.mode, required this.apiBaseUrl});
+
+  final PortenMockMode mode;
+  final String apiBaseUrl;
+
+  /// 人类可读的一行摘要。
+  String get summary {
+    final String source =
+        mode == PortenMockMode.live ? '真实 API' : 'Mock 引擎';
+    final String url =
+        apiBaseUrl.isEmpty ? '' : ' · $apiBaseUrl';
+    return '数据源：$source$url';
+  }
+}
+
+/// 运行环境信息 Provider（启动后一次性解析，供登录页展示）。
+final FutureProvider<EnvironmentInfo> environmentInfoProvider =
+    FutureProvider<EnvironmentInfo>((Ref ref) async {
+  final PortenMockMode mode = ref.read(mockModeProvider);
+  final String? url = await PortenChannels.env.invokeSafe<String>('apiBaseUrl');
+  return EnvironmentInfo(mode: mode, apiBaseUrl: url ?? '');
+});
