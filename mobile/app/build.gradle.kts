@@ -57,7 +57,7 @@ android {
 
     defaultConfig {
         applicationId = "jys.porten.app"
-        versionCode = 26 // 每次分发递增：防止同号覆盖安装被安装器拒绝/静默失败
+        versionCode = 27 // 每次分发递增：防止同号覆盖安装被安装器拒绝/静默失败
         versionName = "1.0.0"
         // 资源语言白名单：Porten 现阶段仅投放简体中文，剔除第三方库带来的多语言资源
         resourceConfigurations += setOf("zh")
@@ -101,8 +101,8 @@ android {
         create("prod") {
             dimension = "environment"
             resValue("string", "app_name", "Porten")
-            buildConfigField("String", "API_BASE_URL", "\"https://example.com/api/v1\"")
-            buildConfigField("String", "API_WS_URL", "\"wss://example.com/ws\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://backend-production-af5cd.up.railway.app/api/v1\"")
+            buildConfigField("String", "API_WS_URL", "\"wss://backend-production-af5cd.up.railway.app/ws\"")
             // 生产包强制关闭 Mock：即使命令行传入 true 也不生效，避免演示数据污染线上
             buildConfigField("boolean", "USE_MOCK", "false")
             buildConfigField("boolean", "ENABLE_SECURITY", securityEnabled.toString())
