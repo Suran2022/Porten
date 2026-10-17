@@ -24,6 +24,7 @@ from sqlalchemy import (
     LargeBinary,
     String,
 )
+from sqlalchemy.dialects.mysql import VARBINARY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -44,8 +45,10 @@ class WebauthnCredential(Base):
         index=True,
         comment="Owner of the credential",
     )
+    # VARBINARY (not BLOB) so the UNIQUE constraint works on MySQL:
+    # BLOB/TEXT columns cannot be indexed without a key length there.
     credential_id: Mapped[bytes] = mapped_column(
-        LargeBinary(1024),
+        VARBINARY(1024),
         nullable=False,
         unique=True,
         comment="Raw credential id bytes issued by the authenticator",
