@@ -26,6 +26,11 @@ val useMockEngine: Boolean = (providers.gradleProperty("porten.mock.enabled").or
 val securityEnabled: Boolean = (providers.gradleProperty("porten.security.enabled").orNull ?: "true").toBoolean()
 val loggingEnabled: Boolean = (providers.gradleProperty("porten.logging.enabled").orNull ?: "true").toBoolean()
 
+// API 基地址（dev/staging 可用 -Pporten.api.base.url / -Pporten.api.ws.url 覆盖，
+// 联调部署环境（如 Zeabur 预发域名）时无需改代码；prod 恒为正式域名，不走属性覆盖）。
+val apiBaseUrl: String? = providers.gradleProperty("porten.api.base.url").orNull
+val apiWsUrl: String? = providers.gradleProperty("porten.api.ws.url").orNull
+
 android {
     namespace = "jys.porten.app"
 
@@ -52,7 +57,7 @@ android {
 
     defaultConfig {
         applicationId = "jys.porten.app"
-        versionCode = 25 // 每次分发递增：防止同号覆盖安装被安装器拒绝/静默失败
+        versionCode = 26 // 每次分发递增：防止同号覆盖安装被安装器拒绝/静默失败
         versionName = "1.0.0"
         // 资源语言白名单：Porten 现阶段仅投放简体中文，剔除第三方库带来的多语言资源
         resourceConfigurations += setOf("zh")
@@ -74,8 +79,8 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "Porten Dev")
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/api/v1\"")
-            buildConfigField("String", "API_WS_URL", "\"ws://10.0.2.2:8000/ws\"")
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl ?: "http://10.0.2.2:8000/api/v1"}\"")
+            buildConfigField("String", "API_WS_URL", "\"${apiWsUrl ?: "ws://10.0.2.2:8000/ws"}\"")
             buildConfigField("boolean", "USE_MOCK", useMockEngine.toString())
             buildConfigField("boolean", "ENABLE_SECURITY", "false")
             buildConfigField("boolean", "ENABLE_LOGGING", loggingEnabled.toString())
@@ -86,8 +91,8 @@ android {
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
             resValue("string", "app_name", "Porten 预发")
-            buildConfigField("String", "API_BASE_URL", "\"https://staging.example.com/api/v1\"")
-            buildConfigField("String", "API_WS_URL", "\"wss://staging.example.com/ws\"")
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl ?: "https://staging.example.com/api/v1"}\"")
+            buildConfigField("String", "API_WS_URL", "\"${apiWsUrl ?: "wss://staging.example.com/ws"}\"")
             buildConfigField("boolean", "USE_MOCK", useMockEngine.toString())
             buildConfigField("boolean", "ENABLE_SECURITY", securityEnabled.toString())
             buildConfigField("boolean", "ENABLE_LOGGING", loggingEnabled.toString())

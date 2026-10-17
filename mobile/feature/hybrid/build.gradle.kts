@@ -28,9 +28,11 @@ dependencies {
     api(project(":core:bridge"))
     implementation(project(":core:common"))
     implementation(project(":core:data"))
+    implementation(project(":core:network"))
     implementation(project(":core:webview"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.fragment)
+    implementation(libs.kotlinx.serialization.json)
 
     // Flutter：源码依赖（开发期）或 AAR 产物依赖（发布期 / CI）
     if (flutterIntegrationMode == "module") {
