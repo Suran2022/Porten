@@ -30,14 +30,48 @@ class Settings(BaseSettings):
     # SMTP
     smtp_host: str = "smtp.qq.com"
     smtp_port: int = 465
+    # SMTP 登录用户名。注意与发件人是两个概念：部分服务商（如 Resend）
+    # 登录名固定为 "resend"，而发件人必须是验证过的地址，故拆分为两个配置。
     smtp_username: str = ""
     smtp_password: str = ""
     smtp_sender_name: str = "Porten"
+    # 发件人地址；缺省回退 smtp_username（兼容 QQ 邮箱等登录名即发件人的服务）。
+    smtp_from_address: str = ""
 
     # Application
     default_avatar_url: str = "https://haowallpaper.com/link//common/file/previewFileImg/19197325717754752"
     app_name: str = "Porten"
     app_env: str = "development"
+
+    # Application timezone: every datetime is stored as UTC and
+    # converted to this zone for display (defaults to Asia/Shanghai).
+    app_timezone: str = "Asia/Shanghai"
+
+    # Weather provider (trip reminders, design: pluggable provider).
+    # The HTTP provider is enabled only when both the URL template and
+    # the API key are configured; otherwise the null provider degrades
+    # the weather sentence out of the reminder text.
+    weather_url_template: str = ""
+    weather_api_key: str = ""
+    # Dotted paths plucked from the provider JSON response.
+    weather_text_path: str = "now.text"
+    weather_temp_path: str = "now.temp"
+    weather_timeout_seconds: float = 5.0
+    # Reminder mentions "feels colder" when the destination is at
+    # least this many degrees below the departure city.
+    weather_temp_drop_threshold: float = 3.0
+
+    # Trip reminder sentence templates (placeholders in braces).
+    trip_reminder_days_template: str = "还有{days}天飞往{arrival_city}"
+    trip_reminder_hours_template: str = "还有{hours}小时飞往{arrival_city}"
+    trip_reminder_weather_template: str = (
+        "您当前所在城市天气{origin_text}，{arrival_city}{arrival_text}，"
+        "气温{origin_temp}℃/{arrival_temp}℃"
+    )
+    trip_reminder_weather_cool_template: str = (
+        "您当前所在城市天气{origin_text}，"
+        "但{arrival_city}气温较低，注意保暖哦！"
+    )
 
     # Security
     # Active security profile: lite | standard | advanced.
@@ -138,7 +172,8 @@ class Settings(BaseSettings):
 
     @property
     def sender_address(self) -> str:
-        return f"{self.smtp_sender_name} <{self.smtp_username}>"
+        from_address = self.smtp_from_address or self.smtp_username
+        return f"{self.smtp_sender_name} <{from_address}>"
 
 
 @lru_cache()
