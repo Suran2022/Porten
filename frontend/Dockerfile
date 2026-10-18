@@ -3,8 +3,11 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 COPY package.json package-lock.json* ./
-# fetch-retry 系列：CI runner 访问 npm registry 偶发 ECONNRESET，加重试避免流水线随机失败
-RUN npm ci --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 --no-audit --no-fund
+# 1) 换 npmmirror 源：buildx 容器网络访问 npmjs.org 偶发 ECONNRESET（CI 同款 npm ci 在
+#    runner 宿主机上稳定通过，问题锁定在 buildx bridge 网络），npmmirror 更稳
+# 2) fetch-retry 系列兜底瞬时抖动
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm ci --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 --no-audit --no-fund
 
 COPY . .
 # 构建期注入后端地址（build args），产物为纯静态文件
