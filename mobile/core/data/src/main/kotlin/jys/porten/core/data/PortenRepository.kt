@@ -12,6 +12,7 @@
 package jys.porten.core.data
 
 import jys.porten.core.common.log.AppLogger
+import jys.porten.core.network.ApiResponse
 
 /** 数据源模式。 */
 public enum class DataSourceMode {
@@ -89,6 +90,13 @@ internal suspend fun <R> dispatchByMode(
     live: suspend () -> R,
     mock: suspend () -> R,
 ): R = when (mode) {
-    DataSourceMode.Live -> live()
+    // Live 通道统一转换 HTTP 4xx/5xx：Retrofit 的 HttpException 携带的是
+    // "HTTP 400 Bad Request" 这类无意义文案，后端真实错误在 errorBody 的
+    // ResponseModel.message 里，必须解析透传（认证错误提示依赖此语义）。
+    DataSourceMode.Live -> try {
+        live()
+    } catch (e: retrofit2.HttpException) {
+        throw ApiResponse.fromHttpException(e)
+    }
     DataSourceMode.Mock -> mock()
 }

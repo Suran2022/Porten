@@ -170,10 +170,14 @@ class AuthController extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false, codeSent: true, countdown: 60);
       _startCountdown();
       return true;
-    } on Exception catch (e) {
+    } catch (e) {
+      // 全捕（含 Error）：桥接链路任何类型异常都不能让 isLoading 卡死，
+      // 否则按钮永久转圈（现场反馈「输入验证码转半天没反应」）。
       state = state.copyWith(isLoading: false);
       PortenToast.show(_messageOf(e, fallback: '发送失败，请稍后重试'));
       return false;
+    } finally {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
     }
   }
 
@@ -226,10 +230,13 @@ class AuthController extends Notifier<AuthState> {
             );
       state = state.copyWith(isLoading: false, session: session);
       return true;
-    } on Exception catch (e) {
+    } catch (e) {
+      // 全捕（含 Error）+ finally 兜底：isLoading 绝不卡死。
       state = state.copyWith(isLoading: false);
       PortenToast.show(_messageOf(e, fallback: '登录失败，请稍后重试'));
       return false;
+    } finally {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
     }
   }
 
@@ -287,10 +294,13 @@ class AuthController extends Notifier<AuthState> {
             );
       state = state.copyWith(isLoading: false, session: session);
       return true;
-    } on Exception catch (e) {
+    } catch (e) {
+      // 全捕（含 Error）+ finally 兜底：isLoading 绝不卡死。
       state = state.copyWith(isLoading: false);
       PortenToast.show(_messageOf(e, fallback: '注册失败，请稍后重试'));
       return false;
+    } finally {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
     }
   }
 

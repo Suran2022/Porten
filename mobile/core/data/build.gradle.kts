@@ -19,6 +19,7 @@ dependencies {
     api(project(":core:model"))
     implementation(project(":core:common"))
     implementation(project(":core:network"))
+    implementation(libs.retrofit.core)
     implementation(project(":core:storage"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
