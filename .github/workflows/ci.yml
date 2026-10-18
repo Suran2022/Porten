@@ -26,6 +26,9 @@ jobs:
         working-directory: backend
         env:
           database_url: "sqlite://"
+          # backend/ 无 pyproject/pytest 配置声明包根，CI 干净环境必须显式
+          # 把 backend 加入导入路径，否则 pytest 收集期报 No module named 'app'
+          PYTHONPATH: ${{ github.workspace }}/backend
         run: pytest -q
 
   frontend-build:
