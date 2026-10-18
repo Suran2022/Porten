@@ -1,0 +1,55 @@
+# Porten CI：推送/PR 自动执行后端测试 + 前端类型检查与构建
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-test:
+    name: 后端测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 安装依赖
+        run: pip install -r backend/requirements.txt
+
+      - name: 运行测试（SQLite 内存库，无需 MySQL）
+        working-directory: backend
+        env:
+          database_url: "sqlite://"
+        run: pytest -q
+
+  frontend-build:
+    name: 前端类型检查与构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 安装依赖
+        working-directory: frontend
+        run: npm ci
+
+      - name: 类型检查
+        working-directory: frontend
+        run: npm run check
+
+      - name: 构建
+        working-directory: frontend
+        run: npm run build
+        env:
+          VITE_USE_MOCK: "true"

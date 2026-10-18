@@ -1,0 +1,16 @@
+# 构建上下文瘦身：依赖目录与产物不进镜像
+node_modules/
+dist/
+dist-ssr/
+.git/
+.github/
+__pycache__/
+*.pyc
+venv*/
+.pytest_cache/
+.env
+.env.*
+uploads/
+*.md
+docs/
+core.*

@@ -1,0 +1,63 @@
+# Porten 一键部署编排：MySQL 8 + Redis + 后端(FastAPI) + 前端(Nginx)
+#
+# 使用：
+#   1. 复制 backend/.env.example 为 backend/.env 并填写真实值
+#   2. docker compose up -d
+#   3. 访问 http://服务器IP （前端容器 80 端口）
+#
+# 数据持久化：mysql-data（数据库）、redis-data（缓存）、backend-uploads（聊天媒体）
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-porten_root_pwd}
+      MYSQL_DATABASE: porten
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-porten_root_pwd}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - ./backend/.env
+    environment:
+      # 容器网络内服务名互访；覆盖 .env 中可能的 localhost 配置
+      database_url: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-porten_root_pwd}@mysql:3306/porten?charset=utf8mb4
+      redis_url: redis://redis:6379/0
+    volumes:
+      - backend-uploads:/app/uploads
+    expose:
+      - "8000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mysql-data:
+  redis-data:
+  backend-uploads:

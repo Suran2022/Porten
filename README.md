@@ -130,7 +130,9 @@
 
 ---
 
-## 🚀 本地运行
+## 🚀 部署与运行
+
+> 📘 **完整部署文档**：[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) —— 三种部署方式（Docker Compose 一键部署 / 宝塔面板与命令行手动部署 / Railway 零服务器体验部署），每种均附常见问题排查表；内置 CI/CD 自动化流水线（GitHub Actions），Fork 后即可使用。
 
 ### 环境要求
 
