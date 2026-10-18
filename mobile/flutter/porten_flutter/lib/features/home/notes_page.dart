@@ -56,27 +56,27 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/porten_back_icon.dart';
 import '../../core/components/porten_lucide_icons.dart';
+import '../../core/components/porten_toast.dart';
+import '../../core/data/notes_controller.dart';
 import '../../core/data/notes_mock.dart';
 import '../../core/design/porten_colors.dart';
 
 /// red-50（Web active:bg-red-50/60 的底色）。
 const Color _kRed50 = Color(0xFFFEF2F2);
 
-class NotesPage extends StatefulWidget {
+class NotesPage extends ConsumerStatefulWidget {
   const NotesPage({super.key});
 
   @override
-  State<NotesPage> createState() => _NotesPageState();
+  ConsumerState<NotesPage> createState() => _NotesPageState();
 }
 
-class _NotesPageState extends State<NotesPage>
+class _NotesPageState extends ConsumerState<NotesPage>
     with SingleTickerProviderStateMixin {
-  /// Web MOCK_NOTES（11 条，可增删改）。
-  final List<NoteItem> _notes = List<NoteItem>.of(kMockNotes);
-
   /// 当前展开下拉菜单的笔记 id（Web activeMenuId）。
   int? _activeMenuId;
 
@@ -167,60 +167,52 @@ class _NotesPageState extends State<NotesPage>
     _contentFocusNode.unfocus();
   }
 
-  /// saveNote：空内容直接返回；标签切分至多 4 个；
-  /// 编辑分支原地更新（刷新 time），新建分支 unshift（Date.now() id）。
-  void _saveNote() {
+  /// saveNote：空内容直接返回；标签切分至多 4 个（新建分支空则回退
+  /// 「随记」、编辑分支允许清空）；提交笔记控制器（mock 写 NoteStore /
+  /// live 走 data 桥），列表经共享控制器自动刷新。
+  Future<void> _saveNote() async {
     final String content = _contentController.text.trim();
     if (content.isEmpty) return;
     final NoteItem? editing = _editingNote;
-    setState(() {
+    final String tagsText = _tagsController.text;
+    try {
+      final NotesController controller =
+          ref.read(notesControllerProvider.notifier);
       if (editing != null) {
-        final List<String> tags = parseNoteTags(_tagsController.text);
-        final int index =
-            _notes.indexWhere((NoteItem note) => note.id == editing.id);
-        if (index >= 0) {
-          _notes[index] = _notes[index].copyWith(
-            content: content,
-            tags: tags,
-            time: notesCurrentTimeLabel(),
-          );
-        }
+        await controller.updateItem(editing.id, content: content, tagsText: tagsText);
       } else {
-        _notes.insert(
-          0,
-          NoteItem(
-            id: DateTime.now().millisecondsSinceEpoch,
-            content: content,
-            time: notesCurrentTimeLabel(),
-            tags: parseNoteTags(_tagsController.text, fallback: true),
-          ),
-        );
+        await controller.create(content: content, tagsText: tagsText);
       }
-      _editorVisible = false;
-    });
-    _editorController.reverse();
-    _contentFocusNode.unfocus();
+      if (!mounted) return;
+      setState(() => _editorVisible = false);
+      _editorController.reverse();
+      _contentFocusNode.unfocus();
+    } catch (_) {
+      if (!mounted) return;
+      PortenToast.show('保存失败', icon: ToastIcon.error);
+    }
   }
 
-  /// deleteNote：移除 + 关闭下拉。
-  void _deleteNote(int noteId) {
-    setState(() {
-      _notes.removeWhere((NoteItem note) => note.id == noteId);
-      _activeMenuId = null;
-    });
+  /// deleteNote：提交控制器删除 + 关闭下拉。
+  Future<void> _deleteNote(int noteId) async {
+    setState(() => _activeMenuId = null);
+    try {
+      await ref.read(notesControllerProvider.notifier).delete(noteId);
+    } catch (_) {
+      if (!mounted) return;
+      PortenToast.show('删除失败', icon: ToastIcon.error);
+    }
   }
 
-  /// toggleArchive：翻转 archived + 关闭下拉。
-  void _toggleArchive(int noteId) {
-    setState(() {
-      final int index =
-          _notes.indexWhere((NoteItem note) => note.id == noteId);
-      if (index >= 0) {
-        _notes[index] =
-            _notes[index].copyWith(archived: !_notes[index].archived);
-      }
-      _activeMenuId = null;
-    });
+  /// toggleArchive：提交控制器翻转 archived + 关闭下拉。
+  Future<void> _toggleArchive(int noteId) async {
+    setState(() => _activeMenuId = null);
+    try {
+      await ref.read(notesControllerProvider.notifier).toggleArchive(noteId);
+    } catch (_) {
+      if (!mounted) return;
+      PortenToast.show('操作失败', icon: ToastIcon.error);
+    }
   }
 
   // ==================== 构建 ====================
@@ -231,6 +223,9 @@ class _NotesPageState extends State<NotesPage>
     final double pageHeight = MediaQuery.sizeOf(context).height;
     final double safeTop = MediaQuery.paddingOf(context).top;
     final double safeBottom = MediaQuery.paddingOf(context).bottom;
+    // 笔记列表由控制器驱动（mock 读 NoteStore / live 走 data 桥）。
+    final List<NoteItem> notes =
+        ref.watch(notesControllerProvider).value?.items ?? const <NoteItem>[];
 
     return Scaffold(
       backgroundColor: PortenColor.white,
@@ -260,7 +255,7 @@ class _NotesPageState extends State<NotesPage>
             child: Column(
               children: <Widget>[
                 _buildHeader(safeTop),
-                _buildList(safeBottom),
+                _buildList(safeBottom, notes),
               ],
             ),
           ),
@@ -353,7 +348,7 @@ class _NotesPageState extends State<NotesPage>
   /// 放不下溢出的菜单，越界部分不可命中）。Stack 尺寸取 Padding
   /// （含底部 32px 内边距），clipBehavior: none 让最后一张卡片的
   /// 菜单可溢入底部内边距区，由滚动视口统一裁剪（与 Web 一致）。
-  Widget _buildList(double safeBottom) {
+  Widget _buildList(double safeBottom, List<NoteItem> notes) {
     return Expanded(
       child: SingleChildScrollView(
         child: Center(
@@ -372,16 +367,16 @@ class _NotesPageState extends State<NotesPage>
                   ),
                   child: Column(
                     children: <Widget>[
-                      for (int i = 0; i < _notes.length; i++) ...<Widget>[
+                      for (int i = 0; i < notes.length; i++) ...<Widget>[
                         if (i > 0) const SizedBox(height: 12), // space-y-3
-                        _noteCard(_notes[i]),
+                        _noteCard(notes[i]),
                       ],
                     ],
                   ),
                 ),
                 // 卡片下拉菜单：absolute right-3 top-10 z-30 w-36
                 // （相对卡片定位，提到内容级 Stack 渲染）。
-                if (_menuAnchor != null) _buildActiveNoteMenu(),
+                if (_menuAnchor != null) _buildActiveNoteMenu(notes),
               ],
             ),
           ),
@@ -391,10 +386,10 @@ class _NotesPageState extends State<NotesPage>
   }
 
   /// 当前展开下拉菜单的笔记（null = 未展开 / 笔记已不存在）。
-  NoteItem? get _activeNote {
+  NoteItem? _activeNote(List<NoteItem> notes) {
     final int? id = _activeMenuId;
     if (id == null) return null;
-    for (final NoteItem note in _notes) {
+    for (final NoteItem note in notes) {
       if (note.id == id) return note;
     }
     return null;
@@ -402,8 +397,8 @@ class _NotesPageState extends State<NotesPage>
 
   /// 下拉菜单覆盖层：按锚点矩形换算 Positioned 坐标
   /// （right-3 → left = anchor.right - 12 - 144；top-10 → top + 40）。
-  Widget _buildActiveNoteMenu() {
-    final NoteItem? note = _activeNote;
+  Widget _buildActiveNoteMenu(List<NoteItem> notes) {
+    final NoteItem? note = _activeNote(notes);
     final Rect? anchor = _menuAnchor;
     if (note == null || anchor == null) return const SizedBox.shrink();
     return Positioned(
@@ -704,7 +699,7 @@ class _NotesPageState extends State<NotesPage>
                 // bg-gray-900 text-white；disabled:bg-gray-200
                 // disabled:text-gray-400
                 _PressBox(
-                  onTap: enabled ? _saveNote : null,
+                  onTap: enabled ? () => _saveNote() : null,
                   disabled: !enabled,
                   normalColor: enabled ? PortenColor.gray900 : PortenColor.gray200,
                   borderRadius: BorderRadius.circular(999),

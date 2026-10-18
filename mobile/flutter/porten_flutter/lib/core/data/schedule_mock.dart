@@ -453,3 +453,150 @@ class ScheduleStore {
     return updated;
   }
 }
+
+// ------------------------------------------------------------ API 序列化
+//
+// 字段硬约束（与后端 /api/v1/schedules 系列、Kotlin 侧 ScheduleItem 逐字段
+// 对齐，一个不多一个不少）：id/date/start_time/end_time/title/detail/
+// category/related_type/related_id/place/participant_ids/color/source。
+// JSON 为 snake_case；枚举以 name 传输（travel/date/visit/work/daily/
+// study/other、trip/agreement、pink/coffee/blue、form/quick）。
+
+/// 按 name 匹配枚举；未知值返回 null（防御：后端新增分类时端上不崩）。
+ScheduleCategory? parseScheduleCategory(String? raw) {
+  if (raw == null) return null;
+  for (final ScheduleCategory value in ScheduleCategory.values) {
+    if (value.name == raw) return value;
+  }
+  return null;
+}
+
+/// 按 name 匹配关联类型。
+ScheduleRelatedType? parseScheduleRelatedType(String? raw) {
+  if (raw == null) return null;
+  for (final ScheduleRelatedType value in ScheduleRelatedType.values) {
+    if (value.name == raw) return value;
+  }
+  return null;
+}
+
+/// 按 name 匹配配色；未知值回退 pink（防御：与后端默认色一致）。
+ScheduleColor parseScheduleColor(String? raw) {
+  if (raw == null) return ScheduleColor.pink;
+  for (final ScheduleColor value in ScheduleColor.values) {
+    if (value.name == raw) return value;
+  }
+  return ScheduleColor.pink;
+}
+
+/// 按 name 匹配创建来源；未知值回退 form。
+ScheduleSource parseScheduleSource(String? raw) {
+  if (raw == null) return ScheduleSource.form;
+  for (final ScheduleSource value in ScheduleSource.values) {
+    if (value.name == raw) return value;
+  }
+  return ScheduleSource.form;
+}
+
+/// 关联候选集合（对齐后端 GET /schedules/related 的 data 段）。
+class ScheduleRelatedData {
+  const ScheduleRelatedData({
+    this.trips = const <ScheduleRelatedItem>[],
+    this.agreements = const <ScheduleRelatedItem>[],
+    this.comrades = const <ScheduleComrade>[],
+  });
+
+  /// 可关联旅程（旅行分类）。
+  final List<ScheduleRelatedItem> trips;
+
+  /// 可关联约定（约会分类）。
+  final List<ScheduleRelatedItem> agreements;
+
+  /// 可参与同胞候选。
+  final List<ScheduleComrade> comrades;
+}
+
+/// 业务数据桥返回 JSON → [ScheduleItem]（字段与 mock 模型一一对应）。
+ScheduleItem scheduleItemFromApi(Map<String, dynamic> json) {
+  return ScheduleItem(
+    id: (json['id'] as num).toInt(),
+    date: json['date'] as String,
+    startTime: json['start_time'] as String,
+    endTime: json['end_time'] as String?,
+    title: json['title'] as String?,
+    detail: json['detail'] as String?,
+    category: parseScheduleCategory(json['category'] as String?),
+    relatedType: parseScheduleRelatedType(json['related_type'] as String?),
+    relatedId: (json['related_id'] as num?)?.toInt(),
+    place: json['place'] as String?,
+    participantIds: (json['participant_ids'] as List<dynamic>?)
+            ?.map((dynamic e) => (e as num).toInt())
+            .toList() ??
+        const <int>[],
+    color: parseScheduleColor(json['color'] as String?),
+    source: parseScheduleSource(json['source'] as String?),
+  );
+}
+
+/// 业务数据桥返回 JSON → [ScheduleRelatedItem]。
+ScheduleRelatedItem scheduleRelatedItemFromApi(Map<String, dynamic> json) {
+  return ScheduleRelatedItem(
+    id: (json['id'] as num).toInt(),
+    label: json['label'] as String,
+  );
+}
+
+/// 业务数据桥返回 JSON → [ScheduleComrade]（桥侧字段为 avatar）。
+ScheduleComrade scheduleComradeFromApi(Map<String, dynamic> json) {
+  return ScheduleComrade(
+    id: (json['id'] as num).toInt(),
+    nickname: json['nickname'] as String,
+    avatarAsset: json['avatar'] as String? ?? '',
+  );
+}
+
+/// 业务数据桥返回 JSON → [ScheduleRelatedData]。
+ScheduleRelatedData scheduleRelatedDataFromApi(Map<String, dynamic> json) {
+  return ScheduleRelatedData(
+    trips: (json['trips'] as List<dynamic>?)
+            ?.map((dynamic e) =>
+                scheduleRelatedItemFromApi(e as Map<String, dynamic>))
+            .toList() ??
+        const <ScheduleRelatedItem>[],
+    agreements: (json['agreements'] as List<dynamic>?)
+            ?.map((dynamic e) =>
+                scheduleRelatedItemFromApi(e as Map<String, dynamic>))
+            .toList() ??
+        const <ScheduleRelatedItem>[],
+    comrades: (json['comrades'] as List<dynamic>?)
+            ?.map((dynamic e) => scheduleComradeFromApi(e as Map<String, dynamic>))
+            .toList() ??
+        const <ScheduleComrade>[],
+  );
+}
+
+/// 创建载荷（POST /schedules 的 payload，snake_case；不含 id/color——
+/// id 服务端分配，color 服务端随机分配）。
+Map<String, Object?> scheduleCreatePayloadOf(ScheduleItem item) {
+  return <String, Object?>{
+    'date': item.date,
+    'start_time': item.startTime,
+    'end_time': item.endTime,
+    'title': item.title,
+    'detail': item.detail,
+    'category': item.category?.name,
+    'related_type': item.relatedType?.name,
+    'related_id': item.relatedId,
+    'place': item.place,
+    'participant_ids': item.participantIds,
+    'source': item.source.name,
+  };
+}
+
+/// 更新载荷（PATCH /schedules/{id} 的 payload，snake_case）。
+///
+/// 编辑表单总是提交全量状态（含置空字段），与 Dart mock 的
+/// 「字段存在即覆盖」语义一致；不含 id/color（颜色创建时定，不可改）。
+Map<String, Object?> scheduleUpdatePayloadOf(ScheduleItem item) {
+  return scheduleCreatePayloadOf(item);
+}

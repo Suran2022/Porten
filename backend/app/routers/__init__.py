@@ -11,10 +11,13 @@ from app.routers.groups import router as groups_router
 from app.routers.honeypot import router as honeypot_router
 from app.routers.security_admin import router as security_admin_router
 from app.routers.messages import router as messages_router
+from app.routers.notes import router as notes_router
 from app.routers.notifications import router as notifications_router
 from app.routers.retention import router as retention_router
+from app.routers.schedules import router as schedules_router
 from app.routers.search import router as search_router
 from app.routers.system_messages import router as system_messages_router
+from app.routers.trips import router as trips_router
 from app.routers.upload import router as upload_router
 from app.routers.user import router as user_router
 from app.routers.websocket import router as websocket_router
@@ -31,8 +34,11 @@ __all__ = [
     "security_admin_router",
     "conversations_router",
     "messages_router",
+    "notes_router",
     "notifications_router",
+    "schedules_router",
     "system_messages_router",
+    "trips_router",
     "upload_router",
     "websocket_router",
     "emotion_diary_router",

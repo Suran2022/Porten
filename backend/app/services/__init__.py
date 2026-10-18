@@ -7,11 +7,14 @@ from app.services.conversation_service import ConversationService
 from app.services.email_service import EmailService
 from app.services.emotion_diary_service import EmotionDiaryService
 from app.services.group_service import GroupService
+from app.services.note_service import NoteService
 from app.services.notification_service import NotificationService
 from app.services.porten_id_service import PortenIdService
 from app.services.rate_limit_service import InMemoryRateLimiter
+from app.services.schedule_service import ScheduleService
 from app.services.security_event_service import SecurityEventService
 from app.services.system_message_service import SystemMessageService
+from app.services.trip_service import TripService
 from app.services.url_scanner_service import LocalRuleUrlScanner
 from app.services.user_service import UserService
 
@@ -30,4 +33,7 @@ __all__ = [
     "LocalRuleUrlScanner",
     "RuleBasedModerator",
     "SecurityEventService",
+    "ScheduleService",
+    "TripService",
+    "NoteService",
 ]

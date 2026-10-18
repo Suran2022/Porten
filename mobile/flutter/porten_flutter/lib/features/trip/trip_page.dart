@@ -9,17 +9,21 @@
  *     行2 mt-5：出发城市 semibold + 时间（green-600 medium）+ 机场名（xs gray-400）
  *       ｜中间 直达/中转胶囊 + 虚线 + 飞机图标 + 虚线｜到达同构；
  *     行3（部分卡片）：tips 底色 #FBF4E8 rounded-[10px] px-3 py-2.5 xs gray-500。
- *   下拉刷新：复用 PortenPullToRefresh（Mock 800ms）。
+ *   下拉刷新：复用 PortenPullToRefresh（数据由旅程控制器重拉）。
  *
- * Mock 离线策略：航司图标使用 Web 端同款 SVG 资产（已拷入 assets/icons），
- * 行程数据与 Web TRIP_ITEMS 逐条一致。
+ * 数据源：旅程控制器（Mock / Live 一键切换）——mock 通道为 TripStore
+ * 种子数据（创建旅程后同步进列表），live 通道经 porten/data 桥拉取
+ * 真实数据；标题 / 提醒 / 航司图标均由数据层派生，页面只展示。
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/components/porten_back_icon.dart';
 import '../../core/components/porten_pull_to_refresh.dart';
+import '../../core/data/trip_controller.dart';
+import '../../core/data/trip_store.dart';
 import '../profile/profile_page.dart' show kGray900;
 
 const Color kTripHeader = Color(0xFFF2DDBC);
@@ -27,82 +31,15 @@ const Color kGreen600 = Color(0xFF16A34A);
 const Color kGray400 = Color(0xFF9CA3AF);
 const Color kGray500 = Color(0xFF6B7280);
 
-class _TripItem {
-  const _TripItem({
-    required this.title,
-    required this.departureCity,
-    required this.departureAirport,
-    required this.departureTime,
-    required this.arrivalCity,
-    required this.arrivalAirport,
-    required this.arrivalTime,
-    required this.transferType,
-    required this.airline,
-    required this.airlineIcon,
-    this.tips,
-  });
-
-  final String title;
-  final String departureCity;
-  final String departureAirport;
-  final String departureTime;
-  final String arrivalCity;
-  final String arrivalAirport;
-  final String arrivalTime;
-  final String transferType; // 直达 / 中转
-  final String airline;
-  final String airlineIcon;
-  final String? tips;
-}
-
-const List<_TripItem> _kTripItems = <_TripItem>[
-  _TripItem(
-    title: '2天后将前往大连',
-    departureCity: '广州',
-    departureAirport: '白云机场',
-    departureTime: '08:35',
-    arrivalCity: '大连',
-    arrivalAirport: '周水子机场',
-    arrivalTime: '12:05',
-    transferType: '直达',
-    airline: '四川航空',
-    airlineIcon: 'assets/icons/airline-sichuan.svg',
-    tips: '两天后可进行线上选座，当天有雨，注意带伞哦！',
-  ),
-  _TripItem(
-    title: '7天后将前往东京',
-    departureCity: '大连',
-    departureAirport: '周水子机场',
-    departureTime: '09:30',
-    arrivalCity: '东京',
-    arrivalAirport: '羽田机场',
-    arrivalTime: '13:00',
-    transferType: '直达',
-    airline: '东方航空',
-    airlineIcon: 'assets/icons/airline-eastern.svg',
-    tips: '请注意日本签证，注意出行安全！',
-  ),
-  _TripItem(
-    title: '12天后将前往旧金山',
-    departureCity: '东京',
-    departureAirport: '羽田机场',
-    departureTime: '17:10',
-    arrivalCity: '旧金山',
-    arrivalAirport: '旧金山国际机场',
-    arrivalTime: '10:30',
-    transferType: '中转',
-    airline: '中国航空',
-    airlineIcon: 'assets/icons/airline-china.svg',
-    tips: '请注意美国签证，注意出行安全！',
-  ),
-];
-
 /// 我的行程页（从右滑入，对齐 Web translate-x-full）。
-class TripPage extends StatelessWidget {
+class TripPage extends ConsumerWidget {
   const TripPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<TripBoardData> tripAsync = ref.watch(tripControllerProvider);
+    final List<TripItem> items = tripAsync.value?.items ?? const <TripItem>[];
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -176,19 +113,17 @@ class TripPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                // 卡片列表（下拉刷新）
+                // 卡片列表（下拉刷新：由旅程控制器重拉，mock 读 TripStore）
                 Expanded(
                   child: PortenPullToRefresh(
-                    onRefresh: () async {
-                      await Future<void>.delayed(
-                          const Duration(milliseconds: 800));
-                    },
+                    onRefresh: () =>
+                        ref.read(tripControllerProvider.notifier).refresh(),
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                       child: Column(
                         children: <Widget>[
-                          for (final _TripItem item in _kTripItems)
+                          for (final TripItem item in items)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: _TripCard(item: item),
@@ -211,7 +146,7 @@ class TripPage extends StatelessWidget {
 class _TripCard extends StatelessWidget {
   const _TripCard({required this.item});
 
-  final _TripItem item;
+  final TripItem item;
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +300,7 @@ class _TripCard extends StatelessWidget {
                                     color: kGray900)),
                           ),
                           const SizedBox(width: 8),
-                          Text(item.arrivalTime,
+                          Text(item.arrivalTime ?? '',
                               style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,

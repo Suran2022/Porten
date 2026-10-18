@@ -4,6 +4,7 @@
 //   3. 时间 / 航司选择器；四选完成后出现取消/创建旅程；
 //   4. 创建旅程后 Toast 并返回。
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:porten_flutter/core/components/porten_back_icon.dart';
 import 'package:porten_flutter/features/schedule/schedule_page.dart';
@@ -13,22 +14,26 @@ void main() {
   /// 以压栈方式打开创建旅程页（真实 App 中该页由首页加号菜单压栈进入，
   /// 根路由不可 pop，故测试也用 Navigator.push 打开）。
   Future<void> openCreateTripPage(WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (BuildContext context) => Scaffold(
-          body: Center(
-            child: TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const CreateTripPage(),
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Builder(
+            builder: (BuildContext context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const CreateTripPage(),
+                    ),
+                  ),
+                  child: const Text('open'),
                 ),
               ),
-              child: const Text('open'),
             ),
           ),
         ),
       ),
-    ));
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
@@ -105,7 +110,8 @@ void main() {
 
   testWidgets('城市选择器：双机场城市进入第二步树杈机场列表',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: CreateTripPage()));
+    await tester.pumpWidget(const ProviderScope(
+        child: MaterialApp(home: CreateTripPage())));
     await tester.pump();
 
     await tester.tap(find.text('出发地'));
@@ -134,7 +140,8 @@ void main() {
 
   testWidgets('顶栏 -ml-2 几何：返回键左缘 8px、标题严格居中',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: CreateTripPage()));
+    await tester.pumpWidget(const ProviderScope(
+        child: MaterialApp(home: CreateTripPage())));
     await tester.pump();
 
     // 返回图标：容器 px-4(16) + -ml-2(-8) + 40 盒内居中 28 图标
@@ -148,7 +155,8 @@ void main() {
   });
 
   testWidgets('日程页顶栏 -ml-2 几何（回归修复）', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: SchedulePage()));
+    await tester.pumpWidget(const ProviderScope(
+        child: MaterialApp(home: SchedulePage())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -161,22 +169,26 @@ void main() {
 
   testWidgets('返回键命中区随 -ml-2 左移（布局盒左缘之外的 8px 也可命中）',
       (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (BuildContext context) => Scaffold(
-          body: Center(
-            child: TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const CreateTripPage(),
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Builder(
+            builder: (BuildContext context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const CreateTripPage(),
+                    ),
+                  ),
+                  child: const Text('open'),
                 ),
               ),
-              child: const Text('open'),
             ),
           ),
         ),
       ),
-    ));
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expect(find.text('创建我的行程'), findsOneWidget);

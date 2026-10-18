@@ -19,13 +19,16 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/components/porten_back_icon.dart';
 import '../../core/components/porten_bottom_sheet.dart';
 import '../../core/components/porten_lucide_icons.dart';
 import '../../core/components/porten_toast.dart';
+import '../../core/data/trip_controller.dart';
 import '../../core/data/trip_mock.dart';
+import '../../core/data/trip_store.dart';
 import '../../core/design/porten_colors.dart';
 import 'airline_picker_sheet.dart';
 import 'city_picker_sheet.dart';
@@ -33,14 +36,14 @@ import 'time_picker_sheet.dart';
 import 'trip_sheet_kit.dart';
 
 /// 创建我的行程页（从右滑入，对齐 Web translate-x-full）。
-class CreateTripPage extends StatefulWidget {
+class CreateTripPage extends ConsumerStatefulWidget {
   const CreateTripPage({super.key});
 
   @override
-  State<CreateTripPage> createState() => _CreateTripPageState();
+  ConsumerState<CreateTripPage> createState() => _CreateTripPageState();
 }
 
-class _CreateTripPageState extends State<CreateTripPage> {
+class _CreateTripPageState extends ConsumerState<CreateTripPage> {
   City? _departureCity;
   CityAirport? _departureAirport;
   City? _arrivalCity;
@@ -100,10 +103,43 @@ class _CreateTripPageState extends State<CreateTripPage> {
     );
   }
 
-  /// 创建旅程：Mock 阶段提示成功后返回（Web showToast + navigate(-1)）。
-  void _handleCreate() {
-    PortenToast.show('旅程创建成功', icon: ToastIcon.success);
-    Navigator.of(context).pop();
+  /// 创建旅程：提交旅程控制器（mock 写 TripStore / live 走 data 桥），
+  /// 标题 / 提醒 / 航司图标由数据层派生；成功后返回——行程页与消息
+  /// 列表入口卡片共享同一控制器，创建即双向同步（Web：toast + 返回）。
+  Future<void> _handleCreate() async {
+    final City? departureCity = _departureCity;
+    final CityAirport? departureAirport = _departureAirport;
+    final City? arrivalCity = _arrivalCity;
+    final CityAirport? arrivalAirport = _arrivalAirport;
+    final DateTime? time = _time;
+    final Airline? airline = _airline;
+    if (departureCity == null ||
+        departureAirport == null ||
+        arrivalCity == null ||
+        arrivalAirport == null ||
+        time == null ||
+        airline == null) {
+      return;
+    }
+    try {
+      await ref.read(tripControllerProvider.notifier).create(TripCreatePayload(
+        departureCity: departureCity.name,
+        departureAirport: departureAirport.name,
+        // 表单收集的是本地墙上时间；按 UTC 声明发出（ISO-8601 含 Z），
+        // 由服务端按展示时区派生 HH:mm（同 Kotlin OffsetDateTime 约定）。
+        departureAt: time.toUtc().toIso8601String(),
+        arrivalCity: arrivalCity.name,
+        arrivalAirport: arrivalAirport.name,
+        transferType: '直达',
+        airline: airline.name,
+      ));
+      if (!mounted) return;
+      PortenToast.show('旅程创建成功', icon: ToastIcon.success);
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      PortenToast.show('创建失败，请稍后重试', icon: ToastIcon.error);
+    }
   }
 
   @override

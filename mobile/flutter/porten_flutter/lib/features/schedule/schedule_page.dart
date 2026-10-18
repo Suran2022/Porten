@@ -19,10 +19,12 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/porten_back_icon.dart';
 import '../../core/components/porten_lucide_icons.dart';
 import '../../core/components/porten_toast.dart';
+import '../../core/data/schedule_controller.dart';
 import '../../core/data/schedule_mock.dart';
 import '../../core/design/porten_colors.dart';
 import 'create_schedule_sheet.dart';
@@ -85,19 +87,16 @@ List<List<DateTime>> buildWeeks() {
   );
 }
 
-class SchedulePage extends StatefulWidget {
+class SchedulePage extends ConsumerStatefulWidget {
   const SchedulePage({super.key});
 
   @override
-  State<SchedulePage> createState() => _SchedulePageState();
+  ConsumerState<SchedulePage> createState() => _SchedulePageState();
 }
 
-class _SchedulePageState extends State<SchedulePage> {
+class _SchedulePageState extends ConsumerState<SchedulePage> {
   final List<List<DateTime>> _weeks = buildWeeks();
   final ScrollController _stripController = ScrollController();
-
-  /// 日程列表（mock 引擎内存态）与有日程的日期集合（驱动绿点）。
-  List<ScheduleItem> _items = ScheduleStore.items;
 
   /// 选中日期（默认今天）与年月行显示（跟随日期条可视区域第一周）。
   late String _selected;
@@ -151,15 +150,14 @@ class _SchedulePageState extends State<SchedulePage> {
     });
   }
 
+  /// 重新拉取日程（mock 读 ScheduleStore / live 走 data 桥，由控制器分流）。
   void _reload() {
-    setState(() => _items = ScheduleStore.items);
+    ref.read(scheduleControllerProvider.notifier).refresh();
   }
 
-  Set<String> get _scheduleDates =>
-      _items.map((ScheduleItem it) => it.date).toSet();
-
-  List<ScheduleItem> get _dayItems =>
-      _items.where((ScheduleItem it) => it.date == _selected).toList();
+  /// 当前看板数据（未加载完成时用空看板，页面骨架由刷新态兜底）。
+  ScheduleBoardData get _board =>
+      ref.read(scheduleControllerProvider).value ?? ScheduleBoardData.empty;
 
   // ------------------------------------------------------------ 时间线交互
 
@@ -180,46 +178,42 @@ class _SchedulePageState extends State<SchedulePage> {
     });
   }
 
-  void _handleQuickSave() {
+  Future<void> _handleQuickSave() async {
     final int? hour = _quickDraftHour;
     if (hour == null) return;
     if (_draftDetail.trim().isEmpty) {
       PortenToast.show('写点什么再保存吧', icon: ToastIcon.error);
       return;
     }
-    ScheduleStore.create(ScheduleItem(
-      id: 0, // Store 内部分配
-      date: _selected,
-      startTime: '${hour.toString().padLeft(2, '0')}:00',
-      endTime: hour < 23
-          ? '${(hour + 1).toString().padLeft(2, '0')}:00'
-          : '24:00',
-      title: _draftTitle.trim().isEmpty ? null : _draftTitle.trim(),
-      detail: _draftDetail.trim(),
-      category: null,
-      relatedType: null,
-      relatedId: null,
-      place: null,
-      participantIds: const <int>[],
-      color: ScheduleColor.pink, // Store 创建时随机覆盖
-      source: ScheduleSource.quick,
-    ));
-    _handleQuickCancel();
-    _reload();
-    PortenToast.show('日程已创建', icon: ToastIcon.success);
+    try {
+      await ref.read(scheduleControllerProvider.notifier).create(ScheduleItem(
+        id: 0, // 服务端 / Store 内部分配
+        date: _selected,
+        startTime: '${hour.toString().padLeft(2, '0')}:00',
+        endTime: hour < 23
+            ? '${(hour + 1).toString().padLeft(2, '0')}:00'
+            : '24:00',
+        title: _draftTitle.trim().isEmpty ? null : _draftTitle.trim(),
+        detail: _draftDetail.trim(),
+        category: null,
+        relatedType: null,
+        relatedId: null,
+        place: null,
+        participantIds: const <int>[],
+        color: ScheduleColor.pink, // 创建时随机覆盖
+        source: ScheduleSource.quick,
+      ));
+      _handleQuickCancel();
+      PortenToast.show('日程已创建', icon: ToastIcon.success);
+    } catch (_) {
+      PortenToast.show('保存失败', icon: ToastIcon.error);
+    }
   }
 
-  /// 拖拽调整结束时间：乐观更新 + 同步 mock 引擎（同 Web）。
+  /// 拖拽调整结束时间：仅拖拽结束触发一次，交由控制器持久化
+  /// （mock 同步 Store / live 走 PATCH），刷新后列表自然更新。
   void _handleEndTimeChange(int id, String endTime) {
-    setState(() => _items = _items
-        .map((ScheduleItem it) =>
-            it.id == id ? it.copyWith(endTime: endTime) : it)
-        .toList());
-    try {
-      ScheduleStore.updateEndTime(id, endTime);
-    } catch (_) {
-      // 乐观更新，失败不回滚演示数据（同 Web）
-    }
+    ref.read(scheduleControllerProvider.notifier).updateEndTime(id, endTime);
   }
 
   void _handleToggleExpand(int id) {
@@ -228,14 +222,24 @@ class _SchedulePageState extends State<SchedulePage> {
 
   /// 双击打开完整编辑弹层（同 Web onOpenEdit）。
   void _handleOpenEdit(ScheduleItem item) {
-    CreateScheduleSheet.show(context, editing: item, onSaved: _reload);
+    CreateScheduleSheet.show(
+      context,
+      editing: item,
+      related: _board.related,
+      onSaved: _reload,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    final Set<String> scheduleDates = _scheduleDates;
-    final List<ScheduleItem> dayItems = _dayItems;
+    final AsyncValue<ScheduleBoardData> scheduleAsync =
+        ref.watch(scheduleControllerProvider);
+    final ScheduleBoardData board = scheduleAsync.value ?? ScheduleBoardData.empty;
+    final Set<String> scheduleDates =
+        board.items.map((ScheduleItem it) => it.date).toSet();
+    final List<ScheduleItem> dayItems =
+        board.items.where((ScheduleItem it) => it.date == _selected).toList();
 
     return Scaffold(
       backgroundColor: PortenColor.white,
@@ -249,7 +253,7 @@ class _SchedulePageState extends State<SchedulePage> {
                 _buildYearMonthRow(),
                 _buildWeekdayHeader(),
                 _buildDateStrip(screenWidth, scheduleDates),
-                _buildTimeline(dayItems),
+                _buildTimeline(board, dayItems),
               ],
             ),
             // 悬浮创建按钮：右下角常规位置，打开完整创建弹层
@@ -260,6 +264,7 @@ class _SchedulePageState extends State<SchedulePage> {
                 behavior: HitTestBehavior.opaque,
                 onTap: () => CreateScheduleSheet.show(
                   context,
+                  related: board.related,
                   onSaved: _reload,
                 ),
                 child: Container(
@@ -426,16 +431,17 @@ class _SchedulePageState extends State<SchedulePage> {
 
   // ------------------------------------------------------------ 时间线
 
-  Widget _buildTimeline(List<ScheduleItem> dayItems) {
+  Widget _buildTimeline(ScheduleBoardData board, List<ScheduleItem> dayItems) {
     // 关联项 id → 名称（"trip-1" / "agreement-2"）
     final Map<String, String> relatedLabelMap = <String, String>{
-      for (final ScheduleRelatedItem t in kMockTrips) 'trip-${t.id}': t.label,
-      for (final ScheduleRelatedItem a in kMockAgreements)
+      for (final ScheduleRelatedItem t in board.related.trips)
+        'trip-${t.id}': t.label,
+      for (final ScheduleRelatedItem a in board.related.agreements)
         'agreement-${a.id}': a.label,
     };
     // 参与者 id → 完整信息（头像/昵称）
     final Map<int, ScheduleComrade> comradeMap = <int, ScheduleComrade>{
-      for (final ScheduleComrade c in kMockComrades) c.id: c,
+      for (final ScheduleComrade c in board.related.comrades) c.id: c,
     };
 
     return Expanded(

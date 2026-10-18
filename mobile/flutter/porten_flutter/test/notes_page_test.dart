@@ -10,30 +10,39 @@
 //   8. 纯函数：parseNoteTags 切分/上限/回退、noteTagStyleOf hash
 //      与 Web charCode 一致、notesCurrentTimeLabel 格式。
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:porten_flutter/core/components/porten_lucide_icons.dart';
 import 'package:porten_flutter/core/data/notes_mock.dart';
 import 'package:porten_flutter/features/home/notes_page.dart';
 
 void main() {
+  // mock Store 为进程内单例：写操作（新建/编辑/归档/删除）会跨用例泄漏，
+  // 每个用例前复位为 11 条种子（对齐重构前页面本地状态的隔离语义）。
+  setUp(NoteStore.resetForTest);
+
   /// 以压栈方式打开记笔记页（真实 App 中由首页加号菜单压栈进入）。
   Future<void> openNotesPage(WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (BuildContext context) => Scaffold(
-          body: Center(
-            child: TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const NotesPage(),
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Builder(
+            builder: (BuildContext context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const NotesPage(),
+                    ),
+                  ),
+                  child: const Text('open'),
                 ),
               ),
-              child: const Text('open'),
             ),
           ),
         ),
       ),
-    ));
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }

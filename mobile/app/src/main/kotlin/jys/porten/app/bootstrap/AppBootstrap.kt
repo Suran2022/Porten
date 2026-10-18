@@ -1,6 +1,7 @@
 package jys.porten.app.bootstrap
 
 import android.content.Context
+import jys.porten.app.bootstrap.tasks.DataSourceStartupTask
 import jys.porten.app.bootstrap.tasks.SecurityStartupTask
 import jys.porten.core.common.log.AppLogger
 
@@ -18,6 +19,7 @@ public object AppBootstrap {
     private val tasks: List<StartupTask> = listOf(
         CrashGuardStartupTask,
         LoggingStartupTask,
+        DataSourceStartupTask,
         SecurityStartupTask,
     )
 

@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'core/bridge/porten_channels.dart';
 import 'core/bridge/porten_navigator_key.dart';
+import 'core/mock/mock_mode.dart';
 
 /// Flutter 侧唯一入口。
 ///
@@ -21,7 +22,23 @@ import 'core/bridge/porten_navigator_key.dart';
 void runPortenFlutterApp() {
   WidgetsFlutterBinding.ensureInitialized();
   _registerNavigationBridge();
-  runApp(const ProviderScope(child: PortenApp()));
+  _resolveDataSourceThenRun();
+}
+
+/// 先解析原生 env 桥注入的数据源模式，再挂载 UI。
+///
+/// 竞态防御：Mock / Live 模式必须在首个业务 Provider（日程 / 旅程 /
+/// 笔记控制器）首次读取前确定，否则首帧可能按错误模式取数。解析失败
+/// （纯 Flutter 调试、原生未注册）时保持默认 mock。
+Future<void> _resolveDataSourceThenRun() async {
+  final ProviderContainer container = ProviderContainer();
+  try {
+    container.read(mockModeProvider.notifier).set(await resolveInitialMockMode());
+  } catch (_) {
+    // 保持默认 mock（resolveInitialMockMode 内部已吞 MissingPluginException，
+    // 此处兜底其它桥接异常，不影响启动）。
+  }
+  runApp(UncontrolledProviderScope(container: container, child: const PortenApp()));
 }
 
 /// 导航桥（r20）：系统返回键由原生转发。

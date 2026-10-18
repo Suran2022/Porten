@@ -163,3 +163,119 @@ List<String> parseNoteTags(String draftTags, {bool fallback = false}) {
   if (fallback && tags.isEmpty) return <String>['随记'];
   return tags;
 }
+
+// ------------------------------------------------------------ API 序列化
+//
+// 字段硬约束（与后端 /api/v1/notes 系列、Kotlin 侧 NoteItem 逐字段对齐，
+// 一个不多一个不少）：id/content/time/tags/archived。
+// time 为服务端派生的展示标签（今天 / 昨天 / M月D日 HH:mm），端上不解析。
+
+/// 业务数据桥返回 JSON → [NoteItem]。
+NoteItem noteItemFromApi(Map<String, dynamic> json) {
+  return NoteItem(
+    id: (json['id'] as num).toInt(),
+    content: json['content'] as String,
+    time: json['time'] as String,
+    tags: (json['tags'] as List<dynamic>?)
+            ?.map((dynamic e) => e as String)
+            .toList() ??
+        const <String>[],
+    archived: json['archived'] as bool? ?? false,
+  );
+}
+
+/// 创建 / 更新载荷（POST/PATCH /notes 的 payload，PATCH 语义：
+/// 仅传入字段覆盖，null 表示不修改；标签为空数组即清空）。
+Map<String, Object?> noteUpsertPayloadOf({
+  String? content,
+  List<String>? tags,
+  bool? archived,
+}) {
+  return <String, Object?>{
+    'content': ?content,
+    'tags': ?tags,
+    'archived': ?archived,
+  };
+}
+
+/// 笔记内存存储（对齐 Kotlin NoteMockEngine 与 Web 端笔记交互）：
+/// GET 返回当前列表；POST 新建回退「随记」并 unshift；
+/// PATCH 按 id 就地更新（仅传入字段，含清空标签）；
+/// 删除按 id 移除。
+class NoteStore {
+  NoteStore._();
+
+  static final List<NoteItem> _items = List<NoteItem>.of(kMockNotes);
+  static int _nextId = 12;
+
+  /// 当前全部笔记（返回副本，新到旧）。
+  static List<NoteItem> get items => List<NoteItem>.of(_items);
+
+  /// 新建：标签切分（空则回退「随记」）后插入列表头部。
+  static NoteItem create({
+    required String content,
+    required String tagsText,
+  }) {
+    final NoteItem item = NoteItem(
+      id: _nextId++,
+      content: content,
+      time: noteTimeLabelNow(),
+      tags: parseNoteTags(tagsText, fallback: true),
+    );
+    _items.insert(0, item);
+    return item;
+  }
+
+  /// 更新：显式传入的字段覆盖（[tagsText] 为 null 表示不改标签；
+  /// 编辑分支允许清空标签，与 Web 行为一致）。
+  static NoteItem update(
+    int id, {
+    String? content,
+    String? tagsText,
+    bool? archived,
+  }) {
+    final int index = _items.indexWhere((NoteItem it) => it.id == id);
+    if (index < 0) {
+      throw StateError('note not found');
+    }
+    final NoteItem current = _items[index];
+    final NoteItem updated = NoteItem(
+      id: id,
+      content: content ?? current.content,
+      time: noteTimeLabelNow(),
+      tags: tagsText != null ? parseNoteTags(tagsText) : current.tags,
+      archived: archived ?? current.archived,
+    );
+    _items[index] = updated;
+    return updated;
+  }
+
+  /// 删除。
+  static void delete(int id) {
+    _items.removeWhere((NoteItem it) => it.id == id);
+  }
+
+  /// 重置为初始种子（仅测试使用：mock Store 为进程内单例，
+  /// 写操作跨测试用例泄漏，需在用例前复位）。
+  @visibleForTesting
+  static void resetForTest() {
+    _items
+      ..clear()
+      ..addAll(kMockNotes);
+    _nextId = 12;
+  }
+}
+
+/// 当前时刻的笔记时间标签：今天 HH:mm / 昨天 HH:mm / M月D日 HH:mm
+/// （对齐 Kotlin NoteMockEngine.currentTimeLabel）。
+String noteTimeLabelNow([DateTime? now]) {
+  final DateTime date = now ?? DateTime.now();
+  final String hm =
+      '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  final DateTime today = DateTime(date.year, date.month, date.day);
+  final DateTime yesterday = today.subtract(const Duration(days: 1));
+  final DateTime day = DateTime(date.year, date.month, date.day);
+  if (day == today) return '今天 $hm';
+  if (day == yesterday) return '昨天 $hm';
+  return '${date.month}月${date.day}日 $hm';
+}

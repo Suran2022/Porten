@@ -25,6 +25,7 @@ from app.models.forensic_record import ForensicRecord
 from app.models.media_file import MediaFile
 from app.models.message import Message
 from app.models.moderation_rule_version import ModerationRuleVersion
+from app.models.note import Note
 from app.models.group import (
     Group,
     GroupMember,
@@ -36,7 +37,15 @@ from app.models.group import (
 from app.models.honeytoken import Honeytoken
 from app.models.login_attempt import LoginAttempt
 from app.models.retention_policy import RetentionPolicy
+from app.models.schedule import (
+    Schedule,
+    ScheduleCategory,
+    ScheduleColor,
+    ScheduleRelatedType,
+    ScheduleSource,
+)
 from app.models.security_event import SecurityEvent
+from app.models.trip import Trip, TransferType
 from app.models.url_reputation import UrlReputation
 from app.models.system_message import (
     SystemMessage,
@@ -90,4 +99,12 @@ __all__ = [
     "WebauthnCredential",
     "UebaEntityScore",
     "ModerationRuleVersion",
+    "Schedule",
+    "ScheduleCategory",
+    "ScheduleColor",
+    "ScheduleRelatedType",
+    "ScheduleSource",
+    "Trip",
+    "TransferType",
+    "Note",
 ]

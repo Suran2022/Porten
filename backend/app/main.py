@@ -33,10 +33,13 @@ from app.routers import (
     honeypot_router,
     security_admin_router,
     messages_router,
+    notes_router,
     notifications_router,
+    schedules_router,
     search_router,
     retention_router,
     system_messages_router,
+    trips_router,
     upload_router,
     user_router,
     websocket_router,
@@ -266,6 +269,9 @@ app.include_router(notifications_router)
 app.include_router(system_messages_router)
 app.include_router(upload_router)
 app.include_router(emotion_diary_router)
+app.include_router(schedules_router)
+app.include_router(trips_router)
+app.include_router(notes_router)
 app.include_router(search_router)
 app.include_router(retention_router)
 app.include_router(websocket_router)

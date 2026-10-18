@@ -18,6 +18,8 @@ import '../../../core/components/porten_page_transitions.dart';
 import '../../../core/components/porten_lucide_icons.dart';
 import '../../../core/components/porten_toast.dart';
 import '../../../core/data/home_mock.dart';
+import '../../../core/data/trip_controller.dart';
+import '../../../core/data/trip_store.dart';
 import '../../../core/design/porten_colors.dart';
 import '../../../core/design/porten_typography.dart';
 import '../state/home_providers.dart';
@@ -331,11 +333,19 @@ class PortenPartnerCard extends StatelessWidget {
 }
 
 /// 「我的旅程」入口卡片（对齐 TripAssistantCard.tsx）。
-class PortenTripCard extends StatelessWidget {
+///
+/// 数据源：旅程控制器（mock 读 TripStore.assistantCard / live 走
+/// porten/data 桥）——创建旅程后 count 与摘要实时同步（与行程页
+/// 共享同一控制器）。
+class PortenTripCard extends ConsumerWidget {
   const PortenTripCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final TripAssistantCard? assistant =
+        ref.watch(tripControllerProvider).value?.assistant;
+    final int tripCount = assistant?.count ?? 0;
+    final String lastMessage = assistant?.lastMessage ?? '';
     return _Pressable(
       onTap: () => Navigator.of(context).push(PortenSlideFromRightRoute<void>(
         builder: (_) => const TripPage(),
@@ -409,15 +419,15 @@ class PortenTripCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (kTripMessageCount > 0) ...<Widget>[
+                  if (tripCount > 0) ...<Widget>[
                     const SizedBox(width: 8),
-                    _TripBadge(count: kTripMessageCount),
+                    _TripBadge(count: tripCount),
                   ],
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '[行程助手]：$kTripLastMessage',
+                    '[行程助手]：$lastMessage',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: PortenTypography.sm.copyWith(

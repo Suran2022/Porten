@@ -31,6 +31,13 @@ public object FlutterHost {
     @Volatile
     public var dataSourceMode: DataSourceMode = DataSourceMode.Mock
 
+    /** API 基地址（由 app 层注入，桥接 env 通道读取，供 Flutter 调试面板展示）。 */
+    @Volatile
+    public var apiBaseUrl: String = ""
+
+    /** 业务数据桥适配器（Application 级协程作用域，禁止随页面销毁）。 */
+    private val dataBridge: DataBridgeAdapter = DataBridgeAdapter()
+
     /**
      * 预热引擎并注册通道（幂等）。
      *
@@ -80,13 +87,32 @@ public object FlutterHost {
                         "mockMode" -> result.success(
                             if (dataSourceMode == DataSourceMode.Live) "live" else "mock",
                         )
+                        "apiBaseUrl" -> result.success(apiBaseUrl)
                         else -> result.notImplemented()
                     }
                 }.onFailure { result.error("native_error", it.message, null) }
             }
 
+        // ---- data 通道：业务数据桥（日程 / 旅程 / 笔记）----
+        // Flutter 禁止直连网络：业务数据一律经本通道下沉到 :core:data 的
+        // Repository（Mock / Live 由 dataSourceMode 决策，Flutter 无感知）。
+        io.flutter.plugin.common.MethodChannel(messenger, dataBridge.channelName)
+            .setMethodCallHandler { call, result ->
+                @Suppress("UNCHECKED_CAST")
+                val arguments = call.arguments as? Map<String, Any?>
+                dataBridge.handle(call.method, arguments) { outcome ->
+                    outcome.fold(
+                        onSuccess = { data -> result.success(data) },
+                        onFailure = { error ->
+                            val (code, message) = dataBridge.mapError(error)
+                            result.error(code, message, null)
+                        },
+                    )
+                }
+            }
+
         // 其余域（im / push / secure_store）的处理器由各自 core 模块提供，
         // Phase 2 在此逐域接入 PortenBridgeRegistry.all() 的注册清单。
-        AppLogger.d(TAG, "已注册通道：env；待接入：${PortenBridgeRegistry.all().keys}")
+        AppLogger.d(TAG, "已注册通道：env、data；待接入：${PortenBridgeRegistry.all().keys}")
     }
 }

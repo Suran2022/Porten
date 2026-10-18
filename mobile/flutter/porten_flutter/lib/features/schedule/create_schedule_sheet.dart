@@ -21,9 +21,11 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/porten_bottom_sheet.dart';
 import '../../core/components/porten_toast.dart';
+import '../../core/data/schedule_controller.dart';
 import '../../core/data/schedule_mock.dart';
 import '../../core/design/porten_colors.dart';
 import 'date_time_picker_sheet.dart';
@@ -42,11 +44,14 @@ class CreateScheduleSheet extends StatelessWidget {
   /// 打开创建/编辑弹层。
   ///
   /// [editing] 非空为编辑模式（回填）；[defaultStart] 为创建模式默认
-  /// 开始时间（时间线快捷定位传入），缺省当前时刻。
+  /// 开始时间（时间线快捷定位传入），缺省当前时刻；
+  /// [related] 为关联候选（旅程 / 约定 / 同胞，由日程控制器提供，
+  /// mock 与 live 双通道数据）。
   static Future<void> show(
     BuildContext context, {
     ScheduleItem? editing,
     DateTime? defaultStart,
+    required ScheduleRelatedData related,
     required VoidCallback onSaved,
   }) {
     final double height = MediaQuery.sizeOf(context).height * 0.75; // h-[75vh]
@@ -57,6 +62,7 @@ class CreateScheduleSheet extends StatelessWidget {
       content: (BuildContext ctx, VoidCallback close) => _CreateScheduleBody(
         editing: editing,
         defaultStart: defaultStart,
+        related: related,
         onClose: close,
         onSaved: onSaved,
       ),
@@ -67,24 +73,26 @@ class CreateScheduleSheet extends StatelessWidget {
   Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
-class _CreateScheduleBody extends StatefulWidget {
+class _CreateScheduleBody extends ConsumerStatefulWidget {
   const _CreateScheduleBody({
     required this.editing,
     required this.defaultStart,
+    required this.related,
     required this.onClose,
     required this.onSaved,
   });
 
   final ScheduleItem? editing;
   final DateTime? defaultStart;
+  final ScheduleRelatedData related;
   final VoidCallback onClose;
   final VoidCallback onSaved;
 
   @override
-  State<_CreateScheduleBody> createState() => _CreateScheduleBodyState();
+  ConsumerState<_CreateScheduleBody> createState() => _CreateScheduleBodyState();
 }
 
-class _CreateScheduleBodyState extends State<_CreateScheduleBody> {
+class _CreateScheduleBodyState extends ConsumerState<_CreateScheduleBody> {
   late DateTime? _start;
   late DateTime? _end;
   late String _title;
@@ -142,9 +150,9 @@ class _CreateScheduleBodyState extends State<_CreateScheduleBody> {
   List<ScheduleRelatedItem> get _relatedItems {
     switch (_category) {
       case ScheduleCategory.travel:
-        return kMockTrips;
+        return widget.related.trips;
       case ScheduleCategory.date:
-        return kMockAgreements;
+        return widget.related.agreements;
       default:
         return const <ScheduleRelatedItem>[];
     }
@@ -158,7 +166,7 @@ class _CreateScheduleBodyState extends State<_CreateScheduleBody> {
     return null;
   }
 
-  List<ScheduleComrade> get _selectedParticipants => kMockComrades
+  List<ScheduleComrade> get _selectedParticipants => widget.related.comrades
       .where((ScheduleComrade c) => _participantIds.contains(c.id))
       .toList();
 
@@ -203,12 +211,14 @@ class _CreateScheduleBodyState extends State<_CreateScheduleBody> {
     );
     setState(() => _saving = true);
     try {
+      final ScheduleController controller =
+          ref.read(scheduleControllerProvider.notifier);
       final ScheduleItem? editing = widget.editing;
       if (editing != null) {
-        ScheduleStore.update(editing.id, draft);
+        await controller.updateItem(editing.id, draft);
         PortenToast.show('日程已保存', icon: ToastIcon.success);
       } else {
-        ScheduleStore.create(draft);
+        await controller.create(draft);
         PortenToast.show('日程创建成功', icon: ToastIcon.success);
       }
       widget.onSaved();
@@ -539,7 +549,7 @@ class _CreateScheduleBodyState extends State<_CreateScheduleBody> {
       context,
       title: '选择参与的同胞',
       placeholder: '搜索昵称',
-      options: kMockComrades
+      options: widget.related.comrades
           .map((ScheduleComrade c) =>
               PickerOption(id: c.id, label: c.nickname, avatarAsset: c.avatarAsset))
           .toList(),
