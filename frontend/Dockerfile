@@ -3,7 +3,8 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+# fetch-retry 系列：CI runner 访问 npm registry 偶发 ECONNRESET，加重试避免流水线随机失败
+RUN npm ci --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 --no-audit --no-fund
 
 COPY . .
 # 构建期注入后端地址（build args），产物为纯静态文件
