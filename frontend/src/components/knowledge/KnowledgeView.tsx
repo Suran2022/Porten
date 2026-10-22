@@ -9,6 +9,8 @@ interface KnowledgeViewProps {
   onMenuFixedChange: (fixed: boolean) => void;
   /** 点击分享列表卡片打开详情页 */
   onSharePostOpen?: (post: SharePost) => void;
+  /** 打开分享独立视图弹窗（仅 PC 第三栏传入） */
+  onShareStandaloneOpen?: () => void;
 }
 
 export function KnowledgeView({
@@ -17,6 +19,7 @@ export function KnowledgeView({
   menuFixed,
   onMenuFixedChange,
   onSharePostOpen,
+  onShareStandaloneOpen,
 }: KnowledgeViewProps) {
   return (
     <div className="h-full flex flex-col bg-white">
@@ -28,7 +31,7 @@ export function KnowledgeView({
           }}
         >
           <div className="h-full w-1/2">
-            <ShareView onPostOpen={onSharePostOpen} />
+            <ShareView onPostOpen={onSharePostOpen} onStandaloneOpen={onShareStandaloneOpen} />
           </div>
           <div className="h-full w-1/2">
             <LearnView

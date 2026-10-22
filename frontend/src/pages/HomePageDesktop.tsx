@@ -7,6 +7,7 @@ import { MUSIC_TRACKS } from "@/data/music";
 import { formatMessageTime } from "@/lib/utils";
 
 import { PcDialog } from "@/components/desktop/PcDialog";
+import { ShareStandaloneDialog } from "@/components/knowledge/ShareStandaloneDialog";
 import { DesktopSidebar, DesktopNavKey } from "@/components/desktop/DesktopSidebar";
 import { DesktopTopBar } from "@/components/desktop/DesktopTopBar";
 import { DesktopMessagesColumn } from "@/components/desktop/DesktopMessagesColumn";
@@ -76,6 +77,7 @@ export default function HomePageDesktop() {
   const [resourceTab, setResourceTab] = useState<ResourceTab>("hospital");
   const [knowledgeTab, setKnowledgeTab] = useState<KnowledgeTab>("share");
   const [knowledgeCategory, setKnowledgeCategory] = useState<LearnCategory>("community");
+  const [shareStandaloneOpen, setShareStandaloneOpen] = useState(false);
 
   // 弹窗状态
   const [searchOpen, setSearchOpen] = useState(false);
@@ -289,6 +291,7 @@ export default function HomePageDesktop() {
           activeTab={knowledgeTab}
           activeCategory={knowledgeCategory}
           onCategoryChange={setKnowledgeCategory}
+          onShareStandaloneOpen={() => setShareStandaloneOpen(true)}
         />
       );
     }
@@ -371,7 +374,18 @@ export default function HomePageDesktop() {
 
       {/* ============ 弹窗层 ============ */}
 
+      {/* 记录与分享独立视图弹窗 */}
+      <PcDialog
+        open={shareStandaloneOpen}
+        onClose={() => setShareStandaloneOpen(false)}
+        width={640}
+        height={760}
+      >
+        <ShareStandaloneDialog onClose={() => setShareStandaloneOpen(false)} />
+      </PcDialog>
+
       <PcDialog open={searchOpen} onClose={() => setSearchOpen(false)} width={640} height={640}>
+
         <SearchPage visible closeMode onClose={() => setSearchOpen(false)} />
       </PcDialog>
 

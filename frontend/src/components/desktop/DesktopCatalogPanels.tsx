@@ -127,10 +127,13 @@ export function DesktopKnowledgeContent({
   activeTab,
   activeCategory,
   onCategoryChange,
+  onShareStandaloneOpen,
 }: {
   activeTab: KnowledgeTab;
   activeCategory: LearnCategory;
   onCategoryChange: (category: LearnCategory) => void;
+  /** 打开分享独立视图弹窗 */
+  onShareStandaloneOpen: () => void;
 }) {
   return (
     <div className="h-full overflow-hidden bg-white flex flex-col">
@@ -152,6 +155,7 @@ export function DesktopKnowledgeContent({
             activeCategory={activeCategory}
             menuFixed
             onMenuFixedChange={() => {}}
+            onShareStandaloneOpen={onShareStandaloneOpen}
           />
         </div>
       </div>
