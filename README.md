@@ -1,15 +1,27 @@
 <div align="center">
 
+<img src="./docs/logo.svg" alt="Porten Logo" width="120" />
+
 # Porten
 
-### 一个为跨性别群体打造的温暖通信与社区平台
+### 为少数群体研发的即时通讯IM
 
 💌 安全 · 包容 · 连接 · 治愈
 
+[![Star](https://img.shields.io/github/stars/Suran2022/Porten?style=social)](https://github.com/Suran2022/Porten/stargazers)
+[![Fork](https://img.shields.io/github/forks/Suran2022/Porten?style=social)](https://github.com/Suran2022/Porten/network/members)
+[![Watch](https://img.shields.io/github/watchers/Suran2022/Porten?style=social)](https://github.com/Suran2022/Porten/watchers)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Suran2022/Porten/pulls)
+[![Issue](https://img.shields.io/badge/Issue-反馈/建议-ff69b4.svg)](https://github.com/Suran2022/Porten/issues)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![Frontend](https://img.shields.io/badge/Frontend-React_18-61DAFB.svg)](https://react.dev/)
-[![Backend](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
-[![Database](https://img.shields.io/badge/Database-MySQL_8-4479A1.svg)](https://www.mysql.com/)
+
+**前端** ![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwindcss&logoColor=white) ![Zustand](https://img.shields.io/badge/Zustand-5-fa7b42?logo=react&logoColor=white)
+
+**后端** ![FastAPI](https://img.shields.io/badge/FastAPI-0.128-009688?logo=fastapi&logoColor=white) ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?logo=sqlalchemy&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white) ![WebSocket](https://img.shields.io/badge/WebSocket-实时推送-010101?logo=socketdotio&logoColor=white)
+
+**移动端** ![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter&logoColor=white) ![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white) ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-Material3-4285F4?logo=jetpackcompose&logoColor=white) ![Riverpod](https://img.shields.io/badge/Riverpod-状态管理-02569B?logo=flutter&logoColor=white)
+
+**工程化** ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF?logo=githubactions&logoColor=white) ![Nginx](https://img.shields.io/badge/Nginx-托管-009639?logo=nginx&logoColor=white) ![ffmpeg](https://img.shields.io/badge/ffmpeg-媒体处理-17280B?logo=ffmpeg&logoColor=white)
 
 </div>
 
